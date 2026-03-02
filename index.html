@@ -78,7 +78,7 @@
             left: 0;
             right: 0;
             height: 6px;
-            background: linear-gradient(90deg, #8b9d83, #a8b89f);
+            background: var(--card-accent, linear-gradient(90deg, #8b9d83, #a8b89f));
             transform: scaleX(0);
             transform-origin: left;
             transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -266,6 +266,15 @@
                     Quick access to your Block 3 training plan with RPE targets, protocols, and notes for every workout session.
                 </p>
                 <span class="app-badge">Training</span>
+            </a>
+
+            <a href="colour-palette.html" class="app-card" style="--card-accent: linear-gradient(90deg, #C4929B, #7389A2);">
+                <div class="app-icon" style="background: linear-gradient(135deg, #8FA387, #7389A2, #A99BBD, #C4929B);">🎨</div>
+                <div class="app-title">Colour Matching</div>
+                <p class="app-description">
+                    Your personal Soft Summer colour palette — core colours, neutrals, outfit combinations, and metals curated for your colouring.
+                </p>
+                <span class="app-badge" style="background: rgba(195,146,155,0.12); color: #8B5A65;">Style</span>
             </a>
         </div>
 

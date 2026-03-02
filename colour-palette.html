@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Soft Summer seasonal colour analysis palette — your personal colour guide">
+    <title>Soft Summer Palette</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: #EDE8E3;
+            min-height: 100vh;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* ── Back link ── */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #7A7570;
+            text-decoration: none;
+            padding: 20px 32px 0;
+            transition: color 0.2s ease;
+        }
+        .back-link:hover { color: #3D3D3D; }
+
+        /* ── Header ── */
+        .header {
+            padding: 28px 32px 0;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .header-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 8px;
+        }
+
+        .header-orb {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #8FA387, #7389A2, #A99BBD, #C4929B);
+            box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+
+        .header-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #7A7570;
+        }
+
+        .header-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 36px;
+            color: #3D3D3D;
+            line-height: 1.15;
+        }
+
+        .header-desc {
+            font-size: 15px;
+            color: #7A7570;
+            line-height: 1.6;
+            max-width: 640px;
+            margin-top: 16px;
+        }
+
+        .header-desc strong { color: #545861; }
+
+        .badges {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 100px;
+            padding: 8px 16px;
+        }
+
+        .badge-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .badge-label { font-size: 12px; color: #7A7570; }
+        .badge-value { font-size: 12px; font-weight: 600; color: #3D3D3D; }
+
+        /* ── Nav ── */
+        .nav {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: rgba(237,232,227,0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+            margin-top: 32px;
+        }
+
+        .nav-inner {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 32px;
+            display: flex;
+            gap: 4px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .nav-inner::-webkit-scrollbar { display: none; }
+
+        .nav-btn {
+            padding: 14px 18px;
+            font-size: 13px;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 400;
+            color: #8A8580;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn.active {
+            font-weight: 600;
+            color: #3D3D3D;
+            border-bottom-color: #7389A2;
+        }
+
+        .nav-btn:hover:not(.active) { color: #545861; }
+
+        /* ── Content ── */
+        .content {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 32px 32px 64px;
+        }
+
+        .section { display: none; }
+        .section.active { display: block; }
+
+        .section-intro {
+            font-size: 14px;
+            color: #7A7570;
+            line-height: 1.6;
+            margin-bottom: 24px;
+            max-width: 620px;
+        }
+
+        .section-intro strong { color: #545861; }
+
+        /* ── Core grid ── */
+        .core-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+
+        @media (max-width: 700px) { .core-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 460px) { .core-grid { grid-template-columns: 1fr; } }
+
+        /* ── Colour card ── */
+        .colour-card {
+            border-radius: 14px;
+            padding: 22px 24px;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            cursor: default;
+        }
+
+        .colour-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        }
+
+        .colour-card:hover .card-desc { opacity: 0.85; }
+
+        .card-name {
+            font-weight: 600;
+            font-size: 15px;
+            letter-spacing: 0.01em;
+        }
+
+        .card-hex {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .card-desc {
+            font-size: 12px;
+            opacity: 0;
+            margin-top: 8px;
+            line-height: 1.45;
+            font-weight: 400;
+            transition: opacity 0.3s ease;
+        }
+
+        /* ── Small colour card (combo swatches) ── */
+        .colour-card.small {
+            border-radius: 10px;
+            padding: 14px 16px;
+            min-height: 70px;
+        }
+
+        .colour-card.small .card-name { font-size: 13px; }
+        .colour-card.small .card-hex { font-size: 10px; }
+
+        /* ── Sister grid ── */
+        .sister-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+
+        @media (max-width: 700px) { .sister-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 460px) { .sister-grid { grid-template-columns: 1fr; } }
+
+        .sister-note {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding: 14px 20px;
+            background: rgba(168,115,96,0.08);
+            border-radius: 12px;
+        }
+
+        .sister-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #A87360;
+            flex-shrink: 0;
+        }
+
+        .sister-note-text { font-size: 13px; color: #6E5548; line-height: 1.5; }
+
+        /* ── Neutral grid ── */
+        .neutral-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+
+        @media (max-width: 700px) { .neutral-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 460px) { .neutral-grid { grid-template-columns: 1fr; } }
+
+        .swap-box {
+            margin-top: 28px;
+            padding: 18px 22px;
+            background: rgba(115,137,162,0.08);
+            border-radius: 12px;
+        }
+
+        .swap-box-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #3D3D3D;
+            margin-bottom: 6px;
+        }
+
+        .swap-box-text {
+            font-size: 13px;
+            color: #7A7570;
+            line-height: 1.55;
+        }
+
+        .swap-box-text strong { color: #545861; }
+
+        /* ── Caution cards ── */
+        .caution-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .caution-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: #F5F0EB;
+            border-radius: 12px;
+            padding: 14px 18px;
+            transition: transform 0.2s ease;
+            cursor: default;
+        }
+
+        .caution-card:hover { transform: translateY(-1px); }
+
+        .caution-swatch {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .caution-swatch::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 8px;
+            background: repeating-linear-gradient(135deg, transparent, transparent 12px, rgba(0,0,0,0.08) 12px, rgba(0,0,0,0.08) 13px);
+        }
+
+        .caution-name {
+            font-weight: 600;
+            font-size: 13px;
+            color: #3D3D3D;
+        }
+
+        .caution-desc {
+            font-size: 11px;
+            color: #8A8580;
+            margin-top: 2px;
+            line-height: 1.4;
+        }
+
+        /* ── Metal cards ── */
+        .metal-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .metal-card {
+            background: #F5F0EB;
+            border-radius: 14px;
+            padding: 24px 22px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.3s ease;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            position: relative;
+            cursor: default;
+        }
+
+        .metal-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+        }
+
+        .metal-card.avoid { opacity: 0.55; }
+
+        .avoid-tag {
+            position: absolute;
+            top: 10px;
+            right: 14px;
+            font-size: 10px;
+            font-weight: 600;
+            color: #A08070;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .metal-orb {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            box-shadow: inset 0 1px 3px rgba(255,255,255,0.5), 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .metal-name {
+            font-weight: 600;
+            font-size: 15px;
+            color: #3D3D3D;
+        }
+
+        .metal-desc {
+            font-size: 12px;
+            color: #7A7570;
+            margin-top: 4px;
+            line-height: 1.45;
+        }
+
+        /* ── Combo grid ── */
+        .combo-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        @media (max-width: 600px) { .combo-grid { grid-template-columns: 1fr; } }
+
+        .combo-card {
+            background: #F5F0EB;
+            border-radius: 14px;
+            padding: 22px;
+            transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.3s ease;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            cursor: default;
+        }
+
+        .combo-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+        }
+
+        .combo-name {
+            font-weight: 600;
+            font-size: 15px;
+            color: #3D3D3D;
+        }
+
+        .combo-desc {
+            font-size: 12px;
+            color: #7A7570;
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+
+        .combo-swatches {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .combo-swatch-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .combo-swatch {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        .combo-swatch-name {
+            font-size: 10px;
+            color: #7A7570;
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        /* ── Footer ── */
+        footer {
+            border-top: 1px solid rgba(0,0,0,0.06);
+            padding: 24px 32px;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .footer-text {
+            font-size: 11px;
+            color: #A09B96;
+            line-height: 1.6;
+            max-width: 500px;
+        }
+
+        @media (max-width: 600px) {
+            .header { padding: 20px 20px 0; }
+            .back-link { padding: 16px 20px 0; }
+            .header-title { font-size: 28px; }
+            .nav-inner { padding: 0 20px; }
+            .content { padding: 24px 20px 48px; }
+            footer { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="back-link">← Back to Hub</a>
+
+    <div class="header">
+        <div class="header-row">
+            <div class="header-orb"></div>
+            <div>
+                <div class="header-label">Seasonal Colour Analysis</div>
+                <div class="header-title">Soft Summer</div>
+            </div>
+        </div>
+        <p class="header-desc">
+            Your colouring is defined by <strong>softness</strong> and a <strong>cool-neutral undertone</strong>.
+            Every colour in this palette has a drop of grey in it — muted, smoky, and gently toned-down.
+            Think morning mist, not midday sun.
+        </p>
+        <div class="badges">
+            <div class="badge">
+                <div class="badge-dot" style="background:#8A8D90"></div>
+                <span class="badge-label">Primary:</span>
+                <span class="badge-value">Muted / Soft</span>
+            </div>
+            <div class="badge">
+                <div class="badge-dot" style="background:#7389A2"></div>
+                <span class="badge-label">Secondary:</span>
+                <span class="badge-value">Cool-Neutral</span>
+            </div>
+            <div class="badge">
+                <div class="badge-dot" style="background:#A87360"></div>
+                <span class="badge-label">Sister Season:</span>
+                <span class="badge-value">Soft Autumn</span>
+            </div>
+        </div>
+    </div>
+
+    <nav class="nav">
+        <div class="nav-inner" id="navInner"></div>
+    </nav>
+
+    <div class="content" id="content"></div>
+
+    <footer>
+        <p class="footer-text">
+            Digital analysis based on photo + questionnaire data. For absolute precision, professional in-person draping is recommended.
+            Your undertone is fixed, but surface tone shifts with sun and season — lean into Soft Autumn when tanned, core Soft Summer when pale.
+        </p>
+    </footer>
+
+<script>
+const SECTIONS = {
+    core:     "Core Palette",
+    sister:   "Soft Autumn Crossover",
+    neutrals: "Your Neutrals",
+    caution:  "Approach with Caution",
+    metals:   "Metals & Accessories",
+    combos:   "Outfit Combinations",
+};
+
+const coreColours = [
+    { name: "Dusty Rose",        hex: "#C4929B", desc: "Your signature pink — muted, sophisticated, effortlessly flattering" },
+    { name: "Mauve",             hex: "#B08A9A", desc: "A smoky pink-purple that echoes the soft complexity of your eyes" },
+    { name: "Sage Green",        hex: "#8FA387", desc: "Greyed herbal green — mirrors the green tones in your iris" },
+    { name: "Soft Teal",         hex: "#6E9B9E", desc: "A muted blue-green bridge colour, calming and harmonious" },
+    { name: "Slate Blue",        hex: "#7389A2", desc: "Smoky blue with grey undertones — a strong everyday colour" },
+    { name: "Lavender",          hex: "#A99BBD", desc: "Cool, dusty purple — soft enough to never overwhelm" },
+    { name: "Cocoa",             hex: "#8B7168", desc: "A cool-leaning soft brown, warmer than grey but cooler than camel" },
+    { name: "Dusty Plum",        hex: "#7E5475", desc: "Deep muted purple — your richest, most dramatic option" },
+    { name: "Soft Burgundy",     hex: "#8B4D5A", desc: "Pinot noir in fabric form — deep, cool red" },
+    { name: "Raspberry Muted",   hex: "#9E5B6E", desc: "A softened berry — your ideal 'red' that isn't actually red" },
+    { name: "Pewter Blue",       hex: "#8DA0AC", desc: "Grey with a blue whisper — effortless sophistication" },
+    { name: "Soft Jade",         hex: "#7BA098", desc: "A greyed blue-green with gentle depth" },
+    { name: "Driftwood",         hex: "#8C7E72", desc: "Muted cool-leaning medium brown — easy and natural" },
+    { name: "Dusty Cornflower",  hex: "#7F99B8", desc: "A softened mid-blue — less corporate than navy, more interesting than sky" },
+    { name: "Heather",           hex: "#A992A5", desc: "Gentle grey-purple, like a Scottish moor in autumn mist" },
+];
+
+const sisterColours = [
+    { name: "Olive",       hex: "#808A5C", desc: "Muted, greyed olive — not bright or vivid" },
+    { name: "Terracotta",  hex: "#B07A65", desc: "Dusty, earthy terracotta — greyed down, not bright" },
+    { name: "Warm Taupe",  hex: "#A08E7F", desc: "Your warmest neutral — a bridge between seasons" },
+    { name: "Soft Rust",   hex: "#A87360", desc: "Rust with the volume turned down — earthy, not fiery" },
+    { name: "Warm Sage",   hex: "#9A9876", desc: "Sage with a golden lean — softer, earthier" },
+    { name: "Mushroom",    hex: "#9C8E82", desc: "A warm grey-brown — natural and grounding" },
+];
+
+const neutralColours = [
+    { name: "Muted Navy",   hex: "#3D4F63", desc: "Your best dark — softer than true navy, endlessly versatile" },
+    { name: "Charcoal",     hex: "#545861", desc: "Your alternative to black — all the depth without the harshness" },
+    { name: "Cool Taupe",   hex: "#9B8E85", desc: "The ultimate Soft Summer neutral — grey + brown + cool" },
+    { name: "Stone",        hex: "#B5ADA4", desc: "A greige — grey-beige blend, effortlessly elegant" },
+    { name: "Greige",       hex: "#C4BAB0", desc: "A lighter warm grey — gentle and versatile" },
+    { name: "Soft White",   hex: "#EDE8E3", desc: "Off-white with a hint of warmth — your replacement for stark white" },
+    { name: "Pewter Grey",  hex: "#8A8D90", desc: "A medium cool grey — clean and understated" },
+    { name: "Dove",         hex: "#B8B3AE", desc: "A delicate warm grey — lighter option for summer" },
+];
+
+const cautionColours = [
+    { name: "Bright Orange",  hex: "#FF6B2B", desc: "Too vivid and warm — overwhelms your soft, cool-neutral colouring" },
+    { name: "Electric Yellow", hex: "#FFD700", desc: "Too saturated and warm — creates a sallow cast near your face" },
+    { name: "Jet Black",       hex: "#0A0A0A", desc: "Too stark — creates harsh contrast against your gentle features" },
+    { name: "Pure White",      hex: "#FFFFFF", desc: "Too crisp and bright — makes skin look grey or washed out" },
+    { name: "Hot Pink",        hex: "#FF3399", desc: "Too vivid — dusty rose is the muted cousin that works" },
+    { name: "Neon Green",      hex: "#39FF14", desc: "Too electric — sage and soft teal are your greens" },
+    { name: "Warm Camel",      hex: "#C8A96E", desc: "Too golden for your cool-neutral undertone — choose cool taupe instead" },
+    { name: "Kelly Green",     hex: "#00A550", desc: "Too saturated and bright — opt for muted jade or sage" },
+];
+
+const metalColours = [
+    { name: "Brushed Silver",    hex: "#B8C0C8", ring: "linear-gradient(135deg, #A8B0B8, #D0D8E0, #909BA5)", desc: "Your primary metal — matte or brushed finish suits Soft Summer perfectly" },
+    { name: "White Gold",        hex: "#D4D0C8", ring: "linear-gradient(135deg, #C8C4BC, #E8E4DC, #B0ACA4)", desc: "A warmer-toned silver — elegant and flattering" },
+    { name: "Rose Gold",         hex: "#D4A89A", ring: "linear-gradient(135deg, #C49888, #E4C0B2, #B4887A)", desc: "Your bridge metal — works beautifully given your Soft Autumn affinity" },
+    { name: "Avoid: Bright Gold", hex: "#D4A843", ring: "linear-gradient(135deg, #C49830, #E4C060, #B48820)", desc: "Too warm and shiny — clashes with your cool-neutral undertone" },
+];
+
+const outfitCombos = [
+    {
+        name: "Everyday Confidence",
+        desc: "A grounded, versatile combination for daily wear",
+        colours: [
+            { name: "Muted Navy",  hex: "#3D4F63" },
+            { name: "Soft White",  hex: "#EDE8E3" },
+            { name: "Cool Taupe",  hex: "#9B8E85" },
+            { name: "Slate Blue",  hex: "#7389A2" },
+        ],
+    },
+    {
+        name: "Saturday Edge",
+        desc: "Relaxed but intentional — borrowing from your Soft Autumn side",
+        colours: [
+            { name: "Charcoal",   hex: "#545861" },
+            { name: "Olive",      hex: "#808A5C" },
+            { name: "Stone",      hex: "#B5ADA4" },
+            { name: "Soft Rust",  hex: "#A87360" },
+        ],
+    },
+    {
+        name: "Evening Out",
+        desc: "Your richest, most dramatic tones — still muted, but with depth",
+        colours: [
+            { name: "Dusty Plum",    hex: "#7E5475" },
+            { name: "Muted Navy",    hex: "#3D4F63" },
+            { name: "Soft Burgundy", hex: "#8B4D5A" },
+            { name: "Pewter Grey",   hex: "#8A8D90" },
+        ],
+    },
+    {
+        name: "Summer Light",
+        desc: "Lighter, cooler tones for warm weather — breezy and fresh",
+        colours: [
+            { name: "Sage Green",  hex: "#8FA387" },
+            { name: "Soft White",  hex: "#EDE8E3" },
+            { name: "Lavender",    hex: "#A99BBD" },
+            { name: "Dusty Rose",  hex: "#C4929B" },
+        ],
+    },
+    {
+        name: "Professional Polish",
+        desc: "Boardroom-ready — authoritative without being severe",
+        colours: [
+            { name: "Charcoal",    hex: "#545861" },
+            { name: "Slate Blue",  hex: "#7389A2" },
+            { name: "Soft White",  hex: "#EDE8E3" },
+            { name: "Cocoa",       hex: "#8B7168" },
+        ],
+    },
+];
+
+// ── Helpers ──────────────────────────────────────────────
+function textColour(hex) {
+    const r = parseInt(hex.slice(1,3), 16);
+    const g = parseInt(hex.slice(3,5), 16);
+    const b = parseInt(hex.slice(5,7), 16);
+    const lum = (0.299*r + 0.587*g + 0.114*b) / 255;
+    return lum > 0.55 ? "#3D3D3D" : "#F5F0EB";
+}
+
+function colourCard(c, small = false) {
+    const tc = textColour(c.hex);
+    const border = c.hex === "#FFFFFF" ? "border: 1.5px solid #D0CCC7;" : "";
+    return `
+    <div class="colour-card${small ? " small" : ""}" style="background:${c.hex};${border}">
+        <div class="card-name" style="color:${tc}">${c.name}</div>
+        <div class="card-hex" style="color:${tc}">${c.hex}</div>
+        ${!small && c.desc ? `<div class="card-desc" style="color:${tc}">${c.desc}</div>` : ""}
+    </div>`;
+}
+
+// ── Section renderers ──────────────────────────────────
+function renderCore() {
+    return `
+    <p class="section-intro">These are your home colours — every one has been greyed-down and softened. Hover over any swatch to see why it works for you.</p>
+    <div class="core-grid">
+        ${coreColours.map(c => colourCard(c)).join("")}
+    </div>`;
+}
+
+function renderSister() {
+    return `
+    <p class="section-intro">
+        You live on the warm edge of Soft Summer — these Soft Autumn tones are borrowed colours that work because they share your
+        defining quality: <strong>mutedness</strong>. They're earthy, warm, but never vivid.
+    </p>
+    <div class="sister-note">
+        <div class="sister-dot"></div>
+        <div class="sister-note-text">These work best when paired with your core Soft Summer neutrals — not worn head-to-toe.</div>
+    </div>
+    <div class="sister-grid">
+        ${sisterColours.map(c => colourCard(c)).join("")}
+    </div>`;
+}
+
+function renderNeutrals() {
+    return `
+    <p class="section-intro">
+        Build your wardrobe foundation here. These neutrals all carry a subtle grey or cool undertone — they'll mix with
+        every colour in your palette without clashing.
+    </p>
+    <div class="neutral-grid">
+        ${neutralColours.map(c => colourCard(c)).join("")}
+    </div>
+    <div class="swap-box">
+        <div class="swap-box-title">The Black & White Swap</div>
+        <div class="swap-box-text">
+            Swap jet black for <strong>charcoal</strong> or <strong>muted navy</strong>.
+            Swap bright white for <strong>soft white</strong> or <strong>stone</strong>.
+            You'll notice the softer alternatives frame your face without overpowering it.
+        </div>
+    </div>`;
+}
+
+function renderCaution() {
+    return `
+    <p class="section-intro">
+        These colours overwhelm your natural softness — they're either too vivid, too warm, or too stark.
+        Each one has a flattering alternative in your core palette.
+    </p>
+    <div class="caution-list">
+        ${cautionColours.map(c => `
+        <div class="caution-card">
+            <div class="caution-swatch" style="background:${c.hex};${c.hex==='#FFFFFF'?'border:1.5px solid #D0CCC7;':''}"></div>
+            <div>
+                <div class="caution-name">${c.name}</div>
+                <div class="caution-desc">${c.desc}</div>
+            </div>
+        </div>`).join("")}
+    </div>`;
+}
+
+function renderMetals() {
+    return `
+    <p class="section-intro">
+        Metals follow the same rules as clothing — cool-toned, muted finishes flatter you most.
+        Brushed or satin textures suit Soft Summer better than high-polish mirror finishes.
+    </p>
+    <div class="metal-list">
+        ${metalColours.map(m => {
+            const isAvoid = m.name.startsWith("Avoid");
+            return `
+            <div class="metal-card${isAvoid ? " avoid" : ""}">
+                ${isAvoid ? '<div class="avoid-tag">Avoid</div>' : ""}
+                <div class="metal-orb" style="background:${m.ring}"></div>
+                <div>
+                    <div class="metal-name">${m.name}</div>
+                    <div class="metal-desc">${m.desc}</div>
+                </div>
+            </div>`;
+        }).join("")}
+    </div>`;
+}
+
+function renderCombos() {
+    return `
+    <p class="section-intro">
+        Five ready-made colour stories using your palette. Each works as a complete outfit combination —
+        mix the swatches across tops, bottoms, outerwear, and accessories.
+    </p>
+    <div class="combo-grid">
+        ${outfitCombos.map(combo => `
+        <div class="combo-card">
+            <div class="combo-name">${combo.name}</div>
+            <div class="combo-desc">${combo.desc}</div>
+            <div class="combo-swatches">
+                ${combo.colours.map(c => `
+                <div class="combo-swatch-wrap">
+                    <div class="combo-swatch" style="background:${c.hex};${c.hex==='#EDE8E3'?'border:1.5px solid #D0CCC7;':''}"></div>
+                    <div class="combo-swatch-name">${c.name}</div>
+                </div>`).join("")}
+            </div>
+        </div>`).join("")}
+    </div>`;
+}
+
+const renderers = { core: renderCore, sister: renderSister, neutrals: renderNeutrals, caution: renderCaution, metals: renderMetals, combos: renderCombos };
+
+// ── Init ────────────────────────────────────────────────
+let activeSection = "core";
+
+function buildNav() {
+    const nav = document.getElementById("navInner");
+    nav.innerHTML = Object.entries(SECTIONS).map(([key, label]) => `
+        <button class="nav-btn${key === activeSection ? " active" : ""}" data-key="${key}">${label}</button>
+    `).join("");
+
+    nav.querySelectorAll(".nav-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            activeSection = btn.dataset.key;
+            buildNav();
+            buildContent();
+        });
+    });
+}
+
+function buildContent() {
+    document.getElementById("content").innerHTML = renderers[activeSection]();
+}
+
+buildNav();
+buildContent();
+</script>
+</body>
+</html>
