@@ -32,6 +32,12 @@
       "short_name": "Bucket List",
       "description": "Track life experiences",
       "url": "/bucketlist.html"
+    },
+    {
+      "name": "Menu Planner",
+      "short_name": "Menu",
+      "description": "Plan meals and track cooking",
+      "url": "/menu.html"
     }
   ]
 }

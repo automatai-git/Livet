@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#b5632a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Menu Planner — Life & Training Hub</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Nunito+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --accent: #b5632a;
+            --accent-dark: #8f4d20;
+            --accent-light: #f2e4d4;
+            --bg: #f5f3f0;
+            --card: #ffffff;
+            --text: #2c3e50;
+            --text-muted: #7d8a96;
+            --border: #e8e0d8;
+            --success: #6b9e72;
+            --success-bg: #eaf4eb;
+            --radius: 16px;
+        }
+
+        body {
+            font-family: 'Nunito Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* ── Views ─────────────────────────────── */
+        .view { display: none; }
+        .view.active { display: block; }
+
+        /* ── Sticky header ──────────────────────── */
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(245, 243, 240, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding-top: env(safe-area-inset-top);
+        }
+
+        .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px 10px;
+        }
+
+        .header-row h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.7rem;
+            font-weight: 600;
+            color: var(--text);
+            letter-spacing: 0.3px;
+        }
+
+        .header-row h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: var(--text);
+            flex: 1;
+            text-align: center;
+        }
+
+        .back-home {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            padding: 6px 0;
+        }
+
+        .back-home:hover { color: var(--accent); }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.3rem;
+            padding: 6px;
+            border-radius: 8px;
+            transition: background 0.2s;
+            line-height: 1;
+        }
+
+        .btn-icon:hover { background: var(--accent-light); }
+
+        .back-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-family: 'Nunito Sans', sans-serif;
+            padding: 6px 0;
+            letter-spacing: 0.3px;
+        }
+
+        .back-btn:hover { color: var(--accent); }
+
+        /* Search */
+        .search-wrap {
+            padding: 0 16px 10px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 16px;
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            font-family: 'Nunito Sans', sans-serif;
+            font-size: 0.9rem;
+            background: var(--card);
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus { border-color: var(--accent); }
+
+        /* Category filters */
+        .filter-scroll {
+            display: flex;
+            gap: 8px;
+            padding: 0 16px 10px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .filter-scroll::-webkit-scrollbar { display: none; }
+
+        .filter-pill {
+            flex-shrink: 0;
+            padding: 5px 14px;
+            border-radius: 20px;
+            border: 1.5px solid var(--border);
+            background: var(--card);
+            font-family: 'Nunito Sans', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.3px;
+        }
+
+        .filter-pill:hover { border-color: var(--accent); color: var(--accent); }
+
+        .filter-pill.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+
+        /* Sort bar */
+        .sort-bar {
+            display: flex;
+            gap: 6px;
+            padding: 0 16px 12px;
+        }
+
+        .sort-btn {
+            padding: 4px 12px;
+            border-radius: 8px;
+            border: 1.5px solid var(--border);
+            background: transparent;
+            font-family: 'Nunito Sans', sans-serif;
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.2px;
+        }
+
+        .sort-btn.active {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-light);
+        }
+
+        /* ── Meal grid ──────────────────────────── */
+        .meal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+            padding: 20px 16px;
+        }
+
+        .meal-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+            border: 1.5px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .meal-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: var(--radius);
+            border: 1.5px solid var(--accent);
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+
+        .meal-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(181,99,42,0.15); }
+        .meal-card:hover::after { opacity: 1; }
+
+        .card-emoji { font-size: 2.2rem; margin-bottom: 12px; line-height: 1; }
+
+        .card-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .card-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text);
+            line-height: 1.2;
+        }
+
+        .cat-badge {
+            flex-shrink: 0;
+            padding: 2px 9px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        .card-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 14px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .card-time {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .card-last-made {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 3px 9px;
+            border-radius: 8px;
+        }
+
+        .last-never { background: #fdf3ee; color: #b5632a; }
+        .last-overdue { background: #fff8e6; color: #9a6b1c; }
+        .last-recent { background: var(--success-bg); color: var(--success); }
+        .last-today { background: var(--success-bg); color: var(--success); }
+
+        /* ── Detail view ────────────────────────── */
+        .detail-hero {
+            padding: 24px 20px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--card);
+        }
+
+        .hero-emoji { font-size: 3rem; line-height: 1; margin-bottom: 10px; }
+
+        .hero-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+            line-height: 1.1;
+        }
+
+        .hero-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .hero-time {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .hero-desc {
+            font-size: 0.9rem;
+            color: #4a5568;
+            line-height: 1.6;
+        }
+
+        /* Tabs */
+        .detail-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+            background: var(--bg);
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            border-bottom: 2.5px solid transparent;
+            padding: 12px 18px;
+            font-family: 'Nunito Sans', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.3px;
+            margin-bottom: -1px;
+        }
+
+        .tab-btn.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .tab-content { padding: 20px; display: none; }
+        .tab-content.active { display: block; }
+
+        /* Shopping list */
+        .serving-selector {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--accent-light);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 18px;
+        }
+
+        .serving-label {
+            flex: 1;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent-dark);
+        }
+
+        .serving-label span {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+        }
+
+        .serving-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1.5px solid var(--accent);
+            background: var(--card);
+            color: var(--accent);
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .serving-btn:hover { background: var(--accent); color: white; }
+        .serving-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        .ingredient-list { list-style: none; margin-bottom: 20px; }
+
+        .ingredient-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+        }
+
+        .ingredient-item:last-child { border-bottom: none; }
+
+        .ingredient-check {
+            width: 20px;
+            height: 20px;
+            border: 1.5px solid var(--border);
+            border-radius: 5px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 1px;
+            transition: all 0.15s;
+            background: var(--card);
+        }
+
+        .ingredient-item.checked .ingredient-check {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .ingredient-item.checked .ingredient-check::after {
+            content: '✓';
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .ingredient-item.checked .ingredient-name {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        .ingredient-name {
+            flex: 1;
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+
+        .ingredient-amount {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .scale-note {
+            background: #fffbe6;
+            border: 1px solid #f0e080;
+            border-radius: 10px;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            color: #7a6520;
+            margin-bottom: 14px;
+            font-weight: 600;
+        }
+
+        .export-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Nunito Sans', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.3px;
+        }
+
+        .export-btn:hover { background: var(--accent-dark); transform: translateY(-1px); }
+
+        .copy-feedback {
+            text-align: center;
+            font-size: 0.82rem;
+            color: var(--success);
+            font-weight: 600;
+            margin-top: 8px;
+            height: 18px;
+            transition: opacity 0.3s;
+        }
+
+        /* Macros */
+        .macros-serving-note {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .macros-serving-note span {
+            color: var(--accent);
+        }
+
+        .macro-serving-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .calories-display {
+            background: var(--accent-light);
+            border-radius: 14px;
+            padding: 16px 20px;
+            text-align: center;
+            margin-bottom: 18px;
+        }
+
+        .calories-number {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.8rem;
+            font-weight: 600;
+            color: var(--accent);
+            line-height: 1;
+        }
+
+        .calories-label {
+            font-size: 0.78rem;
+            color: var(--accent-dark);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-top: 3px;
+        }
+
+        .macro-bars { display: flex; flex-direction: column; gap: 14px; }
+
+        .macro-row { }
+
+        .macro-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .macro-name {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .macro-value {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .macro-bar-track {
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .macro-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.4s ease;
+        }
+
+        .macro-bar-protein { background: #5a8a6e; }
+        .macro-bar-carbs   { background: #b5822a; }
+        .macro-bar-fat     { background: #a05a8a; }
+        .macro-bar-fiber   { background: #5a7a9a; }
+
+        /* Made-today bar */
+        .made-today-bar {
+            position: sticky;
+            bottom: 0;
+            bottom: env(safe-area-inset-bottom, 0);
+            background: rgba(245, 243, 240, 0.95);
+            backdrop-filter: blur(12px);
+            padding: 12px 20px calc(12px + env(safe-area-inset-bottom, 0));
+            border-top: 1px solid var(--border);
+        }
+
+        .made-today-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: 2px solid var(--success);
+            background: transparent;
+            color: var(--success);
+            font-family: 'Nunito Sans', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.3px;
+        }
+
+        .made-today-btn:hover { background: var(--success-bg); }
+
+        .made-today-btn.already-done {
+            background: var(--success-bg);
+            border-color: var(--success);
+            color: var(--success);
+            cursor: default;
+        }
+
+        /* History tab */
+        .history-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .history-empty .big-emoji { font-size: 2.5rem; margin-bottom: 10px; }
+
+        .history-list { list-style: none; }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 11px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .history-item:last-child { border-bottom: none; }
+
+        .history-date {
+            font-size: 0.88rem;
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .history-rel {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 1px;
+        }
+
+        .history-delete {
+            background: none;
+            border: none;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.15s;
+        }
+
+        .history-delete:hover { color: #e05a5a; background: #fef2f2; }
+
+        /* ── Stats view ─────────────────────────── */
+        .stats-header-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            padding: 20px 16px 4px;
+        }
+
+        .stats-card {
+            background: var(--card);
+            border-radius: 14px;
+            padding: 14px 10px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .stats-number {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--accent);
+            line-height: 1;
+        }
+
+        .stats-label {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+        }
+
+        .stats-sort-bar {
+            display: flex;
+            gap: 6px;
+            padding: 16px 16px 8px;
+        }
+
+        .stats-meal-list { padding: 0 16px 80px; }
+
+        .stats-meal-item {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .stats-meal-item:hover { transform: translateX(3px); }
+
+        .stats-emoji { font-size: 1.6rem; flex-shrink: 0; }
+
+        .stats-meal-info { flex: 1; min-width: 0; }
+
+        .stats-meal-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .stats-meal-sub {
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .stats-badge {
+            flex-shrink: 0;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .badge-never { background: #fdf3ee; color: #b5632a; }
+        .badge-overdue { background: #fff8e6; color: #9a6b1c; }
+        .badge-ok { background: var(--success-bg); color: var(--success); }
+
+        /* ── Toast ──────────────────────────────── */
+        .toast {
+            position: fixed;
+            bottom: calc(80px + env(safe-area-inset-bottom, 0));
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #2c3e50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            opacity: 0;
+            transition: all 0.3s;
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 999;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ── Category colours ───────────────────── */
+        .cat-Italian        { background: #fdecea; color: #c0392b; }
+        .cat-Asian          { background: #fef5e4; color: #b5632a; }
+        .cat-Indian         { background: #fef9e4; color: #9a7014; }
+        .cat-Mexican        { background: #eaf5ea; color: #2e7d32; }
+        .cat-Mediterranean  { background: #e4f4f8; color: #1a7a8a; }
+        .cat-Healthy        { background: #eef5ea; color: #4a7c59; }
+        .cat-Classic        { background: #f0edf8; color: #5e3d8a; }
+        .cat-Middle-Eastern { background: #f5f0ea; color: #8a5a2a; }
+
+        /* ── Responsive ─────────────────────────── */
+        @media (max-width: 600px) {
+            .meal-grid { grid-template-columns: 1fr; padding: 14px 12px; }
+            .header-row { padding: 12px 14px 8px; }
+            .search-wrap { padding: 0 12px 8px; }
+            .filter-scroll, .sort-bar { padding-left: 12px; padding-right: 12px; }
+            .detail-hero { padding: 18px 16px 16px; }
+            .tab-content { padding: 16px; }
+            .stats-header-cards { padding: 14px 12px 4px; }
+            .stats-meal-list { padding: 0 12px 80px; }
+            .stats-sort-bar { padding: 12px 12px 6px; }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #1a1814;
+                --card: #252220;
+                --text: #e8e4de;
+                --text-muted: #8a8278;
+                --border: #38332e;
+                --accent-light: #2a1f18;
+            }
+            .search-input { background: var(--card); color: var(--text); }
+            .sticky-header { background: rgba(26, 24, 20, 0.92); }
+            .detail-hero { background: var(--card); }
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .meal-card { animation: fadeUp 0.3s ease both; }
+    </style>
+</head>
+<body>
+
+<!-- ── LIST VIEW ─────────────────────────────────── -->
+<div id="view-list" class="view active">
+    <div class="sticky-header">
+        <div class="header-row">
+            <a href="index.html" class="back-home">← Hub</a>
+            <h1>Menu Planner</h1>
+            <button class="btn-icon" title="Cooking history" onclick="showStats()">📊</button>
+        </div>
+        <div class="search-wrap">
+            <input class="search-input" id="search-input" type="search" placeholder="Search meals..." autocomplete="off" oninput="renderMeals()">
+        </div>
+        <div class="filter-scroll" id="category-filters"></div>
+        <div class="sort-bar">
+            <button class="sort-btn active" data-sort="suggest" onclick="setSort('suggest', this)">Suggest dinner</button>
+            <button class="sort-btn" data-sort="alpha"   onclick="setSort('alpha',   this)">A–Z</button>
+            <button class="sort-btn" data-sort="recent"  onclick="setSort('recent',  this)">Recently made</button>
+        </div>
+    </div>
+    <main id="meal-grid" class="meal-grid"></main>
+</div>
+
+<!-- ── DETAIL VIEW ───────────────────────────────── -->
+<div id="view-detail" class="view">
+    <div class="sticky-header">
+        <div class="header-row">
+            <button class="back-btn" onclick="showList()">← Back</button>
+            <h2 id="detail-header-title"></h2>
+            <div style="width:40px"></div>
+        </div>
+        <div class="detail-tabs">
+            <button class="tab-btn active" onclick="switchTab('shopping', this)">Shopping</button>
+            <button class="tab-btn"        onclick="switchTab('macros',   this)">Macros</button>
+            <button class="tab-btn"        onclick="switchTab('history',  this)">History</button>
+        </div>
+    </div>
+
+    <div id="detail-hero" class="detail-hero"></div>
+
+    <div id="tab-shopping" class="tab-content active"></div>
+    <div id="tab-macros"   class="tab-content"></div>
+    <div id="tab-history"  class="tab-content"></div>
+
+    <div class="made-today-bar">
+        <button class="made-today-btn" id="made-today-btn" onclick="markMadeToday()">✓ Mark as made today</button>
+    </div>
+</div>
+
+<!-- ── STATS VIEW ────────────────────────────────── -->
+<div id="view-stats" class="view">
+    <div class="sticky-header">
+        <div class="header-row">
+            <button class="back-btn" onclick="showList()">← Back</button>
+            <h2>Cooking History</h2>
+            <div style="width:40px"></div>
+        </div>
+    </div>
+    <div id="stats-header-cards" class="stats-header-cards"></div>
+    <div class="stats-sort-bar">
+        <button class="sort-btn active" data-ssort="suggest" onclick="setStatsSort('suggest', this)">Most overdue</button>
+        <button class="sort-btn" data-ssort="freq"    onclick="setStatsSort('freq',    this)">Most cooked</button>
+        <button class="sort-btn" data-ssort="alpha"   onclick="setStatsSort('alpha',   this)">A–Z</button>
+    </div>
+    <div id="stats-meal-list" class="stats-meal-list"></div>
+</div>
+
+<!-- ── TOAST ─────────────────────────────────────── -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ─────────────────────────────────────────
+let meals = [];
+let mealLog = [];          // [{ mealId, date: 'YYYY-MM-DD', ts: ms }]
+let currentMealId = null;
+let currentServings = 1;
+let activeCategory = 'All';
+let activeSort = 'suggest';
+let activeStatsSort = 'suggest';
+let checkedIngredients = new Set();
+
+const LOG_KEY = 'menu-meal-log-v1';
+
+// ── Bootstrap ─────────────────────────────────────
+async function init() {
+    mealLog = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
+    try {
+        const r = await fetch('menu.json');
+        const data = await r.json();
+        meals = data.meals || [];
+    } catch (e) {
+        document.getElementById('meal-grid').innerHTML =
+            '<p style="padding:40px;color:#c0392b;text-align:center">Could not load menu.json</p>';
+        return;
+    }
+    buildCategoryFilters();
+    renderMeals();
+}
+
+// ── Category filters ──────────────────────────────
+function buildCategoryFilters() {
+    const cats = ['All', ...new Set(meals.map(m => m.category))];
+    const wrap = document.getElementById('category-filters');
+    wrap.innerHTML = cats.map(c =>
+        `<button class="filter-pill${c === 'All' ? ' active' : ''}"
+            onclick="setCategory('${c}', this)">${c}</button>`
+    ).join('');
+}
+
+function setCategory(cat, el) {
+    activeCategory = cat;
+    document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    renderMeals();
+}
+
+// ── Sort ──────────────────────────────────────────
+function setSort(sort, el) {
+    activeSort = sort;
+    document.querySelectorAll('#view-list .sort-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    renderMeals();
+}
+
+// ── Last-made helpers ─────────────────────────────
+function getLastMade(mealId) {
+    const entries = mealLog.filter(e => e.mealId === mealId);
+    if (!entries.length) return null;
+    return entries.reduce((a, b) => a.date > b.date ? a : b).date;
+}
+
+function getMadeCount(mealId) {
+    return mealLog.filter(e => e.mealId === mealId).length;
+}
+
+function daysSince(dateStr) {
+    if (!dateStr) return Infinity;
+    const then = new Date(dateStr);
+    const now  = new Date();
+    return Math.floor((now - then) / 86400000);
+}
+
+function relativeDate(dateStr) {
+    if (!dateStr) return null;
+    const d = daysSince(dateStr);
+    if (d === 0) return 'Today';
+    if (d === 1) return 'Yesterday';
+    if (d < 7)   return `${d} days ago`;
+    if (d < 14)  return '1 week ago';
+    if (d < 30)  return `${Math.floor(d/7)} weeks ago`;
+    if (d < 60)  return '1 month ago';
+    return `${Math.floor(d/30)} months ago`;
+}
+
+function formatDate(dateStr) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(y, m-1, d).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
+}
+
+function today() {
+    return new Date().toISOString().slice(0, 10);
+}
+
+// ── Render meal grid ──────────────────────────────
+function renderMeals() {
+    const q = document.getElementById('search-input').value.toLowerCase().trim();
+    let list = meals.filter(m => {
+        if (activeCategory !== 'All' && m.category !== activeCategory) return false;
+        if (!q) return true;
+        return m.name.toLowerCase().includes(q) ||
+               m.description.toLowerCase().includes(q) ||
+               (m.tags || []).some(t => t.toLowerCase().includes(q));
+    });
+
+    list = [...list].sort((a, b) => {
+        if (activeSort === 'alpha')  return a.name.localeCompare(b.name);
+        if (activeSort === 'recent') {
+            const la = getLastMade(a.id), lb = getLastMade(b.id);
+            if (!la && !lb) return 0;
+            if (!la) return 1;
+            if (!lb) return -1;
+            return lb.localeCompare(la);
+        }
+        // suggest: never → most overdue → recent
+        const da = daysSince(getLastMade(a.id));
+        const db = daysSince(getLastMade(b.id));
+        return db - da;
+    });
+
+    const grid = document.getElementById('meal-grid');
+    if (!list.length) {
+        grid.innerHTML = '<p style="grid-column:1/-1;padding:60px 0;text-align:center;color:var(--text-muted)">No meals found</p>';
+        return;
+    }
+
+    grid.innerHTML = list.map((m, i) => {
+        const last = getLastMade(m.id);
+        const d    = daysSince(last);
+        let badge = '', badgeClass = '';
+        if (!last) {
+            badge = 'Never made'; badgeClass = 'last-never';
+        } else if (d === 0) {
+            badge = 'Made today ✓'; badgeClass = 'last-today';
+        } else if (d <= 7) {
+            badge = relativeDate(last); badgeClass = 'last-recent';
+        } else {
+            badge = relativeDate(last); badgeClass = 'last-overdue';
+        }
+
+        const catClass = 'cat-' + m.category.replace(/\s+/g, '-');
+        const totalMin = (m.prepTime || 0) + (m.cookTime || 0);
+
+        return `<div class="meal-card" style="animation-delay:${i * 0.03}s" onclick="openMeal('${m.id}')">
+            <div class="card-emoji">${m.emoji}</div>
+            <div class="card-top">
+                <div class="card-name">${m.name}</div>
+                <span class="cat-badge ${catClass}">${m.category}</span>
+            </div>
+            <p class="card-desc">${m.description}</p>
+            <div class="card-meta">
+                <span class="card-time">⏱ ${totalMin} min · ${m.servings} serving${m.servings !== 1 ? 's' : ''}</span>
+                <span class="card-last-made ${badgeClass}">${badge}</span>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ── Open meal detail ──────────────────────────────
+function openMeal(id) {
+    currentMealId = id;
+    checkedIngredients = new Set();
+    const m = meals.find(x => x.id === id);
+    if (!m) return;
+    currentServings = m.servings;
+
+    // header title
+    document.getElementById('detail-header-title').textContent = m.name;
+
+    // hero
+    const catClass = 'cat-' + m.category.replace(/\s+/g, '-');
+    document.getElementById('detail-hero').innerHTML = `
+        <div class="hero-emoji">${m.emoji}</div>
+        <div class="hero-title">${m.name}</div>
+        <div class="hero-meta">
+            <span class="cat-badge ${catClass}">${m.category}</span>
+            <span class="hero-time">Prep ${m.prepTime} min</span>
+            <span class="hero-time">Cook ${m.cookTime} min</span>
+        </div>
+        <p class="hero-desc">${m.description}</p>`;
+
+    // reset tabs
+    switchTab('shopping', document.querySelector('#view-detail .tab-btn'));
+    renderShoppingTab(m);
+    renderMacrosTab(m);
+    renderHistoryTab(m);
+    updateMadeTodayBtn();
+
+    showView('view-detail');
+    window.scrollTo(0, 0);
+}
+
+// ── Shopping tab ──────────────────────────────────
+function renderShoppingTab(m) {
+    const multiplier = currentServings / m.servings;
+    const showScale  = Math.abs(multiplier - 1) > 0.01;
+
+    const scaleNote = showScale
+        ? `<div class="scale-note">⚖️ Scaled to ${currentServings} servings — multiply all quantities ×${multiplier % 1 === 0 ? multiplier : multiplier.toFixed(1)}</div>`
+        : '';
+
+    const items = m.ingredients.map((ing, i) =>
+        `<li class="ingredient-item" onclick="toggleIngredient(${i})" id="ing-${i}">
+            <div class="ingredient-check"></div>
+            <span class="ingredient-name">${ing.item}</span>
+            <span class="ingredient-amount">${ing.amount}</span>
+        </li>`
+    ).join('');
+
+    document.getElementById('tab-shopping').innerHTML = `
+        <div class="serving-selector">
+            <div class="serving-label">Servings: <span id="serving-count">${currentServings}</span></div>
+            <button class="serving-btn" id="serving-dec" onclick="changeServings(-1, event)">−</button>
+            <button class="serving-btn" id="serving-inc" onclick="changeServings(+1, event)">+</button>
+        </div>
+        ${scaleNote}
+        <ul class="ingredient-list">${items}</ul>
+        <button class="export-btn" onclick="exportShoppingList()">📤 Export to Notes</button>
+        <div class="copy-feedback" id="copy-feedback"></div>`;
+
+    updateServingBtns(m);
+}
+
+function toggleIngredient(i) {
+    const el = document.getElementById(`ing-${i}`);
+    if (checkedIngredients.has(i)) {
+        checkedIngredients.delete(i);
+        el.classList.remove('checked');
+    } else {
+        checkedIngredients.add(i);
+        el.classList.add('checked');
+    }
+}
+
+function changeServings(delta, e) {
+    e.stopPropagation();
+    const m = meals.find(x => x.id === currentMealId);
+    if (!m) return;
+    currentServings = Math.max(1, Math.min(12, currentServings + delta));
+    renderShoppingTab(m);
+    renderMacrosTab(m);
+}
+
+function updateServingBtns(m) {
+    const dec = document.getElementById('serving-dec');
+    const inc = document.getElementById('serving-inc');
+    if (dec) dec.disabled = currentServings <= 1;
+    if (inc) inc.disabled = currentServings >= 12;
+}
+
+function exportShoppingList() {
+    const m = meals.find(x => x.id === currentMealId);
+    if (!m) return;
+    const multiplier = currentServings / m.servings;
+    const scaleNote  = Math.abs(multiplier - 1) > 0.01
+        ? `\nScale: ×${multiplier % 1 === 0 ? multiplier : multiplier.toFixed(1)} (recipe base: ${m.servings} servings)\n`
+        : '';
+    const lines = m.ingredients.map(ing => `□ ${ing.item} — ${ing.amount}`).join('\n');
+    const text  = `🛒 Shopping List: ${m.name}\n${'─'.repeat(34)}\n${lines}\n${'─'.repeat(34)}${scaleNote}\nServes: ${currentServings}  |  Prep: ${m.prepTime} min  |  Cook: ${m.cookTime} min`;
+
+    if (navigator.share) {
+        navigator.share({ title: `Shopping: ${m.name}`, text }).catch(() => copyToClipboard(text));
+    } else {
+        copyToClipboard(text);
+    }
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        const fb = document.getElementById('copy-feedback');
+        if (fb) {
+            fb.textContent = '✓ Copied to clipboard';
+            setTimeout(() => { fb.textContent = ''; }, 2500);
+        }
+    }).catch(() => showToast('Could not copy'));
+}
+
+// ── Macros tab ────────────────────────────────────
+function renderMacrosTab(m) {
+    const mult    = currentServings / m.servings;
+    const cal     = Math.round(m.macros.calories * mult);
+    const protein = Math.round(m.macros.protein  * mult);
+    const carbs   = Math.round(m.macros.carbs    * mult);
+    const fat     = Math.round(m.macros.fat      * mult);
+    const fiber   = Math.round((m.macros.fiber || 0) * mult);
+    const maxG    = Math.max(protein, carbs, fat, 1);
+
+    const bar = (label, val, cls) => `
+        <div class="macro-row">
+            <div class="macro-header">
+                <span class="macro-name">${label}</span>
+                <span class="macro-value">${val}g</span>
+            </div>
+            <div class="macro-bar-track">
+                <div class="macro-bar-fill ${cls}" style="width:${Math.round(val/maxG*100)}%"></div>
+            </div>
+        </div>`;
+
+    document.getElementById('tab-macros').innerHTML = `
+        <p class="macros-serving-note">Per <span>${currentServings} serving${currentServings !== 1 ? 's' : ''}</span> (${m.servings === currentServings ? 'base recipe' : `base: ${m.servings}`})</p>
+        <div class="calories-display">
+            <div class="calories-number">${cal}</div>
+            <div class="calories-label">kcal</div>
+        </div>
+        <div class="macro-bars">
+            ${bar('Protein', protein, 'macro-bar-protein')}
+            ${bar('Carbs',   carbs,   'macro-bar-carbs')}
+            ${bar('Fat',     fat,     'macro-bar-fat')}
+            ${bar('Fibre',   fiber,   'macro-bar-fiber')}
+        </div>`;
+}
+
+// ── History tab ───────────────────────────────────
+function renderHistoryTab(m) {
+    const entries = mealLog
+        .filter(e => e.mealId === m.id)
+        .sort((a, b) => b.date.localeCompare(a.date));
+
+    if (!entries.length) {
+        document.getElementById('tab-history').innerHTML = `
+            <div class="history-empty">
+                <div class="big-emoji">🍽️</div>
+                <p>No cooking history yet.</p>
+                <p style="margin-top:6px;font-size:0.8rem">Mark this meal as made to start tracking!</p>
+            </div>`;
+        return;
+    }
+
+    const items = entries.map((e, i) =>
+        `<li class="history-item">
+            <div>
+                <div class="history-date">${formatDate(e.date)}</div>
+                <div class="history-rel">${relativeDate(e.date)}</div>
+            </div>
+            <button class="history-delete" title="Remove entry" onclick="deleteLogEntry(${i}, '${m.id}')">✕</button>
+        </li>`
+    ).join('');
+
+    document.getElementById('tab-history').innerHTML =
+        `<p style="font-size:0.8rem;color:var(--text-muted);font-weight:600;margin-bottom:12px">Made ${entries.length} time${entries.length !== 1 ? 's' : ''}</p>
+        <ul class="history-list">${items}</ul>`;
+}
+
+function deleteLogEntry(idx, mealId) {
+    const entries = mealLog
+        .filter(e => e.mealId === mealId)
+        .sort((a, b) => b.date.localeCompare(a.date));
+    const target = entries[idx];
+    const globalIdx = mealLog.indexOf(target);
+    if (globalIdx !== -1) {
+        mealLog.splice(globalIdx, 1);
+        saveMealLog();
+        const m = meals.find(x => x.id === mealId);
+        if (m) renderHistoryTab(m);
+        updateMadeTodayBtn();
+    }
+}
+
+// ── Made today ────────────────────────────────────
+function markMadeToday() {
+    const todayStr = today();
+    const alreadyLogged = mealLog.some(e => e.mealId === currentMealId && e.date === todayStr);
+    if (alreadyLogged) return;
+    mealLog.push({ mealId: currentMealId, date: todayStr, ts: Date.now() });
+    saveMealLog();
+    updateMadeTodayBtn();
+    const m = meals.find(x => x.id === currentMealId);
+    if (m) renderHistoryTab(m);
+    showToast('Logged! 🍽️');
+}
+
+function updateMadeTodayBtn() {
+    const btn = document.getElementById('made-today-btn');
+    if (!btn) return;
+    const madeToday = mealLog.some(e => e.mealId === currentMealId && e.date === today());
+    if (madeToday) {
+        btn.textContent = '✓ Made today — logged!';
+        btn.classList.add('already-done');
+    } else {
+        btn.textContent = '✓ Mark as made today';
+        btn.classList.remove('already-done');
+    }
+}
+
+function saveMealLog() {
+    localStorage.setItem(LOG_KEY, JSON.stringify(mealLog));
+}
+
+// ── Stats view ────────────────────────────────────
+function showStats() {
+    renderStats();
+    showView('view-stats');
+    window.scrollTo(0, 0);
+}
+
+function setStatsSort(s, el) {
+    activeStatsSort = s;
+    document.querySelectorAll('.stats-sort-bar .sort-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    renderStatsList();
+}
+
+function renderStats() {
+    const todayStr = today();
+    const weekAgo  = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+    const monthAgo = new Date(); monthAgo.setDate(monthAgo.getDate() - 30);
+
+    const total   = mealLog.length;
+    const thisWeek  = mealLog.filter(e => new Date(e.date) >= weekAgo).length;
+    const thisMonth = mealLog.filter(e => new Date(e.date) >= monthAgo).length;
+
+    document.getElementById('stats-header-cards').innerHTML = `
+        <div class="stats-card">
+            <div class="stats-number">${total}</div>
+            <div class="stats-label">All time</div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-number">${thisMonth}</div>
+            <div class="stats-label">This month</div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-number">${thisWeek}</div>
+            <div class="stats-label">This week</div>
+        </div>`;
+
+    renderStatsList();
+}
+
+function renderStatsList() {
+    let list = [...meals];
+
+    list.sort((a, b) => {
+        if (activeStatsSort === 'alpha') return a.name.localeCompare(b.name);
+        if (activeStatsSort === 'freq') {
+            return getMadeCount(b.id) - getMadeCount(a.id);
+        }
+        // suggest: never first, then most overdue
+        const da = daysSince(getLastMade(a.id));
+        const db = daysSince(getLastMade(b.id));
+        return db - da;
+    });
+
+    document.getElementById('stats-meal-list').innerHTML = list.map(m => {
+        const last  = getLastMade(m.id);
+        const count = getMadeCount(m.id);
+        const d     = daysSince(last);
+        let badgeText, badgeClass;
+
+        if (!last) {
+            badgeText = 'Never made'; badgeClass = 'badge-never';
+        } else if (d === 0) {
+            badgeText = 'Today ✓'; badgeClass = 'badge-ok';
+        } else if (d <= 14) {
+            badgeText = relativeDate(last); badgeClass = 'badge-ok';
+        } else {
+            badgeText = relativeDate(last); badgeClass = 'badge-overdue';
+        }
+
+        const sub = count
+            ? `Made ${count} time${count !== 1 ? 's' : ''}${last ? ' · Last: ' + relativeDate(last) : ''}`
+            : 'Never cooked';
+
+        return `<div class="stats-meal-item" onclick="openMeal('${m.id}')">
+            <div class="stats-emoji">${m.emoji}</div>
+            <div class="stats-meal-info">
+                <div class="stats-meal-name">${m.name}</div>
+                <div class="stats-meal-sub">${sub}</div>
+            </div>
+            <span class="stats-badge ${badgeClass}">${badgeText}</span>
+        </div>`;
+    }).join('');
+}
+
+// ── Tab switching ─────────────────────────────────
+function switchTab(name, el) {
+    document.querySelectorAll('#view-detail .tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('#view-detail .tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    if (el) el.classList.add('active');
+}
+
+// ── View switching ────────────────────────────────
+function showView(id) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+function showList() {
+    showView('view-list');
+    renderMeals();
+}
+
+// ── Toast ─────────────────────────────────────────
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ── Start ─────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
