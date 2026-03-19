@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(python3:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(grep -n localStorage /c/Users/enga/OneDrive/Documents/GitHub/Timeline/*.js /c/Users/enga/OneDrive/Documents/GitHub/Timeline/*.html)",
+      "Bash(grep -n \"fetch\\\\|axios\\\\|XMLHttpRequest\\\\|api\\\\|endpoint\" /c/Users/enga/OneDrive/Documents/GitHub/Timeline/*.html /c/Users/enga/OneDrive/Documents/GitHub/Timeline/*.js)",
+      "Bash(grep -n \"localStorage\\\\|sessionStorage\\\\|IndexedDB\" /c/Users/enga/OneDrive/Documents/GitHub/Timeline/*.html)"
     ]
   }
 }
