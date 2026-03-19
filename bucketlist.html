@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#5a7a4a">
+    <title>Bucket List — Life & Training Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Nunito+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Nunito Sans', sans-serif;
+            background: linear-gradient(135deg, #f5f3f0 0%, #e8e4df 100%);
+            min-height: 100vh;
+            color: #2c3e50;
+        }
+
+        /* ── TOP NAV ── */
+        .top-nav {
+            background: white;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .back-link {
+            text-decoration: none;
+            color: #7d8a96;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: #2c3e50; }
+        .nav-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .nav-search {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .search-input {
+            border: 1.5px solid #e0dbd5;
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-family: 'Nunito Sans', sans-serif;
+            font-size: 0.88rem;
+            color: #2c3e50;
+            background: #f9f7f5;
+            width: 220px;
+            outline: none;
+            transition: border-color 0.2s, width 0.3s;
+        }
+        .search-input:focus { border-color: #8b9d83; width: 280px; }
+        .search-input::placeholder { color: #b0b8c0; }
+
+        /* ── HERO HEADER ── */
+        .hero {
+            background: linear-gradient(135deg, #3d5a32 0%, #5a7a4a 50%, #7a9a5a 100%);
+            color: white;
+            padding: 40px 28px 48px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -40px; right: -40px;
+            width: 200px; height: 200px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 50%;
+        }
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -60px; left: -30px;
+            width: 280px; height: 280px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 50%;
+        }
+        .hero h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 3rem;
+            font-weight: 500;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        .hero-sub {
+            font-size: 1rem;
+            opacity: 0.8;
+            font-weight: 300;
+            margin-bottom: 28px;
+        }
+        .overall-progress {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        .progress-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 8px;
+        }
+        .progress-count {
+            font-size: 2rem;
+            font-weight: 600;
+            font-family: 'Cormorant Garamond', serif;
+        }
+        .progress-pct {
+            font-size: 1rem;
+            opacity: 0.75;
+        }
+        .progress-bar-bg {
+            background: rgba(255,255,255,0.2);
+            border-radius: 6px;
+            height: 8px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            background: rgba(255,255,255,0.85);
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.6s ease;
+        }
+
+        /* ── CATEGORY TABS ── */
+        .tabs-wrap {
+            background: white;
+            border-bottom: 1px solid #e8e4df;
+            position: sticky;
+            top: 57px;
+            z-index: 90;
+        }
+        .tabs {
+            display: flex;
+            overflow-x: auto;
+            scrollbar-width: none;
+            padding: 0 16px;
+            gap: 4px;
+        }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tab {
+            flex-shrink: 0;
+            padding: 14px 16px;
+            border: none;
+            background: none;
+            font-family: 'Nunito Sans', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #7d8a96;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: color 0.2s, border-color 0.2s;
+            white-space: nowrap;
+        }
+        .tab:hover { color: #2c3e50; }
+        .tab.active {
+            color: #3d5a32;
+            border-bottom-color: #5a7a4a;
+        }
+        .tab .tab-count {
+            display: inline-block;
+            margin-left: 5px;
+            background: #f0f4ed;
+            color: #6b7c64;
+            border-radius: 8px;
+            padding: 1px 7px;
+            font-size: 0.72rem;
+        }
+        .tab.active .tab-count {
+            background: #d8e8d0;
+            color: #3d5a32;
+        }
+
+        /* ── FILTER BAR ── */
+        .filter-bar {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .filter-label { font-size: 0.82rem; color: #7d8a96; }
+        .diff-filter {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .diff-btn {
+            padding: 4px 12px;
+            border-radius: 10px;
+            border: 1.5px solid #e0dbd5;
+            background: white;
+            font-family: 'Nunito Sans', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #6c757d;
+        }
+        .diff-btn.active { color: white; border-color: transparent; }
+        .diff-btn[data-diff="All"].active { background: #5a7a4a; }
+        .diff-btn[data-diff="Easy"].active { background: #5a8f5a; }
+        .diff-btn[data-diff="Medium"].active { background: #4a7aa0; }
+        .diff-btn[data-diff="Hard"].active { background: #b06a30; }
+        .diff-btn[data-diff="Very Hard"].active { background: #9a3a3a; }
+        .diff-btn[data-diff="Extreme"].active { background: #6a3a9a; }
+        .diff-btn[data-diff="Expert"].active { background: #2c3e50; }
+
+        .toggle-done {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.82rem;
+            color: #6c757d;
+            cursor: pointer;
+            user-select: none;
+        }
+        .toggle-switch {
+            width: 36px; height: 20px;
+            background: #d0cbc5;
+            border-radius: 10px;
+            position: relative;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px; left: 3px;
+            width: 14px; height: 14px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .toggle-switch.on { background: #5a7a4a; }
+        .toggle-switch.on::after { transform: translateX(16px); }
+
+        /* ── MAIN CONTENT ── */
+        .content {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 20px 16px 60px;
+        }
+
+        /* Category Overview (shown in "All" tab) */
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+        }
+        .overview-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+            cursor: pointer;
+            transition: transform 0.25s, box-shadow 0.25s;
+            border-left: 4px solid var(--cat-color, #8b9d83);
+        }
+        .overview-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+        .ov-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .ov-icon { font-size: 1.5rem; }
+        .ov-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.05rem;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+        .ov-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .ov-count { font-size: 0.82rem; color: #7d8a96; }
+        .ov-pct { font-size: 0.82rem; font-weight: 600; color: var(--cat-color, #5a7a4a); }
+        .ov-bar {
+            height: 5px;
+            background: #f0ece8;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .ov-bar-fill {
+            height: 100%;
+            background: var(--cat-color, #8b9d83);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        /* Items list */
+        .items-header {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .items-header h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+        .items-header .cat-icon { font-size: 1.5rem; }
+        .items-header .cat-progress {
+            font-size: 0.85rem;
+            color: #7d8a96;
+            margin-left: auto;
+        }
+
+        .items-list { display: flex; flex-direction: column; gap: 8px; }
+
+        .item {
+            background: white;
+            border-radius: 12px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: box-shadow 0.2s, opacity 0.2s;
+            cursor: pointer;
+        }
+        .item:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+        .item.done { opacity: 0.55; }
+        .item.done .item-name { text-decoration: line-through; }
+
+        .item-check {
+            width: 22px; height: 22px;
+            border-radius: 6px;
+            border: 2px solid #d0cbc5;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            background: white;
+        }
+        .item.done .item-check {
+            background: #5a7a4a;
+            border-color: #5a7a4a;
+        }
+        .item.done .item-check::after {
+            content: '✓';
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .item-info { flex: 1; min-width: 0; }
+        .item-name {
+            font-size: 0.93rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 3px;
+            line-height: 1.3;
+        }
+        .item-notes {
+            font-size: 0.78rem;
+            color: #9aa5af;
+            font-weight: 300;
+        }
+
+        .item-badges { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+        .badge {
+            padding: 3px 10px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+        .badge-easy    { background: #e8f4e8; color: #3a7a3a; }
+        .badge-medium  { background: #e4eef7; color: #2a5f8a; }
+        .badge-hard    { background: #fdf0e4; color: #a05020; }
+        .badge-vhard   { background: #fce8e8; color: #8a2a2a; }
+        .badge-extreme { background: #f0e8f8; color: #602a90; }
+        .badge-expert  { background: #e8eaed; color: #2c3e50; }
+
+        .no-items {
+            text-align: center;
+            padding: 48px 20px;
+            color: #9aa5af;
+            font-size: 0.95rem;
+        }
+        .no-items .no-icon { font-size: 2.5rem; margin-bottom: 12px; }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 600px) {
+            .hero h1 { font-size: 2.2rem; }
+            .search-input { width: 160px; }
+            .search-input:focus { width: 200px; }
+            .nav-title { font-size: 1.1rem; }
+            .overview-grid { grid-template-columns: 1fr 1fr; }
+            .item-notes { display: none; }
+            .toggle-done span { display: none; }
+        }
+        @media (max-width: 380px) {
+            .overview-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="top-nav">
+    <a href="index.html" class="back-link">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8L10 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Home
+    </a>
+    <span class="nav-title">Bucket List</span>
+    <div class="nav-search">
+        <input class="search-input" id="searchInput" type="text" placeholder="Search experiences…">
+    </div>
+</nav>
+
+<div class="hero">
+    <h1>Bucket List</h1>
+    <p class="hero-sub">425 experiences across 12 categories</p>
+    <div class="overall-progress">
+        <div class="progress-meta">
+            <span class="progress-count"><span id="doneCount">0</span> / 425</span>
+            <span class="progress-pct" id="donePct">0%</span>
+        </div>
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="overallBar" style="width: 0%"></div>
+        </div>
+    </div>
+</div>
+
+<div class="tabs-wrap">
+    <div class="tabs" id="tabs">
+        <button class="tab active" data-cat="all">
+            All
+            <span class="tab-count" id="tab-count-all">425</span>
+        </button>
+    </div>
+</div>
+
+<div style="background: white; border-bottom: 1px solid #e8e4df;">
+    <div class="filter-bar" id="filterBar">
+        <span class="filter-label">Difficulty:</span>
+        <div class="diff-filter">
+            <button class="diff-btn active" data-diff="All">All</button>
+            <button class="diff-btn" data-diff="Easy">Easy</button>
+            <button class="diff-btn" data-diff="Medium">Medium</button>
+            <button class="diff-btn" data-diff="Hard">Hard</button>
+            <button class="diff-btn" data-diff="Very Hard">Very Hard</button>
+            <button class="diff-btn" data-diff="Extreme">Extreme</button>
+            <button class="diff-btn" data-diff="Expert">Expert</button>
+        </div>
+        <label class="toggle-done">
+            <div class="toggle-switch" id="hideSwitch"></div>
+            <span>Hide done</span>
+        </label>
+    </div>
+</div>
+
+<div class="content" id="mainContent"></div>
+
+<script>
+// ══════════════════════════════════════════════════
+//  DATA  [name, difficulty, notes, doneInDoc]
+// ══════════════════════════════════════════════════
+const CATEGORIES = [
+  {
+    id: 'adrenaline', name: 'Adrenaline & Extreme Sports', icon: '🪂',
+    color: '#C4743A',
+    items: [
+      ['Skydive from 15,000+ feet','Medium','Completed!',true],
+      ['Skydive from 30,000+ feet (HALO)','Very Hard','High altitude, oxygen required',false],
+      ['Paragliding tandem flight','Easy','Intro flight with instructor',false],
+      ['Paragliding P2 license','Medium','Solo flying qualification',false],
+      ['Paragliding P3 intermediate','Hard','Cross-country flying',false],
+      ['Speed flying course','Very Hard','Fast ground-hugging canopy',false],
+      ['BASE jumping course','Very Hard','200+ skydives prerequisite',false],
+      ['Wingsuit flying','Extreme','500+ skydives prerequisite',false],
+      ['Bungee jump (standard)','Medium','Bridge or platform',false],
+      ['Bungee jump (iconic location)','Medium','Verzasca Dam, Bloukrans, Nevis',false],
+      ['SkyJump from tower','Medium','Auckland Sky Tower or Macau',false],
+      ['Via Ferrata (easy route)','Medium','Protected climbing path intro',false],
+      ['Via Ferrata (difficult route)','Hard','Dolomites, Italy — exposed sections',false],
+      ['White water rafting (Class III-IV)','Medium','Zambezi, Colorado, Futaleufú',false],
+      ['White water rafting (Class V)','Hard','Expert-level rapids',false],
+      ['Canyoning adventure','Medium','Rappelling waterfalls, swimming',false],
+      ['Hydrospeed (river bodyboarding)','Medium','Alps or New Zealand',false],
+      ['Zip-line (extreme length/height)','Easy','Jebel Jais UAE or Costa Rica',false],
+      ['Jet boat canyon ride','Easy','Shotover River, New Zealand',false],
+      ['Bobsled/luge experience','Medium','Olympic tracks in winter',false],
+      ['Storm chasing in Tornado Alley','Hard','Oklahoma/Kansas May-June',false],
+      ['Bull running (Pamplona)','Hard','Spain — July, high risk',false],
+      ['Zero gravity flight','Hard','Parabolic aircraft experience',false],
+      ['Shark cage diving (great white)','Easy','South Africa — Gansbaai',false],
+      ['Sandboarding dunes','Easy','Namibia, Peru, or Dubai',false],
+      ['Glacier hiking/ice trekking','Medium','Patagonia, Iceland, or NZ',false],
+      ['Cliff diving (10m+)','Hard','Acapulco, Croatia, or Greece',false],
+      ['Coasteering adventure','Medium','Wales, Portugal, or Croatia',false],
+      ['Skydive into Blue Hole, Belize','Very Hard','Extreme location dive',false],
+    ]
+  },
+  {
+    id: 'treks', name: 'Epic Treks & Hiking', icon: '🥾',
+    color: '#5A7A4A',
+    items: [
+      ['Cinque Terre coastal trail, Italy','Easy','12km linking 5 villages',false],
+      ['Diamond Beach walk, Iceland','Easy','Glacier lagoon ice on black sand',false],
+      ['Preikestolen (Pulpit Rock), Norway','Medium','4-hour round trip, iconic view',false],
+      ['Fitz Roy day trek, Argentina','Medium','Patagonia from El Chaltén',false],
+      ["Tiger's Nest Monastery, Bhutan",'Medium','Iconic cliffside monastery',false],
+      ['Zion Narrows, USA','Medium','River walk through slot canyon',false],
+      ["Angel's Landing, Zion",'Hard','Chains section, permit required',false],
+      ['Trolltunga hike, Norway','Hard','28km round trip, iconic rock',false],
+      ['Kjeragbolten boulder, Norway','Hard','Boulder wedged in cliff',false],
+      ['Half Dome, Yosemite','Hard','Cables required, permit needed',false],
+      ['Laugavegur Trail, Iceland (4 days)','Medium','54km through volcanic landscapes',false],
+      ['Milford Track, New Zealand (4 days)','Medium','"Finest walk in the world"',false],
+      ['Overland Track, Tasmania (6 days)','Medium','65km through wilderness',false],
+      ['Camino de Santiago (30-35 days)','Medium','800km pilgrimage across Spain',false],
+      ['Kumano Kodo, Japan (4-6 days)','Medium','Ancient pilgrimage trails',false],
+      ['Dana to Petra, Jordan (6-8 days)','Hard','85km through desert canyons',false],
+      ["Hadrian's Wall Path, UK (7 days)",'Medium','135km coast to coast',false],
+      ['Great Wall of China multi-day trek','Medium','Jinshanling to Simatai sections',false],
+      ['Inca Trail to Machu Picchu (4 days)','Hard','Peru — book 6 months ahead',false],
+      ['Everest Base Camp trek (12-14 days)','Hard','Nepal — 5,364m altitude',false],
+      ['Tour du Mont Blanc (10-12 days)','Hard','France/Italy/Switzerland 170km',false],
+      ['Torres del Paine W Trek (5 days)','Hard','Patagonia, Chile',false],
+      ['Annapurna Circuit, Nepal (12-21 days)','Hard','160-230km, Thorong La 5,416m',false],
+      ["Kungsleden (King's Trail), Sweden",'Hard','440km through Swedish Lapland',false],
+      ['Kilimanjaro summit (5-9 days)','Very Hard','Tanzania — highest walkable mountain',false],
+      ['GR20 Corsica (15 days)','Very Hard',"Europe's toughest trail",false],
+      ['John Muir Trail, USA (3 weeks)','Very Hard','340km through Sierra Nevada',false],
+      ['Mount Vesuvius, Italy','Easy','Short hike, incredible views',false],
+      ['Mount Etna, Sicily','Medium',"Europe's most active volcano",false],
+      ['Tongariro Alpine Crossing, NZ','Medium','19.4km volcanic day hike',false],
+      ['Volcán Acatenango, Guatemala','Hard','Overnight, watch Fuego erupt',false],
+      ['Mount Rinjani, Indonesia','Hard','3-day trek, crater lake',false],
+      ['Erta Ale, Ethiopia','Very Hard','Active lava lake in Danakil',false],
+    ]
+  },
+  {
+    id: 'underwater', name: 'Underwater & Marine', icon: '🤿',
+    color: '#3A74A0',
+    items: [
+      ['Stand-up paddleboarding journey','Easy','Multi-day SUP — completed!',true],
+      ['Swim with whale sharks','Easy','Mexico, Philippines, Maldives',false],
+      ['Swim with manta rays','Easy','Maldives or Hawaii night',false],
+      ['Great white shark cage dive','Easy','South Africa — Gansbaai',false],
+      ['Whale watching (humpbacks)','Easy','Norway, Iceland, Hawaii, Tonga',false],
+      ['Orca watching in the wild','Easy','Norway (Tromsø) or Canada',false],
+      ['Swim with wild dolphins','Medium','Bahamas or Egypt',false],
+      ['Snorkel Silfra fissure, Iceland','Easy','Between tectonic plates',false],
+      ['Swim in bioluminescent bay','Easy','Puerto Rico, Maldives, Costa Rica',false],
+      ['Discover Scuba (intro dive)','Easy','Try diving without cert',false],
+      ['PADI Open Water certification','Medium','Foundation for all diving',false],
+      ['Advanced Open Water certification','Medium','Deeper dives, navigation, night',false],
+      ['Rescue Diver certification','Hard','Emergency response skills',false],
+      ['Divemaster certification','Very Hard','Professional level',false],
+      ['Dive the Great Barrier Reef','Medium',"Australia — world's largest reef",false],
+      ['Dive cenotes in Mexico','Medium','Yucatan cave diving/snorkel',false],
+      ['Dive with sharks (no cage)','Medium','Bahamas or South Africa',false],
+      ['Dive a shipwreck','Medium','SS Thistlegorm or Truk Lagoon',false],
+      ['Night dive experience','Medium','Maldives for bioluminescence',false],
+      ['Manta ray night dive, Hawaii','Medium','Kona coast iconic experience',false],
+      ['Raja Ampat diving, Indonesia','Hard',"World's most biodiverse marine",false],
+      ['Freediving Level 1 course','Hard','Breath-hold diving basics',false],
+      ['Freediving Level 2+ (20m+)','Very Hard','Dahab, Egypt or Philippines',false],
+      ['Ice diving certification','Expert','Arctic/Antarctic — extreme',false],
+      ['Technical diving certification','Expert','Deep/decompression diving',false],
+      ['Learn to surf (stand up)','Medium','Bali, Portugal, or Hawaii',false],
+      ['Surf a proper wave (green wave)','Hard','Intermediate surfing',false],
+      ['Kitesurfing intro lesson','Medium','Learn kite control',false],
+      ['Kitesurfing certification','Hard','Tarifa, Spain or Egypt',false],
+      ['Wakeboarding/wakesurfing','Medium','Boat-towed water sports',false],
+      ['Sea kayaking with orcas','Medium','Norway (Tromsø) or Canada',false],
+      ['Multi-day sea kayaking expedition','Hard','Norway fjords or Alaska',false],
+      ['Sail across an ocean','Very Hard','Atlantic crossing most common',false],
+    ]
+  },
+  {
+    id: 'wildlife', name: 'Natural Phenomena & Wildlife', icon: '🌌',
+    color: '#7A9A3A',
+    items: [
+      ['Northern Lights (visible)','Easy','Tromsø — completed!',true],
+      ['Midnight sun experience','Easy','Norway — completed!',true],
+      ['Polar night experience','Easy','Tromsø winter — completed!',true],
+      ['Northern Lights (strong storm, Kp5+)','Medium','Dancing, colorful display',false],
+      ['Northern Lights from airplane','Medium','Above the clouds view',false],
+      ['Southern Lights (Aurora Australis)','Hard','Tasmania, NZ, or Antarctica',false],
+      ['Milky Way photography session','Medium','Dark sky location',false],
+      ['Meteor shower viewing (Perseids/Geminids)','Easy','August or December peak',false],
+      ['Partial solar eclipse','Easy','More common occurrence',false],
+      ['Total solar eclipse','Hard','Spain/Morocco 2026, Egypt 2027',false],
+      ['Blood moon / total lunar eclipse','Easy','March 2025 visible from Americas',false],
+      ['See active lava flow','Hard','Hawaii, Iceland, or Guatemala',false],
+      ['Witness volcanic eruption from safe distance','Hard','Iceland, Hawaii, Indonesia',false],
+      ['Enter a lava tube','Easy','Iceland or Hawaii',false],
+      ['Stand inside dormant volcanic crater','Medium','Thrihnukagigur, Iceland',false],
+      ['See a geyser erupt (Old Faithful/Strokkur)','Easy','Yellowstone or Iceland',false],
+      ['Sea turtle nesting (Ras al Jinz)','Medium','Oman — completed!',true],
+      ['Safari in East Africa','Medium','Serengeti, Masai Mara, Kruger',false],
+      ['Witness the Great Migration','Medium','Serengeti/Masai Mara Jul-Oct',false],
+      ['Witness river crossing','Hard','Mara River — dramatic wildebeest',false],
+      ['Gorilla trekking','Hard','Rwanda or Uganda — permits expensive',false],
+      ['Chimpanzee trekking','Hard','Uganda or Tanzania',false],
+      ['See wild orangutans','Medium','Borneo or Sumatra',false],
+      ['Polar bear safari','Hard','Svalbard or Churchill, Canada',false],
+      ['Emperor penguins Antarctica','Very Hard','Expedition cruise required',false],
+      ['King penguin colony visit','Hard','South Georgia Island',false],
+      ['Monarch butterfly migration','Medium','Central Mexico Nov-March',false],
+      ['Firefly synchronization','Medium','Great Smoky Mountains June',false],
+      ['Glowworm caves','Easy','Waitomo, New Zealand',false],
+      ['Puffin colony visit','Easy','Iceland, Norway, Scotland',false],
+      ['Bear watching (wild)','Medium','Alaska, Canada, Scandinavia',false],
+      ['See wild wolves','Hard','Yellowstone or Scandinavia',false],
+      ['See Catatumbo Lightning','Hard','Venezuela — constant lightning',false],
+      ['Experience desert bloom','Hard','Atacama or Death Valley — rare',false],
+      ['Rainbow in waterfall spray','Easy','Victoria Falls, Niagara, etc.',false],
+    ]
+  },
+  {
+    id: 'destinations', name: 'Iconic Destinations', icon: '🗺️',
+    color: '#9A7A3A',
+    items: [
+      ['Oman exploration','Medium','Desert, wadis, turtles — done!',true],
+      ['Japan cultural immersion','Medium','Tokyo completed',true],
+      ['Santorini sunset','Easy','Greece — Oia village',true],
+      ['Norwegian fjords cruise','Easy','Geirangerfjord, Nærøyfjord',true],
+      ['Machu Picchu, Peru','Medium','Lost city of the Incas',false],
+      ['Petra, Jordan','Medium','Rose-red city, Treasury sunrise',false],
+      ['Angkor Wat, Cambodia','Easy','Sunrise at temple complex',false],
+      ['Great Pyramids of Giza','Easy','Egypt — camel ride optional',false],
+      ['Taj Mahal at sunrise','Easy','India — beat the crowds',false],
+      ['Colosseum, Rome','Easy','Ancient gladiator arena',false],
+      ['Chichen Itza, Mexico','Easy','Mayan pyramid',false],
+      ['Bagan temples, Myanmar','Medium','Thousands of ancient temples',false],
+      ['Borobudur, Indonesia','Easy','Largest Buddhist temple',false],
+      ['Galápagos Islands','Medium','Ecuador — unique wildlife',false],
+      ['Antarctica expedition','Hard','Drake Passage crossing',false],
+      ['Patagonia exploration','Medium','Argentina/Chile — glaciers, peaks',false],
+      ['Iceland Ring Road','Medium','Complete circumnavigation',false],
+      ['New Zealand South Island','Medium','Queenstown, Milford Sound',false],
+      ['Maldives overwater bungalow','Easy','Ultimate relaxation',false],
+      ['Amazon rainforest expedition','Hard','Brazil/Peru/Ecuador',false],
+      ['Victoria Falls','Medium','Zambia/Zimbabwe border',false],
+      ['Grand Canyon rim-to-rim','Hard','Arizona — 34km crossing',false],
+      ['Ha Long Bay, Vietnam','Easy','Overnight junk boat cruise',false],
+      ['Cappadocia, Turkey','Easy','Balloon ride over fairy chimneys',false],
+      ['Salar de Uyuni, Bolivia','Medium',"World's largest salt flat",false],
+      ['Svalbard expedition','Hard','Arctic wilderness, polar bears',false],
+      ['Safari lodge in Serengeti','Medium','Tanzania wilderness',false],
+      ['Trans-Siberian Railway','Hard','Moscow to Vladivostok 9,289km',false],
+      ['Havana, Cuba exploration','Medium','Classic cars, music, culture',false],
+      ['Marrakech medina, Morocco','Easy','Souks, riads, Sahara gateway',false],
+      ['Varanasi ghats, India','Medium','Hindu holy city, Ganges rituals',false],
+      ['Easter Island, Chile','Hard','Remote Moai statues',false],
+      ['Socotra Island, Yemen','Very Hard','Alien-like dragon blood trees',false],
+      ['Madagascar exploration','Hard','Unique wildlife, baobab avenue',false],
+    ]
+  },
+  {
+    id: 'fitness', name: 'Fitness & Athletic Achievements', icon: '🏋️',
+    color: '#8B5EA6',
+    items: [
+      ['Complete a 5K race','Easy','Completed!',true],
+      ['Complete a 10K race','Easy','Completed!',true],
+      ['Complete a half marathon','Medium','Completed!',true],
+      ['Complete a marathon','Hard','26.2 miles / 42.2km',false],
+      ['Sub-4 hour marathon','Hard','Competitive amateur time',false],
+      ['Complete an ultramarathon (50km)','Very Hard','Beyond marathon distance',false],
+      ['Complete a 100km ultra','Extreme','Multi-year commitment',false],
+      ['Complete a sprint triathlon','Medium','750m/20km/5km',false],
+      ['Complete an Olympic triathlon','Hard','1500m/40km/10km',false],
+      ['Complete a Half Ironman (70.3)','Very Hard','1.9km/90km/21.1km',false],
+      ['Complete a full Ironman','Extreme','3.8km/180km/42.2km',false],
+      ['Complete a century ride (100mi/160km)','Hard','One-day cycling milestone',false],
+      ['Multi-day cycling tour','Hard','3-7 days touring',false],
+      ['Deadlift 2x bodyweight','Hard','Completed!',true],
+      ['Pistol squat (one-legged)','Medium','Completed!',true],
+      ['Bench press 1.5x bodyweight','Hard','Intermediate strength',false],
+      ['Squat 2x bodyweight','Very Hard','Advanced strength',false],
+      ['Deadlift 2.5x bodyweight','Very Hard','Elite amateur level',false],
+      ['1000lb club (S+B+D total)','Hard','Combined total milestone',false],
+      ['Handstand hold (30 seconds)','Medium','Balance and strength',false],
+      ['Handstand walk (10m)','Hard','Advanced balance',false],
+      ['Muscle-up (bar)','Hard','Bar muscle-up',false],
+      ['Muscle-up (rings)','Very Hard','Ring muscle-up harder',false],
+      ['Human flag hold','Very Hard','Extreme calisthenics',false],
+      ['Front lever hold','Very Hard','Gymnastics strength',false],
+      ['Planche progression (tuck)','Hard','Advanced gymnastics',false],
+      ['Swim 1km continuous','Medium','Pool distance',false],
+      ['Open water 2.5km swim','Hard','Olympic distance',false],
+      ['Open water 5km swim','Very Hard','Distance swimming',false],
+      ['Cold water swim (ice swimming)','Hard','Completed!',true],
+      ['Channel relay swim (team)','Very Hard','English Channel team',false],
+      ['Complete Tough Mudder/Spartan Sprint','Hard','Completed!',true],
+      ['30-day fitness challenge','Medium','Completed!',true],
+      ['Complete Spartan Super (10+ mi)','Hard','Longer OCR',false],
+      ['Complete Spartan Beast/Ultra','Very Hard','Marathon-length OCR',false],
+      ['75 Hard challenge','Hard','Mental toughness program',false],
+      ['CrossFit competition','Hard','Local or Open',false],
+      ['Ninja Warrior course','Very Hard','Local or TV course',false],
+      ['Complete yoga teacher training','Hard','200-hour certification',false],
+      ['Martial art colored belt','Hard','Mid-level progression',false],
+      ['Master martial art (black belt)','Extreme','5-10 year commitment',false],
+      ['Rock climbing 5.10 outdoors','Hard','Intermediate climbing',false],
+      ['Rock climbing 5.11+ outdoors','Very Hard','Advanced climbing',false],
+    ]
+  },
+  {
+    id: 'skills', name: 'Skills & Certifications', icon: '🎓',
+    color: '#3A7A7A',
+    items: [
+      ['First aid/CPR certification','Easy','Completed!',true],
+      ['Mixology/bartending course','Easy','Completed!',true],
+      ['Navigation/orienteering course','Medium','Completed!',true],
+      ['Survival skills training','Medium','Completed!',true],
+      ['Rock climbing certification','Medium','Completed!',true],
+      ['Avalanche safety certification','Hard','Completed!',true],
+      ['Wilderness first aid certification','Medium','Remote adventure essential',false],
+      ['Wilderness first responder (WFR)','Hard','Advanced wilderness medicine',false],
+      ['Swift water rescue certification','Hard','River rescue skills',false],
+      ['Mountain guide certification','Very Hard','Professional level',false],
+      ['Learn to sail (basic dinghy)','Medium','Dinghy sailing intro',false],
+      ['Sailing certification (ASA/RYA)','Medium','Keelboat qualification',false],
+      ['Offshore sailing certification','Hard','Ocean passage making',false],
+      ['Motorcycle license','Medium','Freedom of open road',false],
+      ['Advanced driving course','Medium','Performance driving',false],
+      ['Private pilot license (PPL)','Very Hard','40+ flight hours',false],
+      ['Instrument rating (flying)','Very Hard','Flying in clouds/low vis',false],
+      ['Skydiving A-license','Hard','25 jumps, solo qualified',false],
+      ['Learn Spanish (conversational)','Hard','Widely useful',false],
+      ['Learn Japanese (basic)','Very Hard','Complex writing system',false],
+      ['Learn a third language','Hard','Expand linguistic range',false],
+      ['Photography course (professional)','Medium','Landscape/wildlife focus',false],
+      ['Video editing course','Medium','Travel video production',false],
+      ['Learn musical instrument (basic)','Hard','Piano, guitar, or drums',false],
+      ['Learn musical instrument (songs)','Very Hard','Play competently',false],
+      ['Painting/art course','Medium','Watercolor or oil',false],
+      ['Cooking class in native country','Easy','Thai, Italian, Japanese',false],
+      ['Wine sommelier (WSET 2)','Medium','Wine knowledge certification',false],
+      ['Wine sommelier (WSET 3)','Hard','Advanced qualification',false],
+      ['Coffee brewing certification','Easy','SCA barista skills',false],
+      ['Learn to code (new language)','Medium','Python, JavaScript, etc.',false],
+      ['Web development basics','Medium','HTML, CSS, JavaScript',false],
+      ['Data analysis certification','Medium','SQL, Excel, Python',false],
+      ['Public speaking course','Medium','Toastmasters or similar',false],
+      ['Leadership training program','Medium','Professional development',false],
+      ['Negotiation skills course','Medium','Business skill',false],
+      ['Woodworking basics','Medium','Create functional furniture',false],
+      ['Welding certification','Medium','Metal fabrication',false],
+      ['Leatherworking basics','Medium','Handmade goods',false],
+      ['Falconry experience','Hard','Work with birds of prey',false],
+      ['Beekeeping introduction','Medium','Maintain a hive',false],
+    ]
+  },
+  {
+    id: 'cultural', name: 'Cultural Experiences & Festivals', icon: '🎭',
+    color: '#A03A74',
+    items: [
+      ['Viking festival experience','Easy','Norway/Iceland — done!',true],
+      ['Stay in traditional ryokan, Japan','Easy','Hot springs — completed!',true],
+      ['Glastonbury Festival, UK','Hard',"World's most famous music festival",false],
+      ['Coachella, USA','Medium','California desert festival',false],
+      ['Tomorrowland, Belgium','Hard','Premier electronic festival',false],
+      ['Burning Man, USA','Hard','Art and radical self-expression',false],
+      ['Roskilde Festival, Denmark','Medium',"Scandinavia's largest festival",false],
+      ['Rock am Ring, Germany','Medium','Classic rock festival',false],
+      ['Primavera Sound, Spain','Medium','Barcelona indie/alternative',false],
+      ['Fuji Rock, Japan','Hard',"Japan's largest outdoor festival",false],
+      ['Exit Festival, Serbia','Medium','Fortress setting, diverse music',false],
+      ['Sziget Festival, Hungary','Medium','Island festival in Budapest',false],
+      ['Lollapalooza (any location)','Medium','Chicago, Berlin, São Paulo',false],
+      ['Ultra Music Festival, Miami','Medium','Electronic dance music',false],
+      ['Electric Daisy Carnival (EDC)','Medium','Las Vegas EDM festival',false],
+      ['Jazz festival (Montreux/New Orleans)','Easy','Classic jazz experience',false],
+      ['Classical festival (Salzburg/Proms)','Easy','Orchestral performances',false],
+      ['Metal festival (Wacken/Download)','Medium','Heavy metal community',false],
+      ['Country music festival (CMA/Stagecoach)','Easy','Country music celebration',false],
+      ['Witness Rio Carnival','Medium','Brazil February/March',false],
+      ['Holi Festival in India','Medium','Festival of colors — March',false],
+      ['Day of the Dead in Mexico','Medium','Oaxaca November 1-2',false],
+      ['La Tomatina, Spain','Easy','Tomato fight — August',false],
+      ['Oktoberfest in Munich','Easy','September/October',false],
+      ['Cherry blossom viewing, Japan','Medium','Hanami late March/April',false],
+      ['Attend Diwali in India','Medium','Festival of lights Oct/Nov',false],
+      ['Chinese New Year (HK/China)','Medium','January/February',false],
+      ['Lantern Festival, Taiwan','Medium','Sky lantern release',false],
+      ['Yi Peng Lantern Festival, Thailand','Medium','Chiang Mai November',false],
+      ['Songkran Water Festival, Thailand','Medium','Thai New Year — April',false],
+      ['San Fermín (Bull Running)','Hard','Pamplona, Spain — July',false],
+      ['Carnival in Venice','Medium','Masked festival — February',false],
+      ["St. Patrick's Day in Dublin",'Easy','Ireland — March 17',false],
+      ['Mardi Gras in New Orleans','Medium','February/March',false],
+      ['Up Helly Aa, Scotland','Hard','Viking fire festival — January',false],
+      ['Attend an Olympic Games','Hard','LA 2028, Brisbane 2032',false],
+      ['Attend FIFA World Cup match','Hard','USA/Canada/Mexico 2026',false],
+      ['Watch Tour de France stage','Medium','Mountain stages dramatic',false],
+      ['Attend Grand Slam tennis final','Hard','Wimbledon, US Open, etc.',false],
+      ['Attend Formula 1 Grand Prix','Medium','Monaco, Silverstone, etc.',false],
+      ['El Clásico (Real vs Barça)','Hard','Iconic football rivalry',false],
+      ['Super Bowl (live)','Very Hard','American football championship',false],
+      ['Rugby World Cup match','Medium','International tournament',false],
+      ['Traditional Japanese tea ceremony','Easy','Kyoto experience',false],
+      ['Participate in a Maori haka','Medium','New Zealand cultural exchange',false],
+      ['Attend traditional Indian wedding','Medium','Multi-day celebration',false],
+      ['Sleep in an ice hotel','Medium','Sweden, Finland, or Norway',false],
+      ['Hot springs in Iceland','Easy','Blue Lagoon or secret lagoon',false],
+      ['Traditional Finnish sauna','Easy','Including ice swimming',false],
+      ["New Year's Eve in Sydney",'Medium','Fireworks over Opera House',false],
+      ["Times Square New Year's Eve",'Medium','New York City',false],
+      ['Aurora hunting by dog sled','Hard','Lapland experience',false],
+      ['Flamenco show in Seville','Easy','Traditional Spanish dance',false],
+      ['Tango lesson in Buenos Aires','Easy','Argentine tradition',false],
+    ]
+  },
+  {
+    id: 'personal', name: 'Personal Development & Achievement', icon: '🌱',
+    color: '#3A5AA0',
+    items: [
+      ['30 days of journaling','Easy','Daily reflection — done!',true],
+      ['Fix posture — stretching routine','Medium','Daily mobility work',false],
+      ['Fix posture — professional assessment','Medium','Physio or posture specialist',false],
+      ['Fix posture — ergonomic workspace','Easy','Standing desk, monitor height',false],
+      ['Establish consistent sleep schedule','Medium','7-8 hours, regular timing',false],
+      ['Complete elimination diet','Hard','Identify food sensitivities',false],
+      ['30-day no alcohol challenge','Medium','Dry month',false],
+      ['30-day meditation streak','Medium','Daily meditation practice',false],
+      ['10-day Vipassana retreat','Hard','Silent meditation — transformative',false],
+      ['Build a functional app/tool','Hard','Software development',false],
+      ['Build a personal website/portfolio','Medium','Showcase your work',false],
+      ['Create a YouTube channel (5+ videos)','Hard','Video content creation',false],
+      ['Write blog post series (10+ articles)','Medium','Consistent content creation',false],
+      ['Write and self-publish an e-book','Hard','Travel guide, how-to, etc.',false],
+      ['Write a novel (complete draft)','Very Hard','Fiction or non-fiction',false],
+      ['Complete a photography project','Medium','Themed series, 50+ photos',false],
+      ['Build a piece of furniture','Hard','Woodworking project',false],
+      ['Create and release music','Hard','Song, EP, or album',false],
+      ['Design and sell a product','Very Hard','Physical or digital product',false],
+      ['Read 50 books in a year','Hard','~1 per week',false],
+      ['Start a podcast (10+ episodes)','Hard','Audio content creation',false],
+      ['Create an online course','Very Hard','Teach what you know',false],
+      ['Mentor someone in your field','Medium','Give back professionally',false],
+      ['Build emergency fund (6 months)','Medium','Financial security',false],
+      ['Start passive income stream','Hard','Investment, rental, digital',false],
+      ['Achieve financial independence milestone','Very Hard','Long-term wealth goal',false],
+      ['Give a public talk/presentation','Medium','Conference, meetup, or company',false],
+      ['Get published (article/paper)','Hard','Industry publication',false],
+      ['Start a side business','Hard','Entrepreneurship',false],
+      ['Host a dinner party for 10+','Easy','Multi-course meal',false],
+      ['Organize a group adventure trip','Medium','Lead friends on expedition',false],
+      ['Volunteer abroad (1+ week)','Hard','Meaningful contribution',false],
+    ]
+  },
+  {
+    id: 'winter', name: 'Winter & Snow Adventures', icon: '⛷️',
+    color: '#3A8AC4',
+    items: [
+      ['Ski a black diamond run','Medium','Advanced slope',false],
+      ['Ski off-piste (backcountry)','Hard','Avalanche training required',false],
+      ['Ski touring expedition','Hard','Multi-day backcountry',false],
+      ['Heli-skiing experience','Very Hard','Canada or Alaska',false],
+      ['Ski in 5 different countries','Medium','Alps, Scandinavia, Japan, etc.',false],
+      ['Ski in Japan (powder)','Hard','Niseko, Hakuba, etc.',false],
+      ['Cross-country skiing (basics)','Easy','Classic or skate',false],
+      ['Cross-country skiing 25km','Medium','Half-day distance',false],
+      ['Cross-country skiing 50km+','Hard','Long-distance achievement',false],
+      ['Birkebeiner race or similar','Very Hard','Classic Nordic ski race',false],
+      ['Snowmobiling adventure','Easy','Iceland or Lapland',false],
+      ['Dog sledding experience (short)','Easy','Short ride',false],
+      ['Dog sledding expedition (multi-day)','Hard','Lapland overnight',false],
+      ['Snowshoeing day hike','Easy','Winter hiking',false],
+      ['Snowshoeing overnight trip','Medium','Winter camping',false],
+      ['Ice climbing (intro course)','Hard','Frozen waterfalls basics',false],
+      ['Ice climbing (lead climbing)','Very Hard','Advanced ice',false],
+      ['Build igloo and sleep in it','Hard','Survival skill + experience',false],
+      ['Witness ice caves','Medium','Iceland or Alaska',false],
+      ['Sleep in ice hotel','Medium','Sweden or Finland',false],
+      ['Night skiing under aurora','Hard','Tromsø region possible!',false],
+      ['Polar plunge (ice swimming)','Medium','Finland tradition',false],
+      ['Winter camping (tent in snow)','Hard','Extreme conditions',false],
+    ]
+  },
+  {
+    id: 'motorsport', name: 'Motorsport & Vehicles', icon: '🏎️',
+    color: '#A03A3A',
+    items: [
+      ['Go-kart racing (competitive)','Easy','Indoor or outdoor track',false],
+      ['Hot lap with racing driver','Medium','Passenger experience',false],
+      ['Supercar track day','Medium','Ferrari, Lamborghini, etc.',false],
+      ['Rally driving experience','Medium','Dirt track racing',false],
+      ['Drive Nürburgring Nordschleife','Hard','Germany — "Green Hell"',false],
+      ['Formula racing (single-seater)','Hard','Open-wheel car experience',false],
+      ['F1 two-seater experience','Hard','Passenger in F1 car',false],
+      ['Great Ocean Road, Australia','Easy','Coastal beauty',false],
+      ['Pacific Coast Highway, USA','Easy','California coastal drive',false],
+      ['Route 66 (section)','Medium','American classic — partial',false],
+      ['Route 66 (full)','Hard','Chicago to Santa Monica',false],
+      ['Drive Stelvio Pass, Italy','Medium','48 hairpin turns',false],
+      ['Drive Transfăgărășan, Romania','Medium','"Best road in the world"',false],
+      ['Trollstigen (Troll Road), Norway','Medium','Dramatic mountain road',false],
+      ['Off-road 4WD expedition','Medium','Done similar in Oman',false],
+      ['Motorcycle road trip (1 day)','Medium','Scenic day ride',false],
+      ['Motorcycle road trip (multi-day)','Hard','Route 66, Alps, etc.',false],
+      ['Motorcycle track day','Hard','Sports bike on circuit',false],
+      ['Ride in a helicopter','Easy','Grand Canyon, NYC, etc.',false],
+      ['Helicopter flying lesson','Medium','Try flying yourself',false],
+      ['Hot air balloon ride','Easy','Cappadocia, Masai Mara',false],
+      ['Hot air balloon pilot experience','Hard','Learn to fly one',false],
+      ['Glider flight','Medium','Silent soaring',false],
+      ['Aerobatic flight (passenger)','Hard','Loops and rolls',false],
+      ['Ride in a fighter jet','Very Hard','MiG experiences',false],
+      ['Attend Formula 1 Grand Prix','Medium','Monaco, Silverstone, etc.',false],
+      ['Attend Le Mans 24 Hours','Medium','Endurance racing classic',false],
+      ['Attend WRC Rally event','Medium','World Rally Championship',false],
+      ['Attend MotoGP race','Medium','Motorcycle racing',false],
+    ]
+  },
+  {
+    id: 'food', name: 'Food & Drink Experiences', icon: '🍽️',
+    color: '#A07A3A',
+    items: [
+      ['Sake brewery tour in Japan','Easy','Completed!',true],
+      ['Eat fresh sushi in Tsukiji/Toyosu','Easy','Completed!',true],
+      ['Authentic ramen in Tokyo','Easy','Completed!',true],
+      ['Beer tour in Belgium','Easy','Trappist monasteries — done!',true],
+      ['Eat at a 1-Michelin star restaurant','Medium','Quality fine dining',false],
+      ['Eat at a 2-Michelin star restaurant','Medium','Exceptional dining',false],
+      ['Eat at a 3-Michelin star restaurant','Hard','Ultimate fine dining',false],
+      ['Chef\'s table / kitchen experience','Hard','Behind the scenes',false],
+      ["World's 50 Best restaurant visit",'Hard','Top-ranked restaurant',false],
+      ['Dine underwater (Maldives, Norway)','Hard','Under restaurant, Norway',false],
+      ['Dine in the sky (crane table)','Hard','Dinner in the Sky experience',false],
+      ['Dine in complete darkness','Medium','Dans le Noir or similar',false],
+      ['Ice restaurant experience','Medium','Ice hotel restaurant',false],
+      ['Street food tour in Bangkok','Easy',"Thailand's best eats",false],
+      ['Street food tour in Mexico City','Easy','Tacos, tamales, more',false],
+      ['Street food tour in Vietnam','Easy','Pho, banh mi, bun cha',false],
+      ['BBQ pilgrimage (Texas)','Easy','Austin, Lockhart circuit',false],
+      ['Paella in Valencia, Spain','Easy','Origin of the dish',false],
+      ['Pasta in Bologna, Italy','Easy','Home of ragù',false],
+      ['Pizza in Naples, Italy','Easy','Original Neapolitan',false],
+      ['Tapas crawl in San Sebastián','Easy','Pintxos bars',false],
+      ['Peking duck in Beijing','Easy','Traditional preparation',false],
+      ['Dim sum in Hong Kong','Easy','Classic Cantonese',false],
+      ['Cook with local family abroad','Easy','Airbnb experiences',false],
+      ['Wine tasting in Bordeaux','Easy','French wine region',false],
+      ['Wine tasting in Napa/Sonoma','Easy','California wine country',false],
+      ['Wine tasting in Tuscany','Easy','Chianti, Brunello',false],
+      ['Whisky distillery tour, Scotland','Easy','Speyside or Islay',false],
+      ['Whiskey tour in Ireland','Easy','Irish whiskey',false],
+      ['Bourbon trail, Kentucky','Medium','American whiskey',false],
+      ['Mezcal tasting in Oaxaca','Medium','Artisanal mezcal',false],
+      ['Champagne house visit, France','Easy','Reims or Épernay',false],
+      ['Coffee origin (Colombia)','Medium','Bean to cup journey',false],
+      ['Coffee origin (Ethiopia)','Hard','Birthplace of coffee',false],
+      ['Truffle hunting in Italy','Medium','With trained dogs',false],
+      ['Harvest grapes during wine season','Medium','France, Italy, Portugal',false],
+      ['Olive oil harvest experience','Medium','Mediterranean regions',false],
+      ['Cheese-making workshop','Easy','Learn the craft',false],
+      ['Sushi-making class in Japan','Medium','Learn from masters',false],
+    ]
+  },
+];
+
+// ── STATE ──────────────────────────────────────────
+const STORAGE_KEY = 'bucketlist-state-v3';
+let state = {}; // { "catId-index": true/false }
+
+function initState() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    state = JSON.parse(saved);
+    // Merge any new items from doc
+    CATEGORIES.forEach((cat, ci) => {
+      cat.items.forEach((item, ii) => {
+        const key = `${cat.id}-${ii}`;
+        if (!(key in state)) state[key] = item[3];
+      });
+    });
+  } else {
+    CATEGORIES.forEach(cat => {
+      cat.items.forEach((item, ii) => {
+        state[`${cat.id}-${ii}`] = item[3];
+      });
+    });
+  }
+  saveState();
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function toggleItem(catId, index) {
+  const key = `${catId}-${index}`;
+  state[key] = !state[key];
+  saveState();
+  renderAll();
+}
+
+// ── FILTERS ───────────────────────────────────────
+let activeCat = 'all';
+let activeDiff = 'All';
+let hideDone = false;
+let searchQuery = '';
+
+// ── RENDERING ─────────────────────────────────────
+function diffClass(d) {
+  const map = {
+    'Easy': 'badge-easy',
+    'Medium': 'badge-medium',
+    'Hard': 'badge-hard',
+    'Very Hard': 'badge-vhard',
+    'Extreme': 'badge-extreme',
+    'Expert': 'badge-expert',
+  };
+  return map[d] || 'badge-easy';
+}
+
+function getStats(catId) {
+  const cat = CATEGORIES.find(c => c.id === catId);
+  if (!cat) return { done: 0, total: 0 };
+  let done = 0;
+  cat.items.forEach((item, ii) => {
+    if (state[`${cat.id}-${ii}`]) done++;
+  });
+  return { done, total: cat.items.length };
+}
+
+function getOverallStats() {
+  let done = 0, total = 0;
+  CATEGORIES.forEach(cat => {
+    const s = getStats(cat.id);
+    done += s.done; total += s.total;
+  });
+  return { done, total };
+}
+
+function renderTabs() {
+  const tabs = document.getElementById('tabs');
+  const allBtn = tabs.querySelector('[data-cat="all"]');
+  allBtn.className = 'tab' + (activeCat === 'all' ? ' active' : '');
+
+  // Remove old category tabs
+  [...tabs.querySelectorAll('[data-cat]:not([data-cat="all"])')].forEach(t => t.remove());
+
+  CATEGORIES.forEach(cat => {
+    const s = getStats(cat.id);
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (activeCat === cat.id ? ' active' : '');
+    btn.dataset.cat = cat.id;
+    btn.innerHTML = `${cat.icon} ${cat.name.split(' ')[0]} <span class="tab-count">${s.done}/${s.total}</span>`;
+    btn.addEventListener('click', () => { activeCat = cat.id; renderAll(); });
+    tabs.appendChild(btn);
+  });
+}
+
+function renderOverall() {
+  const s = getOverallStats();
+  document.getElementById('doneCount').textContent = s.done;
+  document.getElementById('donePct').textContent = Math.round(s.done / s.total * 100) + '%';
+  document.getElementById('overallBar').style.width = (s.done / s.total * 100) + '%';
+}
+
+function renderContent() {
+  const content = document.getElementById('mainContent');
+
+  if (activeCat === 'all' && !searchQuery) {
+    // Overview grid
+    const grid = document.createElement('div');
+    grid.className = 'overview-grid';
+    CATEGORIES.forEach(cat => {
+      const s = getStats(cat.id);
+      const pct = Math.round(s.done / s.total * 100);
+      const card = document.createElement('div');
+      card.className = 'overview-card';
+      card.style.setProperty('--cat-color', cat.color);
+      card.innerHTML = `
+        <div class="ov-header">
+          <span class="ov-icon">${cat.icon}</span>
+          <span class="ov-name">${cat.name}</span>
+        </div>
+        <div class="ov-stats">
+          <span class="ov-count">${s.done} of ${s.total} done</span>
+          <span class="ov-pct">${pct}%</span>
+        </div>
+        <div class="ov-bar"><div class="ov-bar-fill" style="width:${pct}%"></div></div>
+      `;
+      card.addEventListener('click', () => {
+        activeCat = cat.id;
+        renderAll();
+        document.querySelector('.tabs-wrap').scrollIntoView({ behavior: 'smooth' });
+      });
+      grid.appendChild(card);
+    });
+    content.innerHTML = '';
+    content.appendChild(grid);
+    return;
+  }
+
+  // Items view
+  const catsToShow = activeCat === 'all'
+    ? CATEGORIES
+    : CATEGORIES.filter(c => c.id === activeCat);
+
+  content.innerHTML = '';
+
+  catsToShow.forEach(cat => {
+    const items = cat.items
+      .map((item, ii) => ({ item, ii, key: `${cat.id}-${ii}`, done: state[`${cat.id}-${ii}`] }))
+      .filter(({ item, done }) => {
+        if (hideDone && done) return false;
+        if (activeDiff !== 'All' && item[1] !== activeDiff) return false;
+        if (searchQuery) {
+          const q = searchQuery.toLowerCase();
+          return item[0].toLowerCase().includes(q) || item[2].toLowerCase().includes(q);
+        }
+        return true;
+      });
+
+    if (items.length === 0) return;
+
+    const s = getStats(cat.id);
+    const section = document.createElement('div');
+    section.style.marginBottom = '32px';
+
+    const header = document.createElement('div');
+    header.className = 'items-header';
+    header.innerHTML = `
+      <span class="cat-icon">${cat.icon}</span>
+      <h2>${cat.name}</h2>
+      <span class="cat-progress">${s.done}/${s.total}</span>
+    `;
+    section.appendChild(header);
+
+    const list = document.createElement('div');
+    list.className = 'items-list';
+
+    items.forEach(({ item, ii, done }) => {
+      const el = document.createElement('div');
+      el.className = 'item' + (done ? ' done' : '');
+      el.innerHTML = `
+        <div class="item-check"></div>
+        <div class="item-info">
+          <div class="item-name">${item[0]}</div>
+          ${item[2] ? `<div class="item-notes">${item[2]}</div>` : ''}
+        </div>
+        <div class="item-badges">
+          <span class="badge ${diffClass(item[1])}">${item[1]}</span>
+        </div>
+      `;
+      el.addEventListener('click', () => toggleItem(cat.id, ii));
+      list.appendChild(el);
+    });
+
+    section.appendChild(list);
+    content.appendChild(section);
+  });
+
+  if (content.children.length === 0) {
+    content.innerHTML = `<div class="no-items"><div class="no-icon">🔍</div>No experiences match your filters.</div>`;
+  }
+}
+
+function renderAll() {
+  renderOverall();
+  renderTabs();
+  renderContent();
+
+  // Update active tab highlight
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.cat === activeCat);
+  });
+}
+
+// ── INIT ──────────────────────────────────────────
+initState();
+
+// Build tabs
+document.querySelector('[data-cat="all"]').addEventListener('click', () => {
+  activeCat = 'all';
+  renderAll();
+});
+
+// Diff filter buttons
+document.querySelectorAll('.diff-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeDiff = btn.dataset.diff;
+    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderAll();
+  });
+});
+
+// Hide done toggle
+const hideSwitch = document.getElementById('hideSwitch');
+document.querySelector('.toggle-done').addEventListener('click', () => {
+  hideDone = !hideDone;
+  hideSwitch.classList.toggle('on', hideDone);
+  renderAll();
+});
+
+// Search
+let searchTimeout;
+document.getElementById('searchInput').addEventListener('input', e => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    searchQuery = e.target.value.trim();
+    if (searchQuery && activeCat === 'all') activeCat = 'all'; // keep all for search
+    renderAll();
+  }, 200);
+});
+
+renderAll();
+</script>
+</body>
+</html>
