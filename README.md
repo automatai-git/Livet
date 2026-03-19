@@ -1,147 +1,55 @@
 # Life & Training Hub
 
-A personal productivity ecosystem featuring three integrated web applications for milestone tracking, mobility workouts, and training plan management.
+A personal productivity ecosystem — five integrated web apps for life planning, training, and adventure tracking. Runs entirely in the browser with no backend.
 
-## Features
+## Apps
 
-### 📍 Milestone Timeline
-- Beautiful snaking timeline visualization of life events
-- Track past and future milestones with detailed "what, when, why, results" fields
-- Organic flow design with years marked at turning points
-- Full data export/import capabilities
+| App | File | Description |
+|-----|------|-------------|
+| 📍 Milestone Timeline | `timeline.html` | Snaking timeline of life events with past/future milestones |
+| 🧘 Mobility Tracker | `mobility.html` | Weekly mobility workouts with progress tracking |
+| 💪 Workout Finder | `workout-finder.html` | Block 3 training plan with RPE targets and protocols |
+| 🎨 Colour Matching | `colour-palette.html` | Personal Soft Summer colour palette and outfit combinations |
+| 🌍 Bucket List | `bucketlist.html` | 425 life experiences across 12 categories with progress tracking and focus targets |
 
-### 🧘 Mobility Tracker
-- Structured weekly mobility workout plans
-- Progress tracking with completion percentages
-- Detailed exercise guidance and protocols
-- Day-by-day workout organization
+## Tech Stack
 
-### 💪 Workout Finder
-- Quick access to Block 3 training plan (12 weeks)
-- RPE targets and support protocols for each session
-- Three training phases: Speed Development, Peak Speed, HM Transition
-- Minimal clicks to reach any workout information
-
-## Technology Stack
-
-- **HTML5/CSS3/JavaScript** - Pure vanilla implementation
-- **Progressive Web App (PWA)** - Installable on any device
-- **localStorage** - Client-side data persistence
-- **Responsive Design** - Optimized for mobile and desktop
-
-## Getting Started
-
-### Deployment to GitHub Pages
-
-1. **Create a new GitHub repository**
-   ```bash
-   # Initialize your repository
-   git init
-   git add .
-   git commit -m "Initial commit"
-   ```
-
-2. **Push to GitHub**
-   ```bash
-   git remote add origin https://github.com/yourusername/your-repo-name.git
-   git branch -M main
-   git push -u origin main
-   ```
-
-3. **Enable GitHub Pages**
-   - Go to your repository Settings
-   - Navigate to "Pages" in the left sidebar
-   - Under "Source", select "main" branch
-   - Click "Save"
-   - Your site will be live at: `https://yourusername.github.io/your-repo-name/`
-
-### Local Development
-
-Simply open `index.html` in a web browser. For best results, use a local server:
-
-```bash
-# Python 3
-python -m http.server 8000
-
-# Node.js (with npx)
-npx serve
-
-# Then open http://localhost:8000
-```
-
-## Installation as PWA
-
-### On iPhone/iPad:
-1. Open the site in Safari
-2. Tap the Share button
-3. Scroll down and tap "Add to Home Screen"
-4. Tap "Add"
-
-### On Android:
-1. Open the site in Chrome
-2. Tap the three-dot menu
-3. Tap "Add to Home Screen"
-4. Tap "Add"
-
-### On Desktop (Chrome/Edge):
-1. Look for the install icon in the address bar
-2. Click "Install"
+- Vanilla HTML/CSS/JavaScript — no build step, no dependencies
+- Progressive Web App (PWA) — installable, works offline
+- `localStorage` for all data persistence
 
 ## File Structure
 
 ```
-.
-├── index.html              # Main landing page
-├── milestone-timeline.html # Timeline application
-├── mobility-tracker.html   # Mobility workout tracker
-├── workout-finder.html     # Training plan finder
-├── manifest.json          # PWA manifest
-├── service-worker.js      # PWA service worker for offline support
-└── README.md             # This file
+index.html              Landing page / app hub
+timeline.html           Milestone timeline app
+mobility.html           Mobility tracker
+mobility.js             Mobility workout logic
+mobility.css            Mobility styles
+mobility-data.js        Workout exercise data
+workout-finder.html     Training plan finder
+colour-palette.html     Colour palette tool
+bucketlist.html         Bucket list tracker
+manifest.json           PWA manifest
+service-worker.js       Offline caching
+.github/workflows/      GitHub Pages auto-deploy
 ```
 
-## Data Storage
+## Deployment
 
-All applications use browser localStorage for data persistence:
-- **Milestones**: Stored as JSON array in `milestones` key
-- **Mobility Progress**: Stored per workout in `workout_[day]_progress` keys
-- **Training Data**: Embedded in workout-finder.html (Block 3 data)
+Pushes to `main` automatically deploy to GitHub Pages via the workflow in `.github/workflows/static.yml`.
 
-## Customization
+To run locally: open `index.html` in a browser, or serve with any static server:
 
-### Colors
-The apps use a warm color palette with sage green accents:
-- Primary: `#8b9d83` (sage green)
-- Background: `#f5f3f0` to `#e8e4df` gradient
-- Text: `#2c3e50` (dark blue-gray)
+```bash
+python -m http.server 8000
+```
 
-### Fonts
-- **Headings**: Cormorant Garamond (serif)
-- **Body**: Nunito Sans (sans-serif)
+## Data
 
-### Training Data
-To update the workout finder with different training blocks, edit the `trainingData` object in `workout-finder.html`.
+All data is stored in browser `localStorage` — nothing is sent to any server. Key storage entries:
 
-## Browser Support
-
-- Chrome/Edge (latest)
-- Firefox (latest)
-- Safari 14+
-- iOS Safari 14+
-- Chrome for Android
-
-## Privacy
-
-All data is stored locally in your browser. No data is sent to external servers. Data export/import features allow you to back up your information.
-
-## License
-
-Personal use project. Feel free to adapt for your own needs.
-
-## Version
-
-Current version: 1.0.0
-
----
-
-Built with care for personal productivity and wellness tracking.
+- `milestones` — timeline events
+- `workout_*_progress` — mobility progress
+- `bucketlist-state-v3` — bucket list checked states
+- `bucketlist-targets-v1` — current working-towards targets and step plans

@@ -22,3 +22,7 @@ npm-debug.log
 # Temporary files
 *.tmp
 *.log
+
+# Source/reference documents (data embedded in HTML)
+*.docx
+*.jsx

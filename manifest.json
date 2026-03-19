@@ -1,48 +1,37 @@
 {
   "name": "Life & Training Hub",
   "short_name": "Life Hub",
-  "description": "Personal productivity and wellness tracking applications",
+  "description": "Personal productivity, wellness, and life planning applications",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f5f3f0",
   "theme_color": "#8b9d83",
   "orientation": "portrait-primary",
-  "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
-  ],
   "categories": ["productivity", "health", "lifestyle"],
   "shortcuts": [
     {
       "name": "Milestone Timeline",
       "short_name": "Timeline",
       "description": "View your life milestones",
-      "url": "/milestone-timeline.html",
-      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+      "url": "/timeline.html"
     },
     {
       "name": "Mobility Tracker",
       "short_name": "Mobility",
       "description": "Track mobility workouts",
-      "url": "/mobility-tracker.html",
-      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+      "url": "/mobility.html"
     },
     {
       "name": "Workout Finder",
       "short_name": "Workouts",
       "description": "Find your training plan",
-      "url": "/workout-finder.html",
-      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+      "url": "/workout-finder.html"
+    },
+    {
+      "name": "Bucket List",
+      "short_name": "Bucket List",
+      "description": "Track life experiences",
+      "url": "/bucketlist.html"
     }
   ]
 }
