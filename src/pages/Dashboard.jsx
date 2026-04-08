@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { supabase } from '../services/supabase';
 
 const Dashboard = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -129,6 +130,12 @@ const Dashboard = () => {
 
       <footer className="dashboard-footer">
         <p>Personal productivity ecosystem · v2.0 React</p>
+        <button 
+          onClick={() => supabase.auth.signOut()} 
+          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', textDecoration: 'underline', cursor: 'pointer', marginTop: '10px', fontSize: '0.8rem' }}
+        >
+          Logout
+        </button>
       </footer>
     </>
   );
