@@ -8,5 +8,6 @@
       "Bash(grep -n \"localStorage\\\\|sessionStorage\\\\|IndexedDB\" /c/Users/enga/OneDrive/Documents/GitHub/Timeline/*.html)",
       "Bash(powershell -Command \":*)"
     ]
-  }
+  },
+  "CLAUDE_CODE_MAX_OUTPUT_TOKENS": 10000
 }

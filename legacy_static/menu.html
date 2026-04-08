@@ -825,6 +825,196 @@
             to   { opacity: 1; transform: translateY(0); }
         }
         .meal-card { animation: fadeUp 0.3s ease both; }
+
+        /* ── Multi-select ───────────────────────── */
+        .select-mode .meal-card { cursor: default; }
+        .select-mode .meal-card:hover { transform: none; box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+        .select-mode .meal-card:hover::after { opacity: 0; }
+
+        .meal-card .select-check {
+            display: none;
+            position: absolute;
+            top: 14px; right: 14px;
+            width: 24px; height: 24px;
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            background: var(--card);
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            z-index: 2;
+        }
+        .select-mode .meal-card .select-check { display: flex; }
+        .meal-card.selected { border-color: var(--accent) !important; box-shadow: 0 4px 16px rgba(181,99,42,0.2); }
+        .meal-card.selected .select-check {
+            background: var(--accent); border-color: var(--accent);
+        }
+        .meal-card.selected .select-check::after { content: '✓'; color: #fff; font-size: 0.75rem; font-weight: 700; }
+        .select-mode .meal-card { cursor: pointer; }
+
+        .multi-select-bar {
+            display: none;
+            position: sticky; bottom: 0;
+            background: rgba(245,243,240,0.97);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid var(--border);
+            padding: 12px 16px calc(12px + env(safe-area-inset-bottom,0));
+            gap: 10px;
+            align-items: center;
+            z-index: 50;
+        }
+        .multi-select-bar.active { display: flex; }
+        .multi-select-count {
+            flex: 1;
+            font-size: 0.85rem; font-weight: 700; color: var(--text-muted);
+        }
+        .multi-select-count span { color: var(--accent); }
+        .multi-export-btn {
+            padding: 11px 20px;
+            background: var(--accent); color: #fff;
+            border: none; border-radius: 8px;
+            font-family: 'Nunito Sans', sans-serif;
+            font-size: 0.88rem; font-weight: 700;
+            cursor: pointer; transition: background 0.2s;
+            letter-spacing: 0.2px;
+        }
+        .multi-export-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .multi-export-btn:not(:disabled):hover { background: var(--accent-dark); }
+        .cancel-select-btn {
+            padding: 11px 14px;
+            background: transparent; color: var(--text-muted);
+            border: 1.5px solid var(--border); border-radius: 8px;
+            font-family: 'Nunito Sans', sans-serif;
+            font-size: 0.88rem; font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* ── Add Meal FAB ───────────────────────── */
+        .fab-add {
+            position: fixed; bottom: calc(20px + env(safe-area-inset-bottom,0));
+            right: 20px; z-index: 60;
+            width: 52px; height: 52px;
+            background: var(--accent); color: #fff;
+            border: none; border-radius: 14px;
+            font-size: 1.6rem; font-weight: 300;
+            cursor: pointer;
+            box-shadow: 0 4px 18px rgba(181,99,42,0.4);
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .fab-add:hover { background: var(--accent-dark); transform: scale(1.06); }
+        .fab-add.hidden { display: none; }
+
+        /* ── Modal ──────────────────────────────── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.45); z-index: 200;
+            align-items: flex-end; justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-sheet {
+            background: var(--card);
+            border-radius: 18px 18px 0 0;
+            width: 100%; max-width: 640px;
+            max-height: 90vh; overflow-y: auto;
+            padding: 0 0 calc(20px + env(safe-area-inset-bottom,0));
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+        .modal-handle {
+            width: 40px; height: 4px; background: var(--border);
+            border-radius: 2px; margin: 14px auto 0;
+        }
+        .modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 20px 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        .modal-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem; font-weight: 600; color: var(--text);
+        }
+        .modal-close {
+            background: none; border: none; font-size: 1.4rem;
+            color: var(--text-muted); cursor: pointer; padding: 4px 8px;
+        }
+        .modal-body { padding: 18px 20px; }
+        .form-row { margin-bottom: 14px; }
+        .form-label {
+            display: block; font-size: 0.76rem; font-weight: 700;
+            color: var(--text-muted); text-transform: uppercase;
+            letter-spacing: 0.5px; margin-bottom: 5px;
+        }
+        .form-input, .form-select, .form-textarea {
+            width: 100%; padding: 10px 13px;
+            border: 1.5px solid var(--border); border-radius: 8px;
+            font-family: 'Nunito Sans', sans-serif; font-size: 0.9rem;
+            background: var(--card); color: var(--text); outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+        .form-textarea { resize: vertical; min-height: 70px; }
+        .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+        .ing-edit-row {
+            display: flex; gap: 8px; align-items: center;
+            padding: 6px 0; border-bottom: 1px solid var(--border);
+        }
+        .ing-edit-row:last-child { border-bottom: none; }
+        .ing-edit-row input {
+            padding: 7px 10px; border: 1.5px solid var(--border); border-radius: 6px;
+            font-family: 'Nunito Sans', sans-serif; font-size: 0.85rem;
+            background: var(--card); color: var(--text); outline: none;
+        }
+        .ing-edit-row input:focus { border-color: var(--accent); }
+        .ing-name-input { flex: 1; }
+        .ing-amount-input { width: 90px; }
+        .ing-del-btn {
+            background: none; border: none; color: #ccc; cursor: pointer;
+            font-size: 1.1rem; padding: 4px 6px; border-radius: 5px;
+            transition: all 0.15s; flex-shrink: 0;
+        }
+        .ing-del-btn:hover { color: #e05a5a; background: #fef2f2; }
+        .add-ing-btn {
+            margin-top: 10px; padding: 8px 14px;
+            background: var(--accent-light); color: var(--accent-dark);
+            border: 1.5px dashed var(--accent); border-radius: 8px;
+            font-family: 'Nunito Sans', sans-serif; font-size: 0.82rem;
+            font-weight: 700; cursor: pointer; width: 100%;
+            transition: all 0.2s;
+        }
+        .add-ing-btn:hover { background: var(--accent); color: #fff; }
+        .form-submit-btn {
+            width: 100%; padding: 14px;
+            background: var(--accent); color: #fff;
+            border: none; border-radius: 8px;
+            font-family: 'Nunito Sans', sans-serif;
+            font-size: 0.95rem; font-weight: 700;
+            cursor: pointer; transition: background 0.2s; margin-top: 6px;
+        }
+        .form-submit-btn:hover { background: var(--accent-dark); }
+
+        /* ── Edit ingredients in detail ─────────── */
+        .edit-recipe-btn {
+            margin-top: 14px; padding: 9px 16px;
+            background: transparent; color: var(--text-muted);
+            border: 1.5px solid var(--border); border-radius: 8px;
+            font-family: 'Nunito Sans', sans-serif; font-size: 0.82rem;
+            font-weight: 700; cursor: pointer; transition: all 0.2s;
+        }
+        .edit-recipe-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .edit-recipe-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+        .ing-editing { background: #fffbe6; border-radius: 8px; padding: 4px 0; }
+        .save-recipe-btn {
+            width: 100%; padding: 12px;
+            background: var(--success); color: #fff;
+            border: none; border-radius: 8px;
+            font-family: 'Nunito Sans', sans-serif; font-size: 0.9rem;
+            font-weight: 700; cursor: pointer; transition: background 0.2s;
+            margin-bottom: 10px;
+        }
+        .save-recipe-btn:hover { background: #5a8e62; }
     </style>
 </head>
 <body>
@@ -835,7 +1025,10 @@
         <div class="header-row">
             <a href="index.html" class="back-home">← Hub</a>
             <h1>Menu Planner</h1>
-            <button class="btn-icon" title="Cooking history" onclick="showStats()">📊</button>
+            <div style="display:flex;gap:6px;align-items:center">
+                <button class="btn-icon" id="select-toggle-btn" title="Select multiple" onclick="toggleSelectMode()">☑</button>
+                <button class="btn-icon" title="Cooking history" onclick="showStats()">📊</button>
+            </div>
         </div>
         <div class="search-wrap">
             <input class="search-input" id="search-input" type="search" placeholder="Search meals..." autocomplete="off" oninput="renderMeals()">
@@ -848,7 +1041,13 @@
         </div>
     </div>
     <main id="meal-grid" class="meal-grid"></main>
+    <div class="multi-select-bar" id="multi-select-bar">
+        <div class="multi-select-count"><span id="select-count">0</span> selected</div>
+        <button class="cancel-select-btn" onclick="toggleSelectMode()">Cancel</button>
+        <button class="multi-export-btn" id="multi-export-btn" onclick="exportCombinedList()" disabled>Export list</button>
+    </div>
 </div>
+<button class="fab-add" id="fab-add" onclick="openAddMealModal()" title="Add meal">+</button>
 
 <!-- ── DETAIL VIEW ───────────────────────────────── -->
 <div id="view-detail" class="view">
@@ -894,36 +1093,121 @@
     <div id="stats-meal-list" class="stats-meal-list"></div>
 </div>
 
+<!-- ── ADD MEAL MODAL ────────────────────────────── -->
+<div class="modal-overlay" id="add-meal-modal" onclick="closeModalIfOverlay(event)">
+    <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+            <div class="modal-title">Add new meal</div>
+            <button class="modal-close" onclick="closeAddMealModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-row">
+                <label class="form-label">Meal name</label>
+                <input class="form-input" id="new-name" type="text" placeholder="e.g. Chicken Tikka Masala">
+            </div>
+            <div class="form-row-2">
+                <div class="form-row">
+                    <label class="form-label">Category</label>
+                    <select class="form-select" id="new-category">
+                        <option>Italian</option><option>Asian</option><option>Indian</option>
+                        <option>Mexican</option><option>Mediterranean</option><option>Healthy</option>
+                        <option>Classic</option><option>Middle-Eastern</option><option>Norwegian</option><option>Other</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">Effort</label>
+                    <select class="form-select" id="new-tier">
+                        <option value="simple">Simple</option>
+                        <option value="ambitious">Ambitious</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <label class="form-label">Description</label>
+                <textarea class="form-textarea" id="new-desc" placeholder="Brief description of the meal..."></textarea>
+            </div>
+            <div class="form-row-3">
+                <div class="form-row">
+                    <label class="form-label">Prep (min)</label>
+                    <input class="form-input" id="new-prep" type="number" min="0" value="10">
+                </div>
+                <div class="form-row">
+                    <label class="form-label">Cook (min)</label>
+                    <input class="form-input" id="new-cook" type="number" min="0" value="20">
+                </div>
+                <div class="form-row">
+                    <label class="form-label">Servings</label>
+                    <input class="form-input" id="new-servings" type="number" min="1" value="2">
+                </div>
+            </div>
+            <div class="form-row">
+                <label class="form-label">Ingredients</label>
+                <div id="new-ing-list"></div>
+                <button class="add-ing-btn" onclick="addNewMealIngRow()">+ Add ingredient</button>
+            </div>
+            <button class="form-submit-btn" onclick="submitAddMeal()">Add meal</button>
+        </div>
+    </div>
+</div>
+
 <!-- ── TOAST ─────────────────────────────────────── -->
 <div class="toast" id="toast"></div>
 
 <script>
 // ── State ─────────────────────────────────────────
 let meals = [];
-let mealLog = [];          // [{ mealId, date: 'YYYY-MM-DD', ts: ms }]
+let mealLog = [];
 let currentMealId = null;
 let currentServings = 1;
 let activeCategory = 'All';
 let activeSort = 'suggest';
 let activeStatsSort = 'suggest';
 let checkedIngredients = new Set();
+let selectMode = false;
+let selectedMeals = new Set();
+let editingIngredients = false;
 
-const LOG_KEY = 'menu-meal-log-v1';
+const LOG_KEY  = 'menu-meal-log-v1';
+const DATA_KEY = 'menu-meals-data-v1';
 
 // ── Bootstrap ─────────────────────────────────────
 async function init() {
     mealLog = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
-    try {
-        const r = await fetch('menu.json');
-        const data = await r.json();
-        meals = data.meals || [];
-    } catch (e) {
-        document.getElementById('meal-grid').innerHTML =
-            '<p style="padding:40px;color:#c0392b;text-align:center">Could not load menu.json</p>';
-        return;
+    // Prefer locally-saved meals (user edits) over fetched file
+    const saved = localStorage.getItem(DATA_KEY);
+    if (saved) {
+        try { meals = JSON.parse(saved); } catch(e) {}
+    }
+    if (!meals.length) {
+        try {
+            const r = await fetch('menu.json');
+            const data = await r.json();
+            meals = data.meals || [];
+        } catch (e) {
+            document.getElementById('meal-grid').innerHTML =
+                '<p style="padding:40px;color:#c0392b;text-align:center">Could not load menu.json</p>';
+            return;
+        }
     }
     buildCategoryFilters();
     renderMeals();
+}
+
+// ── Persist meals ──────────────────────────────────
+function saveMealsData() {
+    localStorage.setItem(DATA_KEY, JSON.stringify(meals));
+}
+
+function downloadMealsJson() {
+    const json = JSON.stringify({ meals }, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'meals.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('meals.json downloaded — replace your file');
 }
 
 // ── Category filters ──────────────────────────────
@@ -1029,35 +1313,107 @@ function renderMeals() {
         if (!last) {
             badge = 'Never made'; badgeClass = 'last-never';
         } else if (d === 0) {
-            badge = 'Made today ✓'; badgeClass = 'last-today';
+            badge = 'Made today'; badgeClass = 'last-today';
         } else if (d <= 7) {
             badge = relativeDate(last); badgeClass = 'last-recent';
         } else {
             badge = relativeDate(last); badgeClass = 'last-overdue';
         }
 
-        const catClass = 'cat-' + m.category.replace(/\s+/g, '-');
-        const totalMin = (m.prepTime || 0) + (m.cookTime || 0);
+        const catClass  = 'cat-' + m.category.replace(/\s+/g, '-');
+        const totalMin  = (m.prepTime || 0) + (m.cookTime || 0);
+        const selClass  = selectedMeals.has(m.id) ? ' selected' : '';
 
-        return `<div class="meal-card" style="animation-delay:${i * 0.03}s" onclick="openMeal('${m.id}')">
-            <div class="card-emoji">${m.emoji}</div>
+        return `<div class="meal-card${selClass}" style="animation-delay:${i * 0.03}s" onclick="handleCardClick('${m.id}')">
+            <div class="select-check"></div>
             <div class="card-top">
                 <div class="card-name">${m.name}</div>
                 <span class="cat-badge ${catClass}">${m.category}</span>
             </div>
             <p class="card-desc">${m.description}</p>
             <div class="card-meta">
-                <span class="card-time">⏱ ${totalMin} min · ${m.servings} serving${m.servings !== 1 ? 's' : ''}</span>
+                <span class="card-time">${totalMin} min · ${m.servings} serving${m.servings !== 1 ? 's' : ''}</span>
                 <span class="card-last-made ${badgeClass}">${badge}</span>
             </div>
         </div>`;
     }).join('');
 }
 
+// ── Select mode ───────────────────────────────────
+function handleCardClick(id) {
+    if (selectMode) {
+        if (selectedMeals.has(id)) selectedMeals.delete(id);
+        else selectedMeals.add(id);
+        updateSelectUI();
+        renderMeals();
+    } else {
+        openMeal(id);
+    }
+}
+
+function toggleSelectMode() {
+    selectMode = !selectMode;
+    selectedMeals.clear();
+    const grid  = document.getElementById('meal-grid');
+    const bar   = document.getElementById('multi-select-bar');
+    const fab   = document.getElementById('fab-add');
+    const btn   = document.getElementById('select-toggle-btn');
+    if (selectMode) {
+        grid.classList.add('select-mode');
+        bar.classList.add('active');
+        fab.classList.add('hidden');
+        btn.style.color = 'var(--accent)';
+    } else {
+        grid.classList.remove('select-mode');
+        bar.classList.remove('active');
+        fab.classList.remove('hidden');
+        btn.style.color = '';
+    }
+    renderMeals();
+    updateSelectUI();
+}
+
+function updateSelectUI() {
+    const n   = selectedMeals.size;
+    const cnt = document.getElementById('select-count');
+    const exp = document.getElementById('multi-export-btn');
+    if (cnt) cnt.textContent = n;
+    if (exp) exp.disabled = n === 0;
+}
+
+function exportCombinedList() {
+    const selected = meals.filter(m => selectedMeals.has(m.id));
+    if (!selected.length) return;
+
+    // Merge ingredients, combining duplicates
+    const merged = {};
+    selected.forEach(m => {
+        m.ingredients.forEach(ing => {
+            const key = ing.item.toLowerCase().trim();
+            if (!merged[key]) merged[key] = { item: ing.item, amounts: [] };
+            if (ing.amount) merged[key].amounts.push(ing.amount);
+        });
+    });
+
+    const lines = Object.values(merged).map(i =>
+        `□ ${i.item}${i.amounts.length ? ' — ' + i.amounts.join(' + ') : ''}`
+    ).join('\n');
+
+    const mealNames = selected.map(m => `  • ${m.name}`).join('\n');
+    const text = `Shopping List (${selected.length} meals)\n${'─'.repeat(34)}\nMeals:\n${mealNames}\n${'─'.repeat(34)}\n${lines}`;
+
+    if (navigator.share) {
+        navigator.share({ title: 'Combined Shopping List', text }).catch(() => copyText(text, 'copy-feedback-multi'));
+    } else {
+        navigator.clipboard.writeText(text).then(() => showToast('Shopping list copied!')).catch(() => showToast('Could not copy'));
+    }
+}
+
 // ── Open meal detail ──────────────────────────────
 function openMeal(id) {
     currentMealId = id;
     checkedIngredients = new Set();
+    editingIngredients = false;
     const m = meals.find(x => x.id === id);
     if (!m) return;
     currentServings = m.servings;
@@ -1068,7 +1424,6 @@ function openMeal(id) {
     // hero
     const catClass = 'cat-' + m.category.replace(/\s+/g, '-');
     document.getElementById('detail-hero').innerHTML = `
-        <div class="hero-emoji">${m.emoji}</div>
         <div class="hero-title">${m.name}</div>
         <div class="hero-meta">
             <span class="cat-badge ${catClass}">${m.category}</span>
@@ -1112,8 +1467,15 @@ function renderShoppingTab(m) {
             <button class="serving-btn" id="serving-inc" onclick="changeServings(+1, event)">+</button>
         </div>
         ${scaleNote}
-        <ul class="ingredient-list">${items}</ul>
-        <button class="export-btn" onclick="exportShoppingList()">📤 Export to Notes</button>
+        <ul class="ingredient-list" id="ingredient-list">${items}</ul>
+        <button class="edit-recipe-btn" id="edit-recipe-btn" onclick="toggleEditIngredients()">Edit recipe</button>
+        <div id="edit-ingredients-panel" style="display:none;margin-top:14px">
+            <div id="edit-ing-rows"></div>
+            <button class="add-ing-btn" onclick="addEditIngRow()">+ Add ingredient</button>
+            <button class="save-recipe-btn" style="margin-top:12px" onclick="saveRecipeChanges()">Save changes</button>
+            <p style="font-size:0.75rem;color:var(--text-muted);text-align:center;margin-top:6px">Changes are saved locally. <button onclick="downloadMealsJson()" style="background:none;border:none;color:var(--accent);font-size:0.75rem;cursor:pointer;font-weight:700">Download meals.json</button></p>
+        </div>
+        <button class="export-btn" style="margin-top:14px" onclick="exportShoppingList()">Export to Notes</button>
         <div class="copy-feedback" id="copy-feedback"></div>`;
 
     updateServingBtns(m);
@@ -1217,9 +1579,8 @@ function renderHistoryTab(m) {
     if (!entries.length) {
         document.getElementById('tab-history').innerHTML = `
             <div class="history-empty">
-                <div class="big-emoji">🍽️</div>
                 <p>No cooking history yet.</p>
-                <p style="margin-top:6px;font-size:0.8rem">Mark this meal as made to start tracking!</p>
+                <p style="margin-top:6px;font-size:0.8rem">Mark this meal as made to start tracking.</p>
             </div>`;
         return;
     }
@@ -1264,7 +1625,7 @@ function markMadeToday() {
     updateMadeTodayBtn();
     const m = meals.find(x => x.id === currentMealId);
     if (m) renderHistoryTab(m);
-    showToast('Logged! 🍽️');
+    showToast('Logged!');
 }
 
 function updateMadeTodayBtn() {
@@ -1272,16 +1633,149 @@ function updateMadeTodayBtn() {
     if (!btn) return;
     const madeToday = mealLog.some(e => e.mealId === currentMealId && e.date === today());
     if (madeToday) {
-        btn.textContent = '✓ Made today — logged!';
+        btn.textContent = 'Made today — logged';
         btn.classList.add('already-done');
     } else {
-        btn.textContent = '✓ Mark as made today';
+        btn.textContent = 'Mark as made today';
         btn.classList.remove('already-done');
     }
 }
 
 function saveMealLog() {
     localStorage.setItem(LOG_KEY, JSON.stringify(mealLog));
+}
+
+// ── Edit ingredients ──────────────────────────────
+function toggleEditIngredients() {
+    editingIngredients = !editingIngredients;
+    const panel = document.getElementById('edit-ingredients-panel');
+    const btn   = document.getElementById('edit-recipe-btn');
+    if (editingIngredients) {
+        panel.style.display = 'block';
+        btn.textContent = 'Cancel editing';
+        btn.classList.add('active');
+        renderEditIngRows();
+    } else {
+        panel.style.display = 'none';
+        btn.textContent = 'Edit recipe';
+        btn.classList.remove('active');
+    }
+}
+
+function renderEditIngRows() {
+    const m = meals.find(x => x.id === currentMealId);
+    if (!m) return;
+    document.getElementById('edit-ing-rows').innerHTML = m.ingredients.map((ing, i) => `
+        <div class="ing-edit-row" id="edit-row-${i}">
+            <input class="ing-name-input" type="text" value="${escHtml(ing.item)}" placeholder="Ingredient" id="edit-ing-name-${i}">
+            <input class="ing-amount-input" type="text" value="${escHtml(ing.amount)}" placeholder="Amount" id="edit-ing-amt-${i}">
+            <button class="ing-del-btn" onclick="removeEditIngRow(${i})">✕</button>
+        </div>`
+    ).join('');
+}
+
+function addEditIngRow() {
+    const m = meals.find(x => x.id === currentMealId);
+    if (!m) return;
+    m.ingredients.push({ item: '', amount: '' });
+    renderEditIngRows();
+    // focus last
+    const rows = document.querySelectorAll('.ing-edit-row');
+    if (rows.length) rows[rows.length-1].querySelector('.ing-name-input').focus();
+}
+
+function removeEditIngRow(i) {
+    const m = meals.find(x => x.id === currentMealId);
+    if (!m) return;
+    m.ingredients.splice(i, 1);
+    renderEditIngRows();
+}
+
+function saveRecipeChanges() {
+    const m = meals.find(x => x.id === currentMealId);
+    if (!m) return;
+    // Read current form values
+    const rows = document.querySelectorAll('.ing-edit-row');
+    m.ingredients = Array.from(rows).map((_, i) => ({
+        item:   document.getElementById(`edit-ing-name-${i}`)?.value.trim() || '',
+        amount: document.getElementById(`edit-ing-amt-${i}`)?.value.trim()  || ''
+    })).filter(ing => ing.item);
+    saveMealsData();
+    showToast('Recipe saved');
+    toggleEditIngredients();
+    renderShoppingTab(m);
+}
+
+function escHtml(s) {
+    return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Add meal modal ─────────────────────────────────
+function openAddMealModal() {
+    document.getElementById('new-ing-list').innerHTML = '';
+    document.getElementById('new-name').value = '';
+    document.getElementById('new-desc').value = '';
+    document.getElementById('new-prep').value = 10;
+    document.getElementById('new-cook').value = 20;
+    document.getElementById('new-servings').value = 2;
+    addNewMealIngRow(); addNewMealIngRow(); // start with 2 rows
+    document.getElementById('add-meal-modal').classList.add('open');
+}
+
+function closeAddMealModal() {
+    document.getElementById('add-meal-modal').classList.remove('open');
+}
+
+function closeModalIfOverlay(e) {
+    if (e.target === document.getElementById('add-meal-modal')) closeAddMealModal();
+}
+
+function addNewMealIngRow() {
+    const list = document.getElementById('new-ing-list');
+    const i = list.children.length;
+    const row = document.createElement('div');
+    row.className = 'ing-edit-row';
+    row.id = `new-ing-row-${i}`;
+    row.innerHTML = `
+        <input class="ing-name-input" type="text" placeholder="Ingredient" id="new-ing-name-${i}">
+        <input class="ing-amount-input" type="text" placeholder="Amount" id="new-ing-amt-${i}">
+        <button class="ing-del-btn" onclick="this.closest('.ing-edit-row').remove()">✕</button>`;
+    list.appendChild(row);
+}
+
+function submitAddMeal() {
+    const name = document.getElementById('new-name').value.trim();
+    if (!name) { showToast('Please enter a meal name'); return; }
+
+    const ingRows = document.querySelectorAll('#new-ing-list .ing-edit-row');
+    const ingredients = Array.from(ingRows).map((row, i) => ({
+        item:   row.querySelector(`#new-ing-name-${i}`)?.value.trim() || '',
+        amount: row.querySelector(`#new-ing-amt-${i}`)?.value.trim()  || ''
+    })).filter(ing => ing.item);
+
+    const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const meal = {
+        id: id + '-' + Date.now(),
+        name,
+        category: document.getElementById('new-category').value,
+        tier: document.getElementById('new-tier').value,
+        emoji: '🍽️',
+        description: document.getElementById('new-desc').value.trim() || name,
+        prepTime: parseInt(document.getElementById('new-prep').value) || 0,
+        cookTime: parseInt(document.getElementById('new-cook').value) || 0,
+        servings: parseInt(document.getElementById('new-servings').value) || 2,
+        ingredients,
+        tags: [],
+        macros: { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }
+    };
+
+    meals.push(meal);
+    saveMealsData();
+    buildCategoryFilters();
+    renderMeals();
+    closeAddMealModal();
+    showToast(`"${name}" added`);
+    downloadMealsJson();
 }
 
 // ── Stats view ────────────────────────────────────
@@ -1359,7 +1853,6 @@ function renderStatsList() {
             : 'Never cooked';
 
         return `<div class="stats-meal-item" onclick="openMeal('${m.id}')">
-            <div class="stats-emoji">${m.emoji}</div>
             <div class="stats-meal-info">
                 <div class="stats-meal-name">${m.name}</div>
                 <div class="stats-meal-sub">${sub}</div>
@@ -1381,6 +1874,8 @@ function switchTab(name, el) {
 function showView(id) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById(id).classList.add('active');
+    const fab = document.getElementById('fab-add');
+    if (fab) fab.classList.toggle('hidden', id !== 'view-list');
 }
 
 function showList() {
