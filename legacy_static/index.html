@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Personal productivity and wellness tracking applications">
+    <meta name="theme-color" content="#1B3B2F">
+    <title>Life & Training Hub</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #1B3B2F;
+            --primary-light: #2d5a45;
+            --bg: #F2F0EB;
+            --card: #ffffff;
+            --text: #1B3B2F;
+            --text-muted: #6B7B75;
+            --border: #E2DFD8;
+            --radius: 20px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--primary-light);
+            margin-bottom: 16px;
+        }
+
+        h1 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 3rem;
+            font-weight: 400;
+            color: var(--text);
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+            line-height: 1.1;
+        }
+
+        h1 em {
+            font-style: italic;
+            color: var(--primary-light);
+        }
+
+        .tagline {
+            color: var(--text-muted);
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.6;
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .app-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 32px 26px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            border: 1.5px solid transparent;
+        }
+
+        .app-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 36px rgba(27, 59, 47, 0.15);
+            border-color: var(--primary);
+        }
+
+        .app-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--primary);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 1.6rem;
+            transition: transform 0.3s ease;
+        }
+
+        .app-card:hover .app-icon {
+            transform: scale(1.08) rotate(3deg);
+        }
+
+        .app-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.5rem;
+            font-weight: 400;
+            color: var(--text);
+            margin-bottom: 10px;
+        }
+
+        .app-description {
+            color: var(--text-muted);
+            line-height: 1.6;
+            font-size: 0.9rem;
+        }
+
+        .app-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(27, 59, 47, 0.08);
+            color: var(--primary-light);
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-top: 16px;
+        }
+
+        /* Featured card (menu planner) */
+        .app-card.featured {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .app-card.featured .app-icon {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .app-card.featured .app-title {
+            color: #ffffff;
+            font-size: 1.7rem;
+        }
+
+        .app-card.featured .app-title em {
+            font-style: italic;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .app-card.featured .app-description {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .app-card.featured .app-badge {
+            background: rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.9);
+        }
+
+        .app-card.featured:hover {
+            box-shadow: 0 12px 36px rgba(27, 59, 47, 0.35);
+            border-color: var(--primary-light);
+        }
+
+        .app-card.featured .cta-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 20px;
+            color: #fff;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .app-card.featured .cta-row .arrow {
+            width: 32px;
+            height: 32px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 0.85rem;
+            transition: transform 0.2s;
+        }
+
+        .app-card.featured:hover .cta-row .arrow {
+            transform: translateX(3px);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+        }
+
+        .install-prompt {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 20px 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            text-align: center;
+            margin-bottom: 24px;
+            display: none;
+            position: relative;
+        }
+
+        .install-prompt.show {
+            display: block;
+            animation: slideDown 0.5s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .install-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .install-btn:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        .close-prompt {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.5rem;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            padding: 5px 10px;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.2rem; }
+            .app-grid { grid-template-columns: 1fr; }
+            .app-card { padding: 26px 22px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <p class="label">Your tools</p>
+            <h1>Life & Training <em>Hub</em></h1>
+            <p class="tagline">Track your journey, optimize your performance</p>
+        </header>
+
+        <div id="installPrompt" class="install-prompt">
+            <button class="close-prompt" onclick="closeInstallPrompt()">×</button>
+            <p style="color: var(--text); font-weight: 600; margin-bottom: 5px;">Install App</p>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Add to your home screen for quick access</p>
+            <button class="install-btn" id="installButton">Install</button>
+        </div>
+
+        <div class="app-grid">
+            <a href="menu.html" class="app-card featured">
+                <div class="app-icon">🍽️</div>
+                <div class="app-title">Menu <em>Planner</em></div>
+                <p class="app-description">
+                    Plan dinners, build shopping lists, track what you've cooked and get suggestions for what to make next.
+                </p>
+                <div class="cta-row">
+                    <span class="arrow">↗</span>
+                    Open planner
+                </div>
+            </a>
+
+            <a href="timeline.html" class="app-card">
+                <div class="app-icon">📍</div>
+                <div class="app-title">Milestone Timeline</div>
+                <p class="app-description">
+                    Track and visualize life's significant moments with a beautiful snaking timeline of past and future milestones.
+                </p>
+                <span class="app-badge">Life Planning</span>
+            </a>
+
+            <a href="mobility.html" class="app-card">
+                <div class="app-icon">🧘</div>
+                <div class="app-title">Mobility Tracker</div>
+                <p class="app-description">
+                    Structured weekly mobility workouts with progress tracking and detailed exercise guidance.
+                </p>
+                <span class="app-badge">Wellness</span>
+            </a>
+
+            <a href="workout-finder.html" class="app-card">
+                <div class="app-icon">💪</div>
+                <div class="app-title">Workout Finder</div>
+                <p class="app-description">
+                    Quick access to your training plan with RPE targets, protocols, and notes for every session.
+                </p>
+                <span class="app-badge">Training</span>
+            </a>
+
+            <a href="colour-palette.html" class="app-card">
+                <div class="app-icon" style="background: linear-gradient(135deg, #8FA387, #7389A2, #C4929B);">🎨</div>
+                <div class="app-title">Colour Matching</div>
+                <p class="app-description">
+                    Your personal Soft Summer palette — core colours, neutrals, outfit combos and metals curated for your colouring.
+                </p>
+                <span class="app-badge">Style</span>
+            </a>
+
+            <a href="bucketlist.html" class="app-card">
+                <div class="app-icon" style="background: linear-gradient(135deg, #3d5a32, #5a7a4a);">🌍</div>
+                <div class="app-title">Bucket List</div>
+                <p class="app-description">
+                    425 life experiences across 12 categories — adventures, treks, festivals and culinary journeys.
+                </p>
+                <span class="app-badge">Adventures</span>
+            </a>
+        </div>
+
+        <footer>
+            <p>Personal productivity ecosystem · v1.0</p>
+        </footer>
+    </div>
+
+    <script>
+        let deferredPrompt;
+        const installPrompt = document.getElementById('installPrompt');
+        const installButton = document.getElementById('installButton');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installPrompt.classList.add('show');
+        });
+
+        installButton.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                deferredPrompt = null;
+                installPrompt.classList.remove('show');
+            }
+        });
+
+        function closeInstallPrompt() {
+            installPrompt.classList.remove('show');
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(registration => console.log('SW registered'))
+                    .catch(err => console.log('SW registration failed'));
+            });
+        }
+    </script>
+</body>
+</html>

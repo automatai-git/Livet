@@ -1,28 +1,24 @@
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# Windows
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-
-# Editor directories
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# Node (if using local server tools)
-node_modules/
-npm-debug.log
-
-# Temporary files
-*.tmp
+# Logs
+logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# Source/reference documents (data embedded in HTML)
-*.docx
-*.jsx
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
