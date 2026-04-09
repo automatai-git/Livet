@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../services/supabase';
-import { trainingData } from '../data/workout-data.js';
 
 const Dashboard = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -76,53 +75,6 @@ const Dashboard = () => {
     }
   };
 
-  const handleMigrateData = async () => {
-    try {
-      // 1. Migrate Workouts
-      let workoutInserts = [];
-      trainingData.weeks.forEach(week => {
-        week.days.forEach(day => {
-          workoutInserts.push({
-            week_num: week.week,
-            start_date: week.startDate,
-            end_date: week.endDate,
-            phase: week.phase,
-            date: day.date,
-            day_name: day.day,
-            session_type: day.session,
-            main_workout: day.mainWorkout,
-            support: day.support,
-            rpe: day.rpe,
-            notes: day.notes,
-            comments: day.comments
-          });
-        });
-      });
-      console.log('Inserting', workoutInserts.length, 'workouts...');
-      const { error: wError } = await supabase.from('workouts').insert(workoutInserts);
-      if (wError) throw wError;
-
-      // 2. Migrate Timeline
-      const localTimeline = JSON.parse(localStorage.getItem('lifeTimelinePWA') || '[]');
-      if (localTimeline.length > 0) {
-        let timelineInserts = localTimeline.map(item => ({
-          what: item.what,
-          when_date: item.when,
-          why: item.why || '',
-          icon: item.icon || '📍'
-        }));
-        console.log('Inserting', timelineInserts.length, 'timeline events...');
-        const { error: tError } = await supabase.from('timeline_events').insert(timelineInserts);
-        if (tError) throw tError;
-      }
-      
-      alert('Data migration to Supabase completed successfully!');
-    } catch (err) {
-      console.error(err);
-      alert('Failed to migrate: ' + err.message);
-    }
-  };
-
   return (
     <>
       <header className="dashboard-header">
@@ -180,7 +132,7 @@ const Dashboard = () => {
 
       <div className="app-grid">
         <Link to="/menu" className="app-card featured">
-          <div className="app-icon">🍽️</div>
+          <div className="app-icon" style={{background: 'transparent'}}><img src="/icons/menu.png" alt="Menu Planner" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
           <div className="app-title">Menu <em>Planner</em></div>
           <p className="app-description">
             Plan dinners, build shopping lists, track what you've cooked and get suggestions for what to make next.
@@ -192,7 +144,7 @@ const Dashboard = () => {
         </Link>
 
         <Link to="/timeline" className="app-card">
-          <div className="app-icon">📍</div>
+          <div className="app-icon" style={{background: 'transparent'}}><img src="/icons/timeline.png" alt="Timeline" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
           <div className="app-title">Milestone Timeline</div>
           <p className="app-description">
             Track and visualize life's significant moments with a beautiful snaking timeline.
@@ -201,7 +153,7 @@ const Dashboard = () => {
         </Link>
 
         <Link to="/mobility" className="app-card">
-          <div className="app-icon">🧘</div>
+          <div className="app-icon" style={{background: 'transparent'}}><img src="/icons/mobility.png" alt="Mobility Tracker" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
           <div className="app-title">Mobility Tracker</div>
           <p className="app-description">
             Structured weekly mobility workouts with progress tracking.
@@ -210,7 +162,7 @@ const Dashboard = () => {
         </Link>
 
         <Link to="/workout" className="app-card">
-          <div className="app-icon">💪</div>
+          <div className="app-icon" style={{background: 'transparent'}}><img src="/icons/workout.png" alt="Workout Finder" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
           <div className="app-title">Workout Finder</div>
           <p className="app-description">
             Access your structured Block 3 training plan and daily sessions.
@@ -219,7 +171,7 @@ const Dashboard = () => {
         </Link>
 
         <Link to="/colour" className="app-card">
-          <div className="app-icon" style={{background: 'linear-gradient(135deg, #8FA387, #7389A2, #C4929B)'}}>🎨</div>
+          <div className="app-icon" style={{background: 'transparent'}}><img src="/icons/palette.png" alt="Palette" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
           <div className="app-title">Soft Summer Palette</div>
           <p className="app-description">
             Your personal colour analysis guide and outfit combinations.
@@ -228,7 +180,7 @@ const Dashboard = () => {
         </Link>
 
         <Link to="/bucket" className="app-card">
-          <div className="app-icon" style={{background: 'linear-gradient(135deg, #3d5a32, #5a7a4a)'}}>🌍</div>
+          <div className="app-icon" style={{background: 'transparent'}}><img src="/icons/bucket.png" alt="Bucket List" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
           <div className="app-title">Bucket List</div>
           <p className="app-description">
             Your 425 lifetime experiences to track and unlock.
@@ -240,15 +192,8 @@ const Dashboard = () => {
       <footer className="dashboard-footer">
         <p>Personal productivity ecosystem · v2.0 React</p>
         <button 
-          onClick={handleMigrateData} 
-          style={{ background: 'var(--primary)', border: 'none', color: '#fff', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', marginTop: '10px', fontSize: '0.9rem', fontWeight: 'bold' }}
-        >
-          🚀 MIGRATE DATA TO SUPABASE
-        </button>
-        <br/>
-        <button 
           onClick={() => supabase.auth.signOut()} 
-          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', textDecoration: 'underline', cursor: 'pointer', marginTop: '10px', fontSize: '0.8rem' }}
+          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', textDecoration: 'underline', cursor: 'pointer', marginTop: '15px', fontSize: '0.8rem' }}
         >
           Logout
         </button>
