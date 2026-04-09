@@ -6,6 +6,7 @@ const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'S
 const WeeklyMenu = ({ databaseMeals }) => {
   const [weeklyMenu, setWeeklyMenu] = useState({});
   const [loading, setLoading] = useState(true);
+  const [isLocked, setIsLocked] = useState(true);
 
   useEffect(() => {
     fetchWeeklyMenu();
@@ -135,32 +136,44 @@ const WeeklyMenu = ({ databaseMeals }) => {
     <div style={{ marginTop: '20px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
         <h2 className="heading-serif" style={{ fontSize: '1.5rem' }}>Weekly Dinner Menu</h2>
-        <button 
-          onClick={exportShoppingList}
-          style={{ background: 'var(--success)', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
-        >
-          Export Shopping List
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button 
+            onClick={() => setIsLocked(!isLocked)}
+            style={{ background: isLocked ? 'var(--bg)' : 'var(--warning, #e6b800)', border: '1px solid var(--border)', color: 'var(--text)', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+          >
+            {isLocked ? '🔒 Unlock Edit' : '🔓 Lock Menu'}
+          </button>
+          <button 
+            onClick={exportShoppingList}
+            style={{ background: 'var(--success)', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+          >
+            Export Shopping List
+          </button>
+        </div>
       </div>
       
-      <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '15px' }}>
-        Drag meals from your collection onto a day, or slide them across different days.
-      </p>
+      {!isLocked && (
+        <>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '15px' }}>
+            Drag meals from your collection onto a day, or slide them across different days.
+          </p>
 
-      {/* Database Pool (Draggable source) */}
-      <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', padding: '15px', background: 'var(--card)', borderRadius: '12px', marginBottom: '25px', boxShadow: 'inset 0 0 10px rgba(0,0,0,0.2)' }}>
-        {databaseMeals.length === 0 && <span style={{ color: 'var(--text-muted)' }}>No meals in database yet!</span>}
-        {databaseMeals.map(meal => (
-          <div 
-            key={meal.id} 
-            draggable 
-            onDragStart={(e) => handleDragStart(e, null, meal.id)}
-            style={{ padding: '8px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '20px', cursor: 'grab', whiteSpace: 'nowrap', fontWeight: 600 }}
-          >
-            {meal.emoji} {meal.name}
+          {/* Database Pool (Draggable source) */}
+          <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', padding: '15px', background: 'var(--card)', borderRadius: '12px', marginBottom: '25px', boxShadow: 'inset 0 0 10px rgba(0,0,0,0.2)' }}>
+            {databaseMeals.length === 0 && <span style={{ color: 'var(--text-muted)' }}>No meals in database yet!</span>}
+            {databaseMeals.map(meal => (
+              <div 
+                key={meal.id} 
+                draggable 
+                onDragStart={(e) => handleDragStart(e, null, meal.id)}
+                style={{ padding: '8px 16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '20px', cursor: 'grab', whiteSpace: 'nowrap', fontWeight: 600 }}
+              >
+                {meal.emoji} {meal.name}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </>
+      )}
 
       {loading ? (
         <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>Loading schedule...</p>
@@ -173,8 +186,8 @@ const WeeklyMenu = ({ databaseMeals }) => {
             return (
               <div 
                 key={day} 
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, day)}
+                onDragOver={!isLocked ? handleDragOver : undefined}
+                onDrop={!isLocked ? (e) => handleDrop(e, day) : undefined}
                 style={{ background: 'var(--card)', padding: '12px 16px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '15px', transition: 'background 0.2s ease' }}
               >
                 <div style={{ width: '100px', fontWeight: 'bold' }}>{day}</div>
@@ -182,15 +195,17 @@ const WeeklyMenu = ({ databaseMeals }) => {
                 <div style={{ flex: 1, minHeight: '45px', background: currentMeal ? '#3A5A40' : 'var(--bg)', border: currentMeal ? 'none' : '1px dashed var(--border)', borderRadius: '8px', display: 'flex', alignItems: 'center', padding: '0 15px', color: currentMeal ? '#fff' : 'var(--text-muted)' }}>
                   {currentMeal ? (
                     <div 
-                      draggable 
+                      draggable={!isLocked} 
                       onDragStart={(e) => handleDragStart(e, day, currentMeal.id)}
-                      style={{ cursor: 'grab', display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', padding: '5px 0' }}
+                      style={{ cursor: isLocked ? 'default' : 'grab', display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', padding: '5px 0' }}
                     >
                       <span style={{ fontWeight: 600 }}>{currentMeal.emoji} {currentMeal.name}</span>
-                      <button onClick={() => handleAssignMeal(day, null)} style={{background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', cursor: 'pointer', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>✕</button>
+                      {!isLocked && (
+                        <button onClick={() => handleAssignMeal(day, null)} style={{background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', cursor: 'pointer', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>✕</button>
+                      )}
                     </div>
                   ) : (
-                    "Drag a meal here..."
+                    isLocked ? "No meal planned" : "Drag a meal here..."
                   )}
                 </div>
               </div>
