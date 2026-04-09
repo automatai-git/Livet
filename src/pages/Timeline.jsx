@@ -1,15 +1,51 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { supabase } from '../services/supabase';
 
 const Timeline = () => {
-  const [milestones, setMilestones] = useState(() => JSON.parse(localStorage.getItem('lifeTimelinePWA') || '[]'));
+  const [milestones, setMilestones] = useState([]);
   const [filter, setFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
+
+  // IntersectionObserver for scroll animations
+  const observer = useRef(null);
 
   useEffect(() => {
-    localStorage.setItem('lifeTimelinePWA', JSON.stringify(milestones));
-  }, [milestones]);
+    fetchTimeline();
+    
+    // Set up observer for scroll animations
+    observer.current = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          // Optional: observer.current.unobserve(entry.target) to animate only once
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+    return () => {
+      if (observer.current) observer.current.disconnect();
+    };
+  }, []);
+
+  const fetchTimeline = async () => {
+    setLoading(true);
+    const { data, error } = await supabase.from('timeline_events').select('*');
+    if (!error && data) {
+      // Sort descending by date
+      const sorted = data.sort((a, b) => new Date(b.when_date) - new Date(a.when_date));
+      setMilestones(sorted);
+    }
+    setLoading(false);
+  };
+
+  // Function to attach observer to node refs
+  const observeNode = (el) => {
+    if (el && observer.current) observer.current.observe(el);
+  };
 
   const getTimeCategory = (dateStr) => {
+    if (!dateStr) return 'past';
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return new Date(dateStr) < today ? 'past' : 'future';
@@ -17,12 +53,12 @@ const Timeline = () => {
 
   const getFilteredMilestones = () => {
     if (filter === 'all') return milestones;
-    return milestones.filter(m => getTimeCategory(m.when) === filter);
+    return milestones.filter(m => getTimeCategory(m.when_date) === filter);
   };
 
   const stats = {
-    past: milestones.filter(m => getTimeCategory(m.when) === 'past').length,
-    future: milestones.filter(m => getTimeCategory(m.when) === 'future').length,
+    past: milestones.filter(m => getTimeCategory(m.when_date) === 'past').length,
+    future: milestones.filter(m => getTimeCategory(m.when_date) === 'future').length,
     total: milestones.length
   };
 
@@ -70,15 +106,28 @@ const Timeline = () => {
       </div>
 
       <div style={{padding: '20px 0'}}>
-        {getFilteredMilestones().map((m, i) => (
-          <div key={m.id} style={{marginBottom: '20px', padding: '20px', background: 'var(--card)', borderRadius: '16px'}}>
-            <div style={{fontSize: '1.5rem', marginBottom: '10px'}}>{m.icon}</div>
-            <h3 className="heading-serif" style={{fontSize: '1.2rem', marginBottom: '8px'}}>{m.what}</h3>
-            <p style={{fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '10px'}}>{new Date(m.when).toLocaleDateString()}</p>
-            {m.why && <p style={{fontSize: '0.9rem'}}>{m.why}</p>}
+        {loading ? (
+           <p style={{textAlign: 'center', color: 'var(--text-muted)'}}>Loading timeline...</p>
+        ) : getFilteredMilestones().map((m, i) => (
+          <div 
+            key={m.id} 
+            ref={observeNode}
+            className="timeline-node"
+            style={{marginBottom: '20px', padding: '20px', background: 'var(--card)', borderRadius: '16px', borderLeft: '4px solid var(--primary)'}}
+          >
+            <div style={{display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '10px'}}>
+               <div style={{fontSize: '2rem', background: 'var(--bg)', width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%'}}>
+                 {m.icon || '📍'}
+               </div>
+               <div>
+                 <h3 className="heading-serif" style={{fontSize: '1.2rem', marginBottom: '2px'}}>{m.what}</h3>
+                 <p style={{fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600}}>{m.when_date ? new Date(m.when_date).toLocaleDateString() : ''}</p>
+               </div>
+            </div>
+            {m.why && <p style={{fontSize: '0.95rem', lineHeight: '1.5', marginTop: '10px'}}>{m.why}</p>}
           </div>
         ))}
-        {getFilteredMilestones().length === 0 && (
+        {!loading && getFilteredMilestones().length === 0 && (
           <div style={{textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)'}}>
             <div style={{fontSize: '3rem', opacity: 0.5, marginBottom: '10px'}}>⏳</div>
             <p>No milestones found for this filter.</p>

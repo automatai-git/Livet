@@ -1,10 +1,71 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { trainingData } from '../data/workout-data.js';
+import { supabase } from '../services/supabase';
+
+const InlineTimer = ({ initialSeconds = 60 }) => {
+  const [timeLeft, setTimeLeft] = useState(initialSeconds);
+  const [isRunning, setIsRunning] = useState(false);
+
+  useEffect(() => {
+    let interval;
+    if (isRunning && timeLeft > 0) {
+      interval = setInterval(() => setTimeLeft(t => t - 1), 1000);
+    } else if (timeLeft === 0) {
+       setIsRunning(false);
+    }
+    return () => clearInterval(interval);
+  }, [isRunning, timeLeft]);
+
+  const mins = Math.floor(timeLeft / 60);
+  const secs = timeLeft % 60;
+  
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '15px', background: 'var(--bg)', padding: '10px 20px', borderRadius: '12px', marginTop: '15px', border: '1px solid var(--border)' }}>
+      <div style={{ fontSize: '1.5rem', fontWeight: 600, width: '60px', textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>
+        {mins}:{secs < 10 ? '0'+secs : secs}
+      </div>
+      <button onClick={() => setIsRunning(!isRunning)} style={{ background: isRunning ? '#c48b47' : 'var(--primary)', color: '#fff', border: 'none', padding: '8px 15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
+        {isRunning ? 'Pause' : 'Start'}
+      </button>
+      <button onClick={() => { setIsRunning(false); setTimeLeft(initialSeconds); }} style={{ background: 'transparent', color: 'var(--text-muted)', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+        Reset
+      </button>
+      <div style={{ flex: 1, display: 'flex', gap: '5px', justifyContent: 'flex-end' }}>
+         <button onClick={() => setTimeLeft(60)} style={{background: 'var(--card)', border: '1px solid var(--border)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', cursor: 'pointer'}}>1m</button>
+         <button onClick={() => setTimeLeft(120)} style={{background: 'var(--card)', border: '1px solid var(--border)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', cursor: 'pointer'}}>2m</button>
+      </div>
+    </div>
+  );
+};
 
 const WorkoutFinder = () => {
+  const [weeks, setWeeks] = useState([]);
   const [selectedWeek, setSelectedWeek] = useState(null);
   const [selectedDay, setSelectedDay] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchWorkouts = async () => {
+      setLoading(true);
+      const { data, error } = await supabase.from('workouts').select('*').order('week_num', { ascending: true }).order('date', { ascending: true });
+      if (!error && data && data.length > 0) {
+        const map = {};
+        data.forEach(w => {
+          if (!map[w.week_num]) {
+             map[w.week_num] = { week: w.week_num, startDate: w.start_date, endDate: w.end_date, phase: w.phase, days: [] };
+          }
+          map[w.week_num].days.push({ 
+            day: w.day_name, date: w.date, session: w.session_type, 
+            mainWorkout: w.main_workout, support: w.support, 
+            rpe: w.rpe, notes: w.notes, comments: w.comments 
+          });
+        });
+        setWeeks(Object.values(map));
+      }
+      setLoading(false);
+    };
+    fetchWorkouts();
+  }, []);
 
   if (selectedDay) {
     return (
@@ -26,6 +87,12 @@ const WorkoutFinder = () => {
                  <div style={{fontWeight: 600, color: 'var(--text-muted)'}}>Session Type</div>
                  <div style={{fontSize: '1.1rem'}}>{selectedDay.session}</div>
                </div>
+               
+               <div style={{borderBottom: '1px solid var(--border)', paddingBottom: '15px'}}>
+                 <div style={{fontWeight: 600, color: 'var(--text-muted)'}}>Rest Timer</div>
+                 <InlineTimer initialSeconds={60} />
+               </div>
+
                <div style={{borderBottom: '1px solid var(--border)', paddingBottom: '15px'}}>
                  <div style={{fontWeight: 600, color: 'var(--text-muted)'}}>Main Workout</div>
                  <div>{selectedDay.mainWorkout}</div>
@@ -108,9 +175,19 @@ const WorkoutFinder = () => {
       </div>
 
       <div style={{padding: '20px'}}>
-        <div style={{textAlign: 'center', marginBottom: '30px', color: 'var(--text-muted)'}}>Block 3 Training Plan</div>
+        <div style={{textAlign: 'center', marginBottom: '30px', color: 'var(--text-muted)'}}>
+          Block 3 Training Plan 
+          {loading && <div>Loading database...</div>}
+        </div>
+        
+        {!loading && weeks.length === 0 && (
+          <div style={{textAlign: 'center', color: 'var(--text-muted)', marginTop: '40px'}}>
+            No workouts found in Supabase. Have you migrated your data?
+          </div>
+        )}
+
         <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '12px'}}>
-          {trainingData.weeks.map(week => (
+          {weeks.map(week => (
             <div 
               key={week.week} 
               className="app-card"

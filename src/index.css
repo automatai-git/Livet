@@ -346,3 +346,17 @@ button {
     letter-spacing: 0.3px;
     text-transform: uppercase;
 }
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.timeline-node {
+    opacity: 0;
+    transform: translateY(40px);
+}
+
+.timeline-node.visible {
+    animation: fadeUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}

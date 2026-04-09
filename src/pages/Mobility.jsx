@@ -1,5 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+
+const InlineTimer = ({ initialSeconds = 60 }) => {
+  const [timeLeft, setTimeLeft] = useState(initialSeconds);
+  const [isRunning, setIsRunning] = useState(false);
+
+  useEffect(() => {
+    let interval;
+    if (isRunning && timeLeft > 0) {
+      interval = setInterval(() => setTimeLeft(t => t - 1), 1000);
+    } else if (timeLeft === 0) {
+       setIsRunning(false);
+    }
+    return () => clearInterval(interval);
+  }, [isRunning, timeLeft]);
+
+  const mins = Math.floor(timeLeft / 60);
+  const secs = timeLeft % 60;
+  
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '15px', background: 'var(--bg)', padding: '10px 20px', borderRadius: '12px', marginTop: '15px', border: '1px solid var(--border)' }}>
+      <div style={{ fontSize: '1.5rem', fontWeight: 600, width: '60px', textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>
+        {mins}:{secs < 10 ? '0'+secs : secs}
+      </div>
+      <button onClick={() => setIsRunning(!isRunning)} style={{ background: isRunning ? '#c48b47' : 'var(--primary)', color: '#fff', border: 'none', padding: '8px 15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
+        {isRunning ? 'Pause' : 'Start'}
+      </button>
+      <button onClick={() => { setIsRunning(false); setTimeLeft(initialSeconds); }} style={{ background: 'transparent', color: 'var(--text-muted)', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+        Reset
+      </button>
+      <div style={{ flex: 1, display: 'flex', gap: '5px', justifyContent: 'flex-end' }}>
+         <button onClick={() => setTimeLeft(60)} style={{background: 'var(--card)', border: '1px solid var(--border)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', cursor: 'pointer'}}>1m</button>
+         <button onClick={() => setTimeLeft(120)} style={{background: 'var(--card)', border: '1px solid var(--border)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', cursor: 'pointer'}}>2m</button>
+      </div>
+    </div>
+  );
+};
 
 const MOBILITY_DATA = {
   monday: {
@@ -98,7 +134,8 @@ const Mobility = () => {
               <span><strong>Load:</strong> {ex.load}</span>
             </div>
             <p style={{fontSize: '0.85rem', color: 'var(--text)'}}><strong>Focus:</strong> {ex.purpose}</p>
-            <p style={{fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600, marginTop: '4px'}}><em>Cue: {ex.cue}</em></p>
+            <p style={{fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600, marginTop: '4px', marginBottom: '10px'}}><em>Cue: {ex.cue}</em></p>
+            <InlineTimer initialSeconds={60} />
           </div>
         ))}
         <button style={{width: '100%', padding: '16px', background: 'var(--success)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, fontSize: '1.1rem', marginTop: '10px'}}>

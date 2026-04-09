@@ -7,6 +7,7 @@ const Dashboard = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [todayAgenda, setTodayAgenda] = useState({ meal: null, workout: null, loading: true });
 
   useEffect(() => {
     // Check if the device is iOS
@@ -28,8 +29,38 @@ const Dashboard = () => {
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    fetchAgenda();
+    
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   }, []);
+
+  const fetchAgenda = async () => {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const today = new Date();
+    const dayName = days[today.getDay()];
+    
+    // DD.MM.YYYY format for workouts
+    const dd = String(today.getDate()).padStart(2, '0');
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const yyyy = today.getFullYear();
+    const dateStr = `${dd}.${mm}.${yyyy}`;
+
+    try {
+      const [mealRes, workoutRes] = await Promise.all([
+        supabase.from('weekly_menu').select('meals(emoji, name)').eq('day_of_week', dayName).maybeSingle(),
+        supabase.from('workouts').select('session_type, main_workout').eq('date', dateStr).maybeSingle()
+      ]);
+
+      setTodayAgenda({
+        meal: mealRes.data?.meals,
+        workout: workoutRes.data,
+        loading: false
+      });
+    } catch (e) {
+      console.error(e);
+      setTodayAgenda(prev => ({...prev, loading: false}));
+    }
+  };
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
@@ -99,6 +130,36 @@ const Dashboard = () => {
         <h1 className="heading-serif dashboard-title">Life & Training <em className="dashboard-title-em">Hub</em></h1>
         <p className="tagline">Track your journey, optimize your performance</p>
       </header>
+
+      {/* TODAY'S AGENDA WIDGET */}
+      <div style={{ background: 'var(--card)', margin: '0 20px 20px', padding: '20px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
+        <h2 className="heading-serif" style={{ fontSize: '1.2rem', marginBottom: '15px', color: 'var(--text)' }}>⚡ Today's Agenda</h2>
+        {todayAgenda.loading ? (
+           <p style={{ color: 'var(--text-muted)' }}>Loading agenda...</p>
+        ) : (
+           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+             <Link to="/menu" style={{ textDecoration: 'none', color: 'var(--text)' }}>
+               <div style={{ display: 'flex', alignItems: 'center', gap: '15px', background: 'var(--bg)', padding: '12px', borderRadius: '12px', transition: 'transform 0.2s' }}>
+                 <div style={{ fontSize: '1.5rem', background: 'var(--card)', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🍽️</div>
+                 <div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '2px' }}>Dinner</div>
+                    <div style={{ fontWeight: 600 }}>{todayAgenda.meal ? `${todayAgenda.meal.emoji} ${todayAgenda.meal.name}` : 'Not planned'}</div>
+                 </div>
+               </div>
+             </Link>
+             
+             <Link to="/workout" style={{ textDecoration: 'none', color: 'var(--text)' }}>
+               <div style={{ display: 'flex', alignItems: 'center', gap: '15px', background: 'var(--bg)', padding: '12px', borderRadius: '12px', transition: 'transform 0.2s' }}>
+                 <div style={{ fontSize: '1.5rem', background: 'var(--card)', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>💪</div>
+                 <div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '2px' }}>Workout</div>
+                    <div style={{ fontWeight: 600 }}>{todayAgenda.workout ? `${todayAgenda.workout.session_type}: ${todayAgenda.workout.main_workout}` : 'Rest Day'}</div>
+                 </div>
+               </div>
+             </Link>
+           </div>
+        )}
+      </div>
 
       {showInstallPrompt && (
         <div className="install-prompt show">
