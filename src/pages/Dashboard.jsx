@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../services/supabase';
+import { trainingData } from '../data/workout-data.js';
 
 const Dashboard = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -41,6 +42,53 @@ const Dashboard = () => {
       }
       setDeferredPrompt(null);
       setShowInstallPrompt(false);
+    }
+  };
+
+  const handleMigrateData = async () => {
+    try {
+      // 1. Migrate Workouts
+      let workoutInserts = [];
+      trainingData.weeks.forEach(week => {
+        week.days.forEach(day => {
+          workoutInserts.push({
+            week_num: week.week,
+            start_date: week.startDate,
+            end_date: week.endDate,
+            phase: week.phase,
+            date: day.date,
+            day_name: day.day,
+            session_type: day.session,
+            main_workout: day.mainWorkout,
+            support: day.support,
+            rpe: day.rpe,
+            notes: day.notes,
+            comments: day.comments
+          });
+        });
+      });
+      console.log('Inserting', workoutInserts.length, 'workouts...');
+      const { error: wError } = await supabase.from('workouts').insert(workoutInserts);
+      if (wError) throw wError;
+
+      // 2. Migrate Timeline
+      const localTimeline = JSON.parse(localStorage.getItem('lifeTimelinePWA') || '[]');
+      if (localTimeline.length > 0) {
+        let timelineInserts = localTimeline.map(item => ({
+          what: item.what,
+          when_date: item.when,
+          why: item.why || '',
+          icon: item.icon || '📍'
+        }));
+        console.log('Inserting', timelineInserts.length, 'timeline events...');
+        const { error: tError } = await supabase.from('timeline_events').insert(timelineInserts);
+        if (tError) throw tError;
+      }
+      
+      alert('Data migration to Supabase completed successfully!');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to migrate: ' + err.message);
     }
   };
 
@@ -130,6 +178,13 @@ const Dashboard = () => {
 
       <footer className="dashboard-footer">
         <p>Personal productivity ecosystem · v2.0 React</p>
+        <button 
+          onClick={handleMigrateData} 
+          style={{ background: 'var(--primary)', border: 'none', color: '#fff', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', marginTop: '10px', fontSize: '0.9rem', fontWeight: 'bold' }}
+        >
+          🚀 MIGRATE DATA TO SUPABASE
+        </button>
+        <br/>
         <button 
           onClick={() => supabase.auth.signOut()} 
           style={{ background: 'none', border: 'none', color: 'var(--text-muted)', textDecoration: 'underline', cursor: 'pointer', marginTop: '10px', fontSize: '0.8rem' }}
