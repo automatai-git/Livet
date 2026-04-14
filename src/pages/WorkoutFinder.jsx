@@ -50,29 +50,36 @@ const WorkoutFinder = () => {
   useEffect(() => {
     const fetchWorkouts = async () => {
       setLoading(true);
-      
-      // Fetch highlights/start date info
-      const storedDate = await trainingService.getStartDate();
-      setStartDate(storedDate);
-      const pos = trainingService.calculateProgramPosition(storedDate);
-      setProgramPosition(pos);
+      try {
+        // Fetch highlights/start date info
+        const storedDate = await trainingService.getStartDate();
+        setStartDate(storedDate);
+        const pos = trainingService.calculateProgramPosition(storedDate);
+        setProgramPosition(pos);
 
-      const { data, error } = await supabase.from('workouts').select('*').order('week_num', { ascending: true }).order('date', { ascending: true });
-      if (!error && data && data.length > 0) {
-        const map = {};
-        data.forEach(w => {
-          if (!map[w.week_num]) {
-             map[w.week_num] = { week: w.week_num, startDate: w.start_date, endDate: w.end_date, phase: w.phase, days: [] };
-          }
-          map[w.week_num].days.push({ 
-            day: w.day_name, date: w.date, session: w.session_type, 
-            mainWorkout: w.main_workout, support: w.support, 
-            rpe: w.rpe, notes: w.notes, comments: w.comments 
+        const { data, error } = await supabase.from('workouts').select('*').order('week_num', { ascending: true }).order('date', { ascending: true });
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          const map = {};
+          data.forEach(w => {
+            if (!w || !w.week_num) return;
+            if (!map[w.week_num]) {
+               map[w.week_num] = { week: w.week_num, startDate: w.start_date || 'N/A', endDate: w.end_date || 'N/A', phase: w.phase || 'N/A', days: [] };
+            }
+            map[w.week_num].days.push({ 
+              day: w.day_name, date: w.date, session: w.session_type, 
+              mainWorkout: w.main_workout, support: w.support, 
+              rpe: w.rpe, notes: w.notes, comments: w.comments 
+            });
           });
-        });
-        setWeeks(Object.values(map));
+          setWeeks(Object.values(map));
+        }
+      } catch (err) {
+        console.error("WorkoutFinder fetchWorkouts error:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     fetchWorkouts();
   }, []);

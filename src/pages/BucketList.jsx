@@ -8,17 +8,19 @@ const BucketList = () => {
   const [difficultyFilter, setDifficultyFilter] = useState('All');
   const [hideDone, setHideDone] = useState(false);
 
-  const currentCategories = activeUser === 'andreas' ? ANDREAS_CATEGORIES : JULIE_CATEGORIES;
+  const currentCategories = (activeUser === 'andreas' ? ANDREAS_CATEGORIES : JULIE_CATEGORIES) || [];
 
   const stats = {
-    total: currentCategories.reduce((acc, cat) => acc + cat.items.length, 0),
-    done: currentCategories.reduce((acc, cat) => acc + cat.items.filter(item => item[3]).length, 0)
+    total: currentCategories.reduce((acc, cat) => acc + (cat?.items?.length || 0), 0),
+    done: currentCategories.reduce((acc, cat) => acc + (cat?.items?.filter(item => item && item[3]).length || 0), 0)
   };
 
   const pct = Math.round((stats.done / stats.total) * 100);
 
   const getFilteredItems = (cat) => {
+    if (!cat || !cat.items) return [];
     return cat.items.filter(item => {
+      if (!item) return false;
       if (difficultyFilter !== 'All' && item[1] !== difficultyFilter) return false;
       if (hideDone && item[3]) return false;
       return true;

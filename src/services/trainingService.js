@@ -50,6 +50,9 @@ export const trainingService = {
     const start = new Date(startDateStr);
     const today = new Date();
     
+    // Check for invalid date
+    if (isNaN(start.getTime())) return null;
+
     // Reset times to midnight for accurate day calculation
     start.setHours(0, 0, 0, 0);
     today.setHours(0, 0, 0, 0);
@@ -61,10 +64,9 @@ export const trainingService = {
     
     const week = Math.floor(diffInDays / 7) + 1;
     
-    // Get the day name based on the actual day index of the calculated program day
-    // We assume the program follows a standard 7-day week sequence starting from the start date's day of week.
-    // However, the DB workouts are usually keyed by 'Monday', 'Tuesday', etc.
-    // So we match the current calendar day name.
+    // Safety check for NaN
+    if (isNaN(week)) return null;
+
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const currentCalendarDayName = days[today.getDay()];
 

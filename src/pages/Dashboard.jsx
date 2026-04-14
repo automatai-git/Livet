@@ -52,7 +52,7 @@ const Dashboard = () => {
 
       let workoutQuery = supabase.from('workouts').select('session_type, main_workout');
 
-      if (pos) {
+      if (pos && !isNaN(pos.week)) {
         // Find workout by program week and calendar day name
         workoutQuery = workoutQuery.eq('week_num', pos.week).eq('day_name', pos.dayName).maybeSingle();
       } else {
@@ -63,16 +63,19 @@ const Dashboard = () => {
       const [mealRes, workoutRes] = await Promise.all([
         supabase.from('weekly_menu').select('meals(emoji, name)').eq('day_of_week', dayName).maybeSingle(),
         workoutQuery
-      ]);
+      ]).catch(err => {
+        console.error("Supabase parallel fetch failed:", err);
+        return [ {data: null, error: err}, {data: null, error: err} ];
+      });
 
       setTodayAgenda({
-        meal: mealRes.data?.meals,
-        workout: workoutRes.data,
+        meal: mealRes?.data?.meals || null,
+        workout: workoutRes?.data || null,
         loading: false
       });
     } catch (e) {
-      console.error(e);
-      setTodayAgenda(prev => ({...prev, loading: false}));
+      console.error("Dashboard fetchAgenda crash prevented:", e);
+      setTodayAgenda({ meal: null, workout: null, loading: false });
     }
   };
 
