@@ -245,4 +245,13 @@ const WorkoutFinder = () => {
               onClick={handleSetStartDate}
               style={{background: 'var(--card)', border: '1px solid var(--border)', padding: '12px 20px', borderRadius: '12px', color: 'var(--text)', cursor: 'pointer', fontWeight: 600}}
             >
+              📅 {startDate ? `Program started: ${startDate}` : 'Set Program Start Date'}
+            </button>
+         </div>
+      </div>
+
+    </div>
+  );
+};
+
 export default WorkoutFinder;
