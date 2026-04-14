@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CATEGORIES } from '../data/bucketData.js';
+import { ANDREAS_CATEGORIES, JULIE_CATEGORIES } from '../data/bucketData.js';
 
 const BucketList = () => {
+  const [activeUser, setActiveUser] = useState('andreas');
   const [activeCategory, setActiveCategory] = useState('all');
   const [difficultyFilter, setDifficultyFilter] = useState('All');
   const [hideDone, setHideDone] = useState(false);
 
+  const currentCategories = activeUser === 'andreas' ? ANDREAS_CATEGORIES : JULIE_CATEGORIES;
+
   const stats = {
-    total: CATEGORIES.reduce((acc, cat) => acc + cat.items.length, 0),
-    done: CATEGORIES.reduce((acc, cat) => acc + cat.items.filter(item => item[3]).length, 0)
+    total: currentCategories.reduce((acc, cat) => acc + cat.items.length, 0),
+    done: currentCategories.reduce((acc, cat) => acc + cat.items.filter(item => item[3]).length, 0)
   };
 
   const pct = Math.round((stats.done / stats.total) * 100);
@@ -35,8 +37,32 @@ const BucketList = () => {
       </div>
 
       <div style={{background: 'linear-gradient(135deg, #3d5a32 0%, #5a7a4a 50%, #7a9a5a 100%)', color: 'white', padding: '40px 20px', textAlign: 'center'}}>
-         <h1 className="heading-serif" style={{fontSize: '2.5rem', marginBottom: '10px'}}>Bucket List</h1>
-         <p style={{opacity: 0.8, marginBottom: '20px'}}>{stats.total} experiences across {CATEGORIES.length} categories</p>
+         <div style={{display: 'inline-flex', background: 'rgba(0,0,0,0.2)', padding: '4px', borderRadius: '12px', marginBottom: '25px'}}>
+            <button 
+              onClick={() => setActiveUser('andreas')}
+              style={{
+                padding: '8px 24px', borderRadius: '10px', border: 'none', 
+                background: activeUser === 'andreas' ? 'white' : 'transparent',
+                color: activeUser === 'andreas' ? '#3d5a32' : 'white',
+                fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
+              }}
+            >
+              Andreas
+            </button>
+            <button 
+              onClick={() => setActiveUser('julie')}
+              style={{
+                padding: '8px 24px', borderRadius: '10px', border: 'none', 
+                background: activeUser === 'julie' ? 'white' : 'transparent',
+                color: activeUser === 'julie' ? '#3d5a32' : 'white',
+                fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
+              }}
+            >
+              Julie
+            </button>
+         </div>
+         <h1 className="heading-serif" style={{fontSize: '2.5rem', marginBottom: '10px'}}>{activeUser === 'andreas' ? "Andreas's" : "Julie's"} Bucket List</h1>
+         <p style={{opacity: 0.8, marginBottom: '20px'}}>{stats.total} experiences across {currentCategories.length} categories</p>
          <div style={{maxWidth: '400px', margin: '0 auto'}}>
            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '8px'}}>
              <span style={{fontSize: '1.5rem', fontWeight: 600}}>{stats.done} / {stats.total}</span>
@@ -58,7 +84,7 @@ const BucketList = () => {
         >
           All
         </button>
-        {CATEGORIES.map(c => (
+        {currentCategories.map(c => (
           <button 
             key={c.id} 
             onClick={() => setActiveCategory(c.id)}
@@ -90,7 +116,7 @@ const BucketList = () => {
       </div>
 
       <div style={{padding: '20px'}}>
-        {CATEGORIES.filter(c => activeCategory === 'all' || activeCategory === c.id).map(cat => {
+        {currentCategories.filter(c => activeCategory === 'all' || activeCategory === c.id).map(cat => {
            const items = getFilteredItems(cat);
            if (items.length === 0) return null;
            return (

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../services/supabase';
+import { trainingService } from '../services/trainingService';
 
 const Dashboard = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -38,16 +38,30 @@ const Dashboard = () => {
     const today = new Date();
     const dayName = days[today.getDay()];
     
-    // DD.MM.YYYY format for workouts
+    // DD.MM.YYYY format for calendar backup
     const dd = String(today.getDate()).padStart(2, '0');
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const yyyy = today.getFullYear();
     const dateStr = `${dd}.${mm}.${yyyy}`;
 
     try {
+      // Get program start date
+      const startDate = await trainingService.getStartDate();
+      const pos = trainingService.calculateProgramPosition(startDate);
+
+      let workoutQuery = supabase.from('workouts').select('session_type, main_workout');
+
+      if (pos) {
+        // Find workout by program week and calendar day name
+        workoutQuery = workoutQuery.eq('week_num', pos.week).eq('day_name', pos.dayName).maybeSingle();
+      } else {
+        // Fallback to calendar date
+        workoutQuery = workoutQuery.eq('date', dateStr).maybeSingle();
+      }
+
       const [mealRes, workoutRes] = await Promise.all([
         supabase.from('weekly_menu').select('meals(emoji, name)').eq('day_of_week', dayName).maybeSingle(),
-        supabase.from('workouts').select('session_type, main_workout').eq('date', dateStr).maybeSingle()
+        workoutQuery
       ]);
 
       setTodayAgenda({

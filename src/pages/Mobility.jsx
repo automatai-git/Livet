@@ -103,6 +103,14 @@ const Mobility = () => {
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedRoutine, setSelectedRoutine] = useState(null);
 
+  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const todayName = days[new Date().getDay()];
+
+  useEffect(() => {
+    // Auto-select today
+    setSelectedDay(todayName);
+  }, []);
+
   const renderRoutines = () => {
     if (!selectedDay || !MOBILITY_DATA[selectedDay].routines) return null;
     return Object.entries(MOBILITY_DATA[selectedDay].routines).map(([key, rot]) => (
@@ -159,21 +167,26 @@ const Mobility = () => {
         {!selectedRoutine && (
           <>
             <div style={{display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '20px', margin: '0 -20px 20px', padding: '0 20px 20px'}}>
-              {Object.keys(MOBILITY_DATA).map(day => (
-                <button
-                  key={day}
-                  onClick={() => setSelectedDay(day)}
-                  style={{
-                    flexShrink: 0, padding: '10px 20px', borderRadius: '20px',
-                    background: selectedDay === day ? 'var(--text)' : 'var(--card)',
-                    color: selectedDay === day ? 'white' : 'var(--text)',
-                    border: '1.5px solid ' + (selectedDay === day ? 'var(--text)' : 'var(--border)'),
-                    textTransform: 'capitalize', fontWeight: 600
-                  }}
-                >
-                  {day}
-                </button>
-              ))}
+              {Object.keys(MOBILITY_DATA).map(day => {
+                const isToday = day === todayName;
+                return (
+                  <button
+                    key={day}
+                    onClick={() => setSelectedDay(day)}
+                    style={{
+                      flexShrink: 0, padding: '10px 20px', borderRadius: '20px',
+                      background: selectedDay === day ? 'var(--text)' : 'var(--card)',
+                      color: selectedDay === day ? 'white' : 'var(--text)',
+                      border: isToday ? '2px solid var(--success)' : ('1.5px solid ' + (selectedDay === day ? 'var(--text)' : 'var(--border)')),
+                      textTransform: 'capitalize', fontWeight: 600,
+                      position: 'relative'
+                    }}
+                  >
+                    {isToday && <span style={{position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', background: 'var(--success)', color: 'white', fontSize: '0.6rem', padding: '2px 6px', borderRadius: '4px', fontWeight: 800}}>TODAY</span>}
+                    {day}
+                  </button>
+                );
+              })}
             </div>
             <div>
               {selectedDay ? renderRoutines() : <p style={{color: 'var(--text-muted)', textAlign: 'center', marginTop: '40px'}}>Select a day to view mobility routines.</p>}

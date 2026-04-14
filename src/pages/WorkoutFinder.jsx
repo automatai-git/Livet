@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../services/supabase';
+import { trainingService } from '../services/trainingService';
 
 const InlineTimer = ({ initialSeconds = 60 }) => {
   const [timeLeft, setTimeLeft] = useState(initialSeconds);
@@ -43,10 +43,19 @@ const WorkoutFinder = () => {
   const [selectedWeek, setSelectedWeek] = useState(null);
   const [selectedDay, setSelectedDay] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [programPosition, setProgramPosition] = useState(null);
+  const [startDate, setStartDate] = useState(null);
 
   useEffect(() => {
     const fetchWorkouts = async () => {
       setLoading(true);
+      
+      // Fetch highlights/start date info
+      const storedDate = await trainingService.getStartDate();
+      setStartDate(storedDate);
+      const pos = trainingService.calculateProgramPosition(storedDate);
+      setProgramPosition(pos);
+
       const { data, error } = await supabase.from('workouts').select('*').order('week_num', { ascending: true }).order('date', { ascending: true });
       if (!error && data && data.length > 0) {
         const map = {};
@@ -66,6 +75,18 @@ const WorkoutFinder = () => {
     };
     fetchWorkouts();
   }, []);
+
+  const handleSetStartDate = async () => {
+    const newDate = prompt("Enter training start date (YYYY-MM-DD):", startDate || new Date().toISOString().split('T')[0]);
+    if (newDate) {
+      const success = await trainingService.setStartDate(newDate);
+      if (success) {
+        setStartDate(newDate);
+        setProgramPosition(trainingService.calculateProgramPosition(newDate));
+        alert("Start date updated!");
+      }
+    }
+  };
 
   if (selectedDay) {
     return (
@@ -144,21 +165,27 @@ const WorkoutFinder = () => {
            <div style={{textAlign: 'center', marginBottom: '20px', color: 'var(--text-muted)'}}>
              {selectedWeek.startDate} - {selectedWeek.endDate} ({selectedWeek.phase})
            </div>
-           {selectedWeek.days.map((day, i) => (
-             <div key={i} className="app-card" style={{borderLeft: '4px solid var(--primary)', marginBottom: '12px', cursor: 'pointer', padding: '20px'}} onClick={() => setSelectedDay(day)}>
-               <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '8px'}}>
-                 <strong style={{fontSize: '1.1rem'}}>{day.day}</strong>
-                 <span style={{color: 'var(--text-muted)'}}>{day.date}</span>
+           {selectedWeek.days.map((day, i) => {
+             const isCurrentDay = programPosition && programPosition.week === selectedWeek.week && programPosition.dayName === day.day;
+             return (
+               <div key={i} className="app-card" style={{borderLeft: isCurrentDay ? '6px solid var(--success)' : '4px solid var(--primary)', marginBottom: '12px', cursor: 'pointer', padding: '20px', background: isCurrentDay ? 'var(--bg)' : 'var(--card)' }} onClick={() => setSelectedDay(day)}>
+                 <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '8px'}}>
+                   <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                     <strong style={{fontSize: '1.1rem'}}>{day.day}</strong>
+                     {isCurrentDay && <span style={{fontSize: '0.7rem', background: 'var(--success)', color: 'white', padding: '2px 8px', borderRadius: '10px', textTransform: 'uppercase'}}>Current Day</span>}
+                   </div>
+                   <span style={{color: 'var(--text-muted)'}}>{day.date}</span>
+                 </div>
+                 <div style={{marginBottom: '8px'}}>
+                   <span style={{padding: '4px 12px', background: 'var(--primary)', color: 'white', borderRadius: '20px', fontSize: '0.85rem', marginRight: '8px'}}>
+                     {day.session}
+                   </span>
+                   <span style={{fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-muted)'}}>RPE {day.rpe}</span>
+                 </div>
+                 <div style={{color: 'var(--text)'}}>{day.mainWorkout}</div>
                </div>
-               <div style={{marginBottom: '8px'}}>
-                 <span style={{padding: '4px 12px', background: 'var(--primary)', color: 'white', borderRadius: '20px', fontSize: '0.85rem', marginRight: '8px'}}>
-                   {day.session}
-                 </span>
-                 <span style={{fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-muted)'}}>RPE {day.rpe}</span>
-               </div>
-               <div style={{color: 'var(--text)'}}>{day.mainWorkout}</div>
-             </div>
-           ))}
+             );
+           })}
         </div>
       </div>
     );
@@ -186,25 +213,36 @@ const WorkoutFinder = () => {
           </div>
         )}
 
-        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '12px'}}>
-          {weeks.map(week => (
-            <div 
-              key={week.week} 
-              className="app-card"
-              onClick={() => setSelectedWeek(week)}
-              style={{cursor: 'pointer', textAlign: 'center', padding: '15px'}}
-            >
-               <div style={{fontWeight: 600, fontSize: '1.1rem', marginBottom: '5px'}}>Week {week.week}</div>
-               <div style={{fontSize: '0.75rem', color: 'var(--text-muted)'}}>
-                 {week.startDate.slice(0, 5)} - {week.endDate.slice(0, 5)}
+         <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '12px'}}>
+           {weeks.map(week => {
+             const isCurrentWeek = programPosition && programPosition.week === week.week;
+             return (
+               <div 
+                 key={week.week} 
+                 className="app-card"
+                 onClick={() => setSelectedWeek(week)}
+                 style={{
+                   cursor: 'pointer', 
+                   textAlign: 'center', 
+                   padding: '15px', 
+                   border: isCurrentWeek ? '2px solid var(--success)' : '1px solid var(--border)',
+                   position: 'relative',
+                   overflow: 'hidden'
+                 }}
+               >
+                  {isCurrentWeek && <div style={{position: 'absolute', top: 0, right: 0, background: 'var(--success)', color: 'white', fontSize: '0.6rem', padding: '2px 8px', borderRadius: '0 0 0 8px', fontWeight: 700}}>CURRENT</div>}
+                  <div style={{fontWeight: 600, fontSize: '1.1rem', marginBottom: '5px'}}>Week {week.week}</div>
+                  <div style={{fontSize: '0.75rem', color: 'var(--text-muted)'}}>
+                    {week.startDate.slice(0, 5)} - {week.endDate.slice(0, 5)}
+                  </div>
                </div>
-            </div>
-          ))}
-        </div>
-      </div>
+             );
+           })}
+         </div>
 
-    </div>
-  );
-};
-
+         <div style={{marginTop: '40px', textAlign: 'center'}}>
+            <button 
+              onClick={handleSetStartDate}
+              style={{background: 'var(--card)', border: '1px solid var(--border)', padding: '12px 20px', borderRadius: '12px', color: 'var(--text)', cursor: 'pointer', fontWeight: 600}}
+            >
 export default WorkoutFinder;

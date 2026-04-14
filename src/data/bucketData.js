@@ -1,4 +1,4 @@
-export const CATEGORIES = [
+export const ANDREAS_CATEGORIES = [
   {
     id: 'adrenaline', name: 'Adrenaline & Extreme Sports', icon: '🪂',
     color: '#C4743A',
@@ -498,6 +498,7 @@ export const CATEGORIES = [
   },
 ];
 
-// ── STATE ──────────────────────────────────────────
-const STORAGE_KEY = 'bucketlist-state-v3';
+export const JULIE_CATEGORIES = JSON.parse(JSON.stringify(ANDREAS_CATEGORIES));
 
+// ── STATE ──────────────────────────────────────────
+const STORAGE_KEY = 'bucketlist-state-v4';
