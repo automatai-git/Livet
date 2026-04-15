@@ -1,3 +1,4 @@
+// ... existing imports
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
@@ -7,6 +8,7 @@ import Mobility from './pages/Mobility';
 import WorkoutFinder from './pages/WorkoutFinder';
 import ColourPalette from './pages/ColourPalette';
 import BucketList from './pages/BucketList';
+import TravelPlanner from './pages/TravelPlanner';
 import { supabase } from './services/supabase';
 import Auth from './components/meal-planner/Auth';
 
@@ -39,6 +41,7 @@ function App() {
             <Route path="/workout" element={<WorkoutFinder />} />
             <Route path="/colour" element={<ColourPalette />} />
             <Route path="/bucket" element={<BucketList />} />
+            <Route path="/travel" element={<TravelPlanner />} />
           </Routes>
         )}
       </div>

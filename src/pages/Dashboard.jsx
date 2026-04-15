@@ -196,6 +196,15 @@ const Dashboard = () => {
           </p>
           <span className="app-badge">Style</span>
         </Link>
+        
+        <Link to="/travel" className="app-card">
+          <div className="app-icon" style={{background: 'transparent'}}><img src="icons/travel.png" alt="Trip Planner" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
+          <div className="app-title">Trip Planner</div>
+          <p className="app-description">
+            Manage your destination itineraries, explore experiences, and plan your trips.
+          </p>
+          <span className="app-badge">Travel</span>
+        </Link>
 
         <Link to="/bucket" className="app-card">
           <div className="app-icon" style={{background: 'transparent'}}><img src="icons/bucket.png" alt="Bucket List" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
