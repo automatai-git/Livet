@@ -96,11 +96,12 @@ const WeeklyMenu = ({ databaseMeals }) => {
       return;
     }
 
-    // Deduplicate and format
-    const uniqueIngredients = [...new Set(allIngredients.map(i => i.trim().toLowerCase()))];
+    // Deduplicate, sort, and format
+    const uniqueIngredients = [...new Set(allIngredients.map(i => i.trim()))]
+      .sort((a, b) => a.localeCompare(b, undefined, {sensitivity: 'base'}));
 
-    // Apple Notes checkable format
-    const textBlob = `Shopping List (Week)\n\n` + uniqueIngredients.map(ing => `- [ ] ${ing}`).join('\n');
+    // Format for easy import to iOS Notes as checklists
+    const textBlob = `Shopping List\n\n` + uniqueIngredients.map(ing => `[ ] ${ing}`).join('\n');
 
     navigator.clipboard.writeText(textBlob).then(() => {
       alert("Shopping list copied to clipboard! Paste it directly into Apple Notes.");
