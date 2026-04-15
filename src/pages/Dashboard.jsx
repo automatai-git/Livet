@@ -150,7 +150,7 @@ const Dashboard = () => {
 
       <div className="app-grid">
         <Link to="/menu" className="app-card featured">
-          <div className="app-icon" style={{background: 'transparent'}}><img src="/icons/menu.png" alt="Menu Planner" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
+          <div className="app-icon" style={{background: 'transparent'}}><img src="icons/menu.png" alt="Menu Planner" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
           <div className="app-title">Menu <em>Planner</em></div>
           <p className="app-description">
             Plan dinners, build shopping lists, track what you've cooked and get suggestions for what to make next.
@@ -162,7 +162,7 @@ const Dashboard = () => {
         </Link>
 
         <Link to="/timeline" className="app-card">
-          <div className="app-icon" style={{background: 'transparent'}}><img src="/icons/timeline.png" alt="Timeline" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
+          <div className="app-icon" style={{background: 'transparent'}}><img src="icons/timeline.png" alt="Timeline" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
           <div className="app-title">Milestone Timeline</div>
           <p className="app-description">
             Track and visualize life's significant moments with a beautiful snaking timeline.
@@ -171,7 +171,7 @@ const Dashboard = () => {
         </Link>
 
         <Link to="/mobility" className="app-card">
-          <div className="app-icon" style={{background: 'transparent'}}><img src="/icons/mobility.png" alt="Mobility Tracker" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
+          <div className="app-icon" style={{background: 'transparent'}}><img src="icons/mobility.png" alt="Mobility Tracker" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
           <div className="app-title">Mobility Tracker</div>
           <p className="app-description">
             Structured weekly mobility workouts with progress tracking.
@@ -180,7 +180,7 @@ const Dashboard = () => {
         </Link>
 
         <Link to="/workout" className="app-card">
-          <div className="app-icon" style={{background: 'transparent'}}><img src="/icons/workout.png" alt="Workout Finder" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
+          <div className="app-icon" style={{background: 'transparent'}}><img src="icons/workout.png" alt="Workout Finder" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
           <div className="app-title">Workout Finder</div>
           <p className="app-description">
             Access your structured Block 3 training plan and daily sessions.
@@ -189,7 +189,7 @@ const Dashboard = () => {
         </Link>
 
         <Link to="/colour" className="app-card">
-          <div className="app-icon" style={{background: 'transparent'}}><img src="/icons/palette.png" alt="Palette" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
+          <div className="app-icon" style={{background: 'transparent'}}><img src="icons/palette.png" alt="Palette" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
           <div className="app-title">Soft Summer Palette</div>
           <p className="app-description">
             Your personal colour analysis guide and outfit combinations.
@@ -198,7 +198,7 @@ const Dashboard = () => {
         </Link>
 
         <Link to="/bucket" className="app-card">
-          <div className="app-icon" style={{background: 'transparent'}}><img src="/icons/bucket.png" alt="Bucket List" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
+          <div className="app-icon" style={{background: 'transparent'}}><img src="icons/bucket.png" alt="Bucket List" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
           <div className="app-title">Bucket List</div>
           <p className="app-description">
             Your 425 lifetime experiences to track and unlock.
