@@ -1,0 +1,176 @@
+{
+  "nodes": [
+    {
+      "id": "bucket_globe",
+      "label": "World Globe (Bucket List)",
+      "file_type": "image",
+      "source_file": "public/icons/bucket.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "menu_dining",
+      "label": "Dining / Meal Menu",
+      "file_type": "image",
+      "source_file": "public/icons/menu.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "mobility_yoga",
+      "label": "Yoga / Mobility Stretch Pose",
+      "file_type": "image",
+      "source_file": "public/icons/mobility.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "palette_art",
+      "label": "Artist Palette with Paintbrush",
+      "file_type": "image",
+      "source_file": "public/icons/palette.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "timeline_path",
+      "label": "Timeline Path with Location Pin",
+      "file_type": "image",
+      "source_file": "public/icons/timeline.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "travel_app",
+      "label": "Travel App Icon (Airplane, Island, Map)",
+      "file_type": "image",
+      "source_file": "public/icons/travel.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "workout_dumbbell",
+      "label": "Dumbbell / Strength Training",
+      "file_type": "image",
+      "source_file": "public/icons/workout.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "bucket_globe",
+      "target": "travel_app",
+      "relation": "semantically_similar_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "public/icons/bucket.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "bucket_globe",
+      "target": "timeline_path",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "public/icons/bucket.png",
+      "source_location": null,
+      "weight": 0.8
+    },
+    {
+      "source": "travel_app",
+      "target": "timeline_path",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "public/icons/travel.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "mobility_yoga",
+      "target": "workout_dumbbell",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "public/icons/mobility.png",
+      "source_location": null,
+      "weight": 0.85
+    },
+    {
+      "source": "mobility_yoga",
+      "target": "menu_dining",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.7,
+      "source_file": "public/icons/mobility.png",
+      "source_location": null,
+      "weight": 0.7
+    },
+    {
+      "source": "workout_dumbbell",
+      "target": "menu_dining",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.7,
+      "source_file": "public/icons/workout.png",
+      "source_location": null,
+      "weight": 0.7
+    },
+    {
+      "source": "palette_art",
+      "target": "bucket_globe",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.65,
+      "source_file": "public/icons/palette.png",
+      "source_location": null,
+      "weight": 0.65
+    },
+    {
+      "source": "timeline_path",
+      "target": "travel_app",
+      "relation": "semantically_similar_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "public/icons/timeline.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "bucket_globe",
+      "target": "palette_art",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.6,
+      "source_file": "public/icons/bucket.png",
+      "source_location": null,
+      "weight": 0.6
+    }
+  ],
+  "hyperedges": [],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

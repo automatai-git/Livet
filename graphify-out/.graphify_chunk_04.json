@@ -1,0 +1,166 @@
+{
+  "nodes": [
+    {
+      "id": "hero_heroimage",
+      "label": "Hero Image",
+      "file_type": "image",
+      "source_file": "src/assets/hero.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "hero_isometriclayer",
+      "label": "Isometric Layered Slab",
+      "file_type": "image",
+      "source_file": "src/assets/hero.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "hero_toplayer",
+      "label": "Top Transparent/Glass Slab Layer",
+      "file_type": "image",
+      "source_file": "src/assets/hero.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "hero_bottomlayer",
+      "label": "Bottom Purple/Violet Slab Layer",
+      "file_type": "image",
+      "source_file": "src/assets/hero.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "hero_visualmetaphor",
+      "label": "Layered Architecture Visual Metaphor",
+      "file_type": "image",
+      "source_file": "src/assets/hero.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "hero_purpleaccent",
+      "label": "Purple Brand Accent Color",
+      "file_type": "image",
+      "source_file": "src/assets/hero.png",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "index_landingpage",
+      "label": "Life & Training Hub Landing Page",
+      "file_type": "html",
+      "source_file": "index.html",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "hero_heroimage",
+      "target": "hero_isometriclayer",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/assets/hero.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "hero_isometriclayer",
+      "target": "hero_toplayer",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/assets/hero.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "hero_isometriclayer",
+      "target": "hero_bottomlayer",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/assets/hero.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "hero_heroimage",
+      "target": "hero_visualmetaphor",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/assets/hero.png",
+      "source_location": null,
+      "weight": 0.8
+    },
+    {
+      "source": "hero_bottomlayer",
+      "target": "hero_purpleaccent",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/assets/hero.png",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "hero_toplayer",
+      "target": "hero_bottomlayer",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "src/assets/hero.png",
+      "source_location": null,
+      "weight": 0.85
+    },
+    {
+      "source": "hero_heroimage",
+      "target": "index_landingpage",
+      "relation": "references",
+      "confidence": "INFERRED",
+      "confidence_score": 0.75,
+      "source_file": "src/assets/hero.png",
+      "source_location": null,
+      "weight": 0.75
+    },
+    {
+      "source": "hero_visualmetaphor",
+      "target": "index_landingpage",
+      "relation": "rationale_for",
+      "confidence": "INFERRED",
+      "confidence_score": 0.7,
+      "source_file": "src/assets/hero.png",
+      "source_location": null,
+      "weight": 0.7
+    }
+  ],
+  "hyperedges": [],
+  "input_tokens": 0,
+  "output_tokens": 0
+}
