@@ -2,7 +2,11 @@ export const DESTINATION = {
   id: 'hawaii',
   name: 'Hawaii Islands',
   subtitle: 'Experience Guide & 12-Day Split',
-  description: 'A curated selection of the best experiences across the Hawaiian islands, prioritised for adventure, unique landscapes, and marine encounters.',
+  description: [
+    'Curated selection of best experiences across the Hawaiian islands',
+    'Prioritised for adventure, unique landscapes, and marine encounters',
+    'Optimized for a 12-day journey with no overlap'
+  ],
   recommendedSplit: {
     title: 'Option A: Three Islands (Recommended)',
     duration: '12 Days',
@@ -13,21 +17,41 @@ export const DESTINATION = {
         islandId: 'big-island',
         islandName: 'Big Island',
         theme: 'YOUR ANCHOR',
-        description: 'Manta ray night snorkel (Kona), helicopter volcano tour (Hilo), Volcanoes NP ground visit with night glow, Kealakekua snorkeling, Hapuna Beach. Base: 3 nights Kona + 2 nights Hilo/Volcano side.'
+        description: [
+          'Manta ray night snorkel (Kona)',
+          'Helicopter volcano tour (Hilo)',
+          'Volcanoes NP ground visit with night glow',
+          'Kealakekua snorkeling',
+          'Hapuna Beach chill'
+        ],
+        base: '3 nights Kona + 2 nights Hilo/Volcano side'
       },
       {
         range: '6–8',
         islandId: 'oahu',
         islandName: 'Oahu',
         theme: 'ACTION BLOCK',
-        description: 'Waikiki surf lessons (2 sessions), cage-free shark dive (North Shore), Diamond Head sunrise hike, North Shore exploration. Compact — high-value experiences per day. Base: Waikiki.'
+        description: [
+          'Waikiki surf lessons (2 sessions)',
+          'Cage-free shark dive (North Shore)',
+          'Diamond Head sunrise hike',
+          'North Shore exploration'
+        ],
+        base: 'Waikiki'
       },
       {
         range: '9–12',
         islandId: 'kauai',
         islandName: 'Kauai',
         theme: 'TREKKING & SCENERY FINALE',
-        description: 'Na Pali Coast boat/raft tour, Kalalau Trail day hike (Hanakapiai Falls), Waimea Canyon, Wailua River kayak, beach chill. Ends the trip on a dramatic, nature-immersive note. Base: Poipu or Princeville.'
+        description: [
+          'Na Pali Coast boat/raft tour',
+          'Kalalau Trail day hike (Hanakapiai Falls)',
+          'Waimea Canyon exploration',
+          'Wailua River kayak',
+          'Beach recovery time'
+        ],
+        base: 'Poipu or Princeville'
       }
     ]
   }
@@ -40,6 +64,7 @@ export const ISLANDS = [
     nickname: 'The Adventure Island',
     color: '#de431d', // Volcanic red
     icon: '🌋',
+    coords: { x: 80, y: 70 },
     verdict: 'Your #1 priority island. Base in Kona (west side) for beach, manta rays, helicopter, and coffee. Spend 1–2 nights on Hilo side for volcano, waterfalls.'
   },
   {
@@ -48,6 +73,7 @@ export const ISLANDS = [
     nickname: 'The Action Island',
     color: '#0d94da', // Ocean blue
     icon: '🏄',
+    coords: { x: 35, y: 35 },
     verdict: '2–3 nights. Day 1: Waikiki surf lesson + Diamond Head. Day 2: North Shore shark dive + Haleiwa. Compact, efficient, done.'
   },
   {
@@ -56,6 +82,7 @@ export const ISLANDS = [
     nickname: 'The Scenic All-Rounder',
     color: '#e2ba1b', // Sun yellow
     icon: '🐋',
+    coords: { x: 60, y: 50 },
     verdict: '3–4 nights if included. Road to Hana is a must-do full day. Haleakala sunrise is a full day. Best all-round island but has overlap.'
   },
   {
@@ -64,6 +91,7 @@ export const ISLANDS = [
     nickname: 'The Adventure Trekking Island',
     color: '#348e3e', // Jungle green
     icon: '🥾',
+    coords: { x: 10, y: 20 },
     verdict: '3–4 nights. Day 1: Na Pali boat tour. Day 2: Kalalau Trail hike. Day 3: Waimea Canyon. Day 4: Wailua kayak. Slower travel — don’t rush it.'
   }
 ];

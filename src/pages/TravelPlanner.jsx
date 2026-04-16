@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { DESTINATION, ISLANDS, EXPERIENCES } from '../data/travelData';
 import { CHECKLIST_DATA } from '../data/travelChecklistData';
+import TravelMap from '../components/TravelMap';
 
 const TravelPlanner = () => {
   // --- STATE ---
@@ -13,6 +14,7 @@ const TravelPlanner = () => {
   const [activeIsland, setActiveIsland] = useState('all');
   const [myTripState, setMyTripState] = useState([]);
   const [loadingTrip, setLoadingTrip] = useState(false);
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
 
   // --- PERSISTENCE ---
   useEffect(() => {
@@ -101,6 +103,12 @@ const TravelPlanner = () => {
       }]).select().single();
       if (!error && data) setMyTripState([...myTripState, data]);
     }
+  };
+
+  const handleMapSelect = (islandId) => {
+    setActiveIsland(islandId);
+    setActiveTab('experiences');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // --- DERIVED DATA ---
@@ -229,19 +237,67 @@ const TravelPlanner = () => {
             {activeTab === 'overview' && (
               <>
                 <div style={{marginBottom: '30px', padding: '0 10px'}}>
-                  <h1 className="heading-serif" style={{fontSize: '2.4rem', marginBottom: '8px', color: 'var(--primary)'}}>{DESTINATION.name}</h1>
-                  <p style={{color: 'var(--text-muted)', fontSize: '1rem', lineHeight: 1.6}}>{DESTINATION.description}</p>
+                  <h1 className="heading-serif" style={{fontSize: '2.4rem', marginBottom: '12px', color: 'var(--primary)'}}>{DESTINATION.name}</h1>
+                  <ul style={{padding: 0, margin: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px', color: 'var(--text-muted)'}}>
+                    {DESTINATION.description.map((item, i) => (
+                      <li key={i} style={{fontSize: '0.95rem', display: 'flex', gap: '8px', lineHeight: 1.4}}>
+                        <span style={{color: 'var(--primary)'}}>•</span> {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Map Section */}
+                <div style={{marginBottom: '30px'}}>
+                  <button 
+                    onClick={() => setIsMapExpanded(!isMapExpanded)}
+                    style={{
+                      width: '100%',
+                      padding: '16px',
+                      borderRadius: '16px',
+                      border: '1px solid rgba(0,0,0,0.05)',
+                      background: 'white',
+                      fontWeight: 700,
+                      color: 'var(--primary)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      cursor: 'pointer',
+                      marginBottom: isMapExpanded ? '15px' : '0',
+                      WebkitTapHighlightColor: 'transparent'
+                    }}
+                  >
+                    <span>{isMapExpanded ? 'Hide Map' : 'Explore Trip Map'}</span>
+                    <span>{isMapExpanded ? '▲' : '🗺️'}</span>
+                  </button>
+                  {isMapExpanded && (
+                    <div className="fade-in" style={{padding: '0 5px'}}>
+                      <TravelMap onSelectIsland={handleMapSelect} activeIsland={activeIsland} />
+                      <p style={{fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: '10px'}}>
+                        Tap an island to filter experiences.
+                      </p>
+                    </div>
+                  )}
                 </div>
                 
                 <h2 className="heading-serif" style={{fontSize: '1.4rem', marginBottom: '15px', padding: '0 10px'}}>The Plan</h2>
-                <div style={{display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '30px'}}>
+                <div style={{display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '30px'}}>
                   {DESTINATION.recommendedSplit.days.map((day, i) => (
-                    <div key={i} style={{background: 'white', borderRadius: '16px', padding: '16px', display: 'flex', gap: '15px', border: '1px solid rgba(0,0,0,0.05)'}}>
-                      <div style={{color: 'var(--primary)', fontWeight: 800, fontSize: '0.9rem', minWidth: '40px'}}>DAY {day.range}</div>
-                      <div>
-                        <div style={{fontWeight: 700, marginBottom: '2px'}}>{day.islandName}</div>
-                        <p style={{fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0}}>{day.description}</p>
+                    <div key={i} style={{background: 'white', borderRadius: '20px', padding: '20px', border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 4px 15px rgba(0,0,0,0.02)'}}>
+                      <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '12px', alignItems: 'center'}}>
+                        <div style={{color: 'var(--primary)', fontWeight: 800, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px'}}>DAY {day.range}</div>
+                        <div style={{fontWeight: 800, color: 'var(--text-primary)', fontSize: '1rem'}}>{day.islandName}</div>
                       </div>
+                      <div style={{background: 'rgba(0,0,0,0.02)', padding: '10px 14px', borderRadius: '10px', marginBottom: '12px', fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary)'}}>
+                         📍 {day.base}
+                      </div>
+                      <ul style={{padding: 0, margin: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px'}}>
+                        {day.description.map((item, idx) => (
+                          <li key={idx} style={{fontSize: '0.9rem', color: 'var(--text-muted)', display: 'flex', gap: '10px', lineHeight: 1.4}}>
+                            <span style={{color: 'var(--primary)', opacity: 0.5}}>—</span> {item}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   ))}
                 </div>
@@ -473,13 +529,4 @@ const filterBtnStyle = (active, color) => ({
   WebkitTapHighlightColor: 'transparent'
 });
 
-const tabStyle = (active) => ({
-    padding: '8px 24px', borderRadius: '10px', border: 'none', 
-    background: active ? 'white' : 'transparent',
-    color: active ? '#1d3557' : 'white',
-    fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
-    display: 'flex', alignItems: 'center'
-  });
-
 export default TravelPlanner;
-
