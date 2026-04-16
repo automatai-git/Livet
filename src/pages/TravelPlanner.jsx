@@ -2,12 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { DESTINATION, ISLANDS, EXPERIENCES } from '../data/travelData';
+import { CHECKLIST_DATA } from '../data/travelChecklistData';
 
 const TravelPlanner = () => {
-  const [activeTab, setActiveTab] = useState('overview'); // overview, experiences, mytrip
+  const [activeTab, setActiveTab] = useState('overview'); // overview, experiences, mytrip, checklist
   const [activeIsland, setActiveIsland] = useState('all');
   const [myTripState, setMyTripState] = useState([]);
   const [loadingTrip, setLoadingTrip] = useState(false);
+
+  const toggleChecklistStatus = async (chk) => {
+    const expId = `chk-${chk.id}`;
+    const existing = myTripState.find(p => p.experience_id === expId);
+    if (existing) {
+      const { error } = await supabase.from('travel_plans').delete().eq('id', existing.id);
+      if (!error) setMyTripState(myTripState.filter(p => p.id !== existing.id));
+    } else {
+      const { data, error } = await supabase.from('travel_plans').insert([{
+        destination_id: DESTINATION.id,
+        experience_id: expId,
+        status: 'completed'
+      }]).select().single();
+      if (!error && data) setMyTripState([...myTripState, data]);
+    }
+  };
 
   useEffect(() => {
     fetchMyTrip();
@@ -74,10 +91,14 @@ const TravelPlanner = () => {
   };
 
   // Derived state for My Trip
-  const plannedExperiences = myTripState.map(plan => {
-    const xp = EXPERIENCES.find(e => e.id === plan.experience_id) || {};
-    return { ...plan, xp };
-  });
+  const plannedExperiences = myTripState
+    .filter(plan => !plan.experience_id.startsWith('chk-'))
+    .map(plan => {
+      const xp = EXPERIENCES.find(e => e.id === plan.experience_id) || {};
+      return { ...plan, xp };
+    });
+    
+  const plannedCount = myTripState.filter(p => !p.experience_id.startsWith('chk-')).length;
 
   return (
     <div>
@@ -101,8 +122,9 @@ const TravelPlanner = () => {
             <button onClick={() => setActiveTab('overview')} style={tabStyle(activeTab === 'overview')}>Overview</button>
             <button onClick={() => setActiveTab('experiences')} style={tabStyle(activeTab === 'experiences')}>Experiences</button>
             <button onClick={() => setActiveTab('mytrip')} style={tabStyle(activeTab === 'mytrip')}>
-              My Trip {myTripState.length > 0 && <span style={{background: 'var(--primary)', color: 'white', padding: '2px 8px', borderRadius: '10px', marginLeft: '5px', fontSize: '0.8rem'}}>{myTripState.length}</span>}
+              My Trip {plannedCount > 0 && <span style={{background: 'var(--primary)', color: 'white', padding: '2px 8px', borderRadius: '10px', marginLeft: '5px', fontSize: '0.8rem'}}>{plannedCount}</span>}
             </button>
+            <button onClick={() => setActiveTab('checklist')} style={tabStyle(activeTab === 'checklist')}>Checklist</button>
          </div>
       </div>
 
@@ -254,6 +276,60 @@ const TravelPlanner = () => {
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {/* CHECKLIST TAB */}
+        {activeTab === 'checklist' && (
+          <div className="fade-in">
+             <div style={{marginBottom: '20px', padding: '15px', background: 'var(--card)', borderRadius: '16px', borderLeft: '4px solid #f39c12'}}>
+               <h3 className="heading-serif" style={{margin: '0 0 10px 0'}}>Hawaii Trip Pre-flight Checklist</h3>
+               <p style={{margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)'}}>
+                 Follow this prioritized timeline to secure flights, cars, and high-risk activities before they sell out.
+               </p>
+             </div>
+             
+             <div style={{display: 'flex', flexDirection: 'column', gap: '20px'}}>
+               {['CRITICAL', 'HIGH', 'MEDIUM', 'FLEXIBLE', 'ON-TRIP'].map(priority => {
+                 const items = CHECKLIST_DATA.filter(c => c.priority === priority);
+                 if (items.length === 0) return null;
+                 
+                 const colorMap = {
+                   'CRITICAL': '#e74c3c',
+                   'HIGH': '#e67e22',
+                   'MEDIUM': '#f1c40f',
+                   'FLEXIBLE': '#2ecc71',
+                   'ON-TRIP': '#3498db'
+                 };
+                 const color = colorMap[priority];
+                 
+                 return (
+                   <div key={priority}>
+                     <h3 style={{color, borderBottom: `2px solid ${color}40`, paddingBottom: '8px', marginBottom: '15px'}}>{priority}</h3>
+                     <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
+                       {items.map(chk => {
+                         const isCompleted = myTripState.some(p => p.experience_id === `chk-${chk.id}`);
+                         return (
+                           <div key={chk.id} style={{background: 'var(--card)', padding: '16px', borderRadius: '12px', display: 'flex', gap: '16px', opacity: isCompleted ? 0.6 : 1, transition: 'all 0.3s'}}>
+                             <div 
+                                onClick={() => toggleChecklistStatus(chk)}
+                                style={{width: '24px', height: '24px', borderRadius: '6px', border: isCompleted ? 'none' : '2px solid var(--border)', background: isCompleted ? 'var(--success)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0, cursor: 'pointer', marginTop: '2px'}}
+                              >
+                                {isCompleted ? '✓' : ''}
+                              </div>
+                              <div style={{flex: 1}}>
+                                <div style={{fontWeight: 700, fontSize: '1.05rem', textDecoration: isCompleted ? 'line-through' : 'none', marginBottom: '4px'}}>{chk.task}</div>
+                                <div style={{fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600, marginBottom: '6px'}}>{chk.why}</div>
+                                <div style={{fontSize: '0.9rem', color: 'var(--text-muted)'}}>{chk.action}</div>
+                              </div>
+                           </div>
+                         );
+                       })}
+                     </div>
+                   </div>
+                 );
+               })}
+             </div>
           </div>
         )}
 
