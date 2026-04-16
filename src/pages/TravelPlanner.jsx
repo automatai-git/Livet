@@ -5,26 +5,24 @@ import { DESTINATION, ISLANDS, EXPERIENCES } from '../data/travelData';
 import { CHECKLIST_DATA } from '../data/travelChecklistData';
 
 const TravelPlanner = () => {
-  const [activeTab, setActiveTab] = useState('overview'); // overview, experiences, mytrip, checklist
+  // --- STATE ---
+  const [tripPhase, setTripPhase] = useState(() => {
+    return localStorage.getItem('travel_trip_phase') || 'planning'; // planning, booked, ontrip
+  });
+  const [activeTab, setActiveTab] = useState('overview'); 
   const [activeIsland, setActiveIsland] = useState('all');
   const [myTripState, setMyTripState] = useState([]);
   const [loadingTrip, setLoadingTrip] = useState(false);
 
-  const toggleChecklistStatus = async (chk) => {
-    const expId = `chk-${chk.id}`;
-    const existing = myTripState.find(p => p.experience_id === expId);
-    if (existing) {
-      const { error } = await supabase.from('travel_plans').delete().eq('id', existing.id);
-      if (!error) setMyTripState(myTripState.filter(p => p.id !== existing.id));
-    } else {
-      const { data, error } = await supabase.from('travel_plans').insert([{
-        destination_id: DESTINATION.id,
-        experience_id: expId,
-        status: 'completed'
-      }]).select().single();
-      if (!error && data) setMyTripState([...myTripState, data]);
+  // --- PERSISTENCE ---
+  useEffect(() => {
+    localStorage.setItem('travel_trip_phase', tripPhase);
+    // Auto-adjust active tab if it's not valid for the current phase
+    const validTabs = getValidTabs(tripPhase);
+    if (!validTabs.includes(activeTab)) {
+      setActiveTab(validTabs[0]);
     }
-  };
+  }, [tripPhase]);
 
   useEffect(() => {
     fetchMyTrip();
@@ -43,9 +41,10 @@ const TravelPlanner = () => {
     setLoadingTrip(false);
   };
 
+  // --- ACTIONS ---
   const addToPlan = async (experienceId) => {
     const existing = myTripState.find(p => p.experience_id === experienceId);
-    if (existing) return; // Already in plan
+    if (existing) return;
 
     const { data, error } = await supabase
       .from('travel_plans')
@@ -59,8 +58,6 @@ const TravelPlanner = () => {
 
     if (!error && data) {
       setMyTripState([...myTripState, data]);
-    } else {
-      console.error(error);
     }
   };
 
@@ -90,7 +87,23 @@ const TravelPlanner = () => {
     }
   };
 
-  // Derived state for My Trip
+  const toggleChecklistStatus = async (chk) => {
+    const expId = `chk-${chk.id}`;
+    const existing = myTripState.find(p => p.experience_id === expId);
+    if (existing) {
+      const { error } = await supabase.from('travel_plans').delete().eq('id', existing.id);
+      if (!error) setMyTripState(myTripState.filter(p => p.id !== existing.id));
+    } else {
+      const { data, error } = await supabase.from('travel_plans').insert([{
+        destination_id: DESTINATION.id,
+        experience_id: expId,
+        status: 'completed'
+      }]).select().single();
+      if (!error && data) setMyTripState([...myTripState, data]);
+    }
+  };
+
+  // --- DERIVED DATA ---
   const plannedExperiences = myTripState
     .filter(plan => !plan.experience_id.startsWith('chk-'))
     .map(plan => {
@@ -98,238 +111,344 @@ const TravelPlanner = () => {
       return { ...plan, xp };
     });
     
-  const plannedCount = myTripState.filter(p => !p.experience_id.startsWith('chk-')).length;
+  const plannedCount = plannedExperiences.length;
 
+  const getValidTabs = (phase) => {
+    switch(phase) {
+      case 'planning': return ['overview', 'checklist', 'experiences'];
+      case 'booked': return ['mytrip', 'checklist'];
+      case 'ontrip': return ['itinerary', 'habits'];
+      default: return ['overview'];
+    }
+  };
+
+  // --- SUB-COMPONENTS ---
+  const PhaseSelector = () => (
+    <div style={{
+      display: 'flex', 
+      background: 'rgba(0,0,0,0.05)', 
+      padding: '4px', 
+      borderRadius: '12px',
+      margin: '0 20px 20px',
+      gap: '4px'
+    }}>
+      {['Planning', 'Booked', 'On Trip'].map(p => {
+        const id = p.toLowerCase().replace(' ', '');
+        const active = tripPhase === id;
+        return (
+          <button 
+            key={id} 
+            onClick={() => setTripPhase(id)}
+            style={{
+              flex: 1,
+              padding: '10px 0',
+              borderRadius: '8px',
+              border: 'none',
+              background: active ? 'white' : 'transparent',
+              color: active ? 'var(--primary)' : 'var(--text-muted)',
+              boxShadow: active ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
+              fontWeight: 700,
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              WebkitTapHighlightColor: 'transparent'
+            }}
+          >
+            {p}
+          </button>
+        )
+      })}
+    </div>
+  );
+
+  const TabBar = () => {
+    const tabs = getValidTabs(tripPhase);
+    return (
+      <div style={{
+        display: 'flex', 
+        justifyContent: 'center',
+        padding: '0 20px 20px',
+        gap: '10px',
+        overflowX: 'auto',
+        scrollbarWidth: 'none'
+      }}>
+        {tabs.map(tab => (
+          <button 
+            key={tab} 
+            onClick={() => setActiveTab(tab)}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '20px',
+              border: 'none',
+              background: activeTab === tab ? 'var(--primary)' : 'var(--card)',
+              color: activeTab === tab ? 'white' : 'var(--text-muted)',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              whiteSpace: 'nowrap',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            {tab === 'mytrip' && plannedCount > 0 && (
+              <span style={{marginLeft: '6px', opacity: 0.8}}>{plannedCount}</span>
+            )}
+          </button>
+        ))}
+      </div>
+    );
+  };
+
+  // --- RENDER ---
   return (
-    <div>
-      <div className="sticky-header" style={{margin: 0, paddingBottom: 0}}>
-        <div className="header-row" style={{paddingBottom: '20px'}}>
-          <Link to="/" className="back-home">← Dashboard</Link>
-          <h1 className="heading-serif">Trip Planner</h1>
-          <div style={{width: '80px'}}></div>
+    <div style={{minHeight: '100vh', paddingBottom: '40px', background: '#f8f9fa'}}>
+      {/* iOS Header */}
+      <div style={{
+        position: 'sticky', 
+        top: 0, 
+        zIndex: 100, 
+        background: 'rgba(255, 255, 255, 0.8)', 
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(0,0,0,0.05)'
+      }}>
+        <div className="header-row" style={{padding: '15px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+          <Link to="/" style={{textDecoration: 'none', color: 'var(--primary)', fontWeight: 600, fontSize: '0.9rem'}}>← Dashboard</Link>
+          <span className="heading-serif" style={{fontSize: '1.2rem'}}>Travel Planner</span>
+          <div style={{width: '60px'}}></div>
         </div>
+        <PhaseSelector />
+        <TabBar />
       </div>
 
-      {/* Destination Hero */}
-      <div style={{background: 'linear-gradient(135deg, #1d3557 0%, #457b9d 100%)', color: 'white', padding: '40px 20px', textAlign: 'center'}}>
-         <h1 className="heading-serif" style={{fontSize: '2.5rem', marginBottom: '10px'}}>
-           {DESTINATION.name}
-         </h1>
-         <p style={{opacity: 0.9, marginBottom: '20px', maxWidth: '600px', margin: '0 auto 20px'}}>
-           {DESTINATION.subtitle}
-         </p>
-         <div style={{display: 'inline-flex', background: 'rgba(0,0,0,0.2)', padding: '4px', borderRadius: '12px'}}>
-            <button onClick={() => setActiveTab('overview')} style={tabStyle(activeTab === 'overview')}>Overview</button>
-            <button onClick={() => setActiveTab('experiences')} style={tabStyle(activeTab === 'experiences')}>Experiences</button>
-            <button onClick={() => setActiveTab('mytrip')} style={tabStyle(activeTab === 'mytrip')}>
-              My Trip {plannedCount > 0 && <span style={{background: 'var(--primary)', color: 'white', padding: '2px 8px', borderRadius: '10px', marginLeft: '5px', fontSize: '0.8rem'}}>{plannedCount}</span>}
-            </button>
-            <button onClick={() => setActiveTab('checklist')} style={tabStyle(activeTab === 'checklist')}>Checklist</button>
-         </div>
-      </div>
-
-      <div style={{padding: '20px', maxWidth: '800px', margin: '0 auto'}}>
+      <div style={{padding: '20px', maxWidth: '600px', margin: '0 auto'}}>
         
-        {/* OVERVIEW TAB */}
-        {activeTab === 'overview' && (
+        {/* PLANNING PHASE CONTENT */}
+        {tripPhase === 'planning' && (
           <div className="fade-in">
-            <p style={{lineHeight: 1.6, color: 'var(--text-muted)', marginBottom: '30px'}}>{DESTINATION.description}</p>
-            
-            <h2 className="heading-serif" style={{marginBottom: '15px'}}>{DESTINATION.recommendedSplit.title}</h2>
-            <div style={{background: 'var(--card)', borderRadius: '16px', padding: '20px', borderLeft: '4px solid var(--primary)', marginBottom: '30px'}}>
-              <p style={{fontWeight: 600, marginBottom: '15px'}}>{DESTINATION.recommendedSplit.summary}</p>
-              <div style={{display: 'flex', flexDirection: 'column', gap: '15px'}}>
-                {DESTINATION.recommendedSplit.days.map((day, i) => (
-                  <div key={i} style={{display: 'flex', gap: '15px'}}>
-                    <div style={{fontWeight: 700, color: 'var(--primary)', minWidth: '50px'}}>Days {day.range}</div>
-                    <div>
-                      <div style={{fontWeight: 600, marginBottom: '4px'}}>{day.islandName} <span style={{fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase'}}>— {day.theme}</span></div>
-                      <p style={{fontSize: '0.9rem', color: 'var(--text-muted)'}}>{day.description}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <h2 className="heading-serif" style={{marginBottom: '15px'}}>Island Profiles</h2>
-            <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px'}}>
-              {ISLANDS.map(island => (
-                <div key={island.id} style={{background: 'var(--card)', padding: '20px', borderRadius: '16px'}}>
-                  <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px'}}>
-                    <div style={{width: '40px', height: '40px', borderRadius: '50%', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem'}}>{island.icon}</div>
-                    <div>
-                      <h3 style={{margin: 0, fontSize: '1.1rem'}}>{island.name}</h3>
-                      <div style={{fontSize: '0.8rem', color: island.color, fontWeight: 700, textTransform: 'uppercase'}}>{island.nickname}</div>
-                    </div>
-                  </div>
-                  <p style={{fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: 1.5}}>{island.verdict}</p>
+            {activeTab === 'overview' && (
+              <>
+                <div style={{marginBottom: '30px', padding: '0 10px'}}>
+                  <h1 className="heading-serif" style={{fontSize: '2.4rem', marginBottom: '8px', color: 'var(--primary)'}}>{DESTINATION.name}</h1>
+                  <p style={{color: 'var(--text-muted)', fontSize: '1rem', lineHeight: 1.6}}>{DESTINATION.description}</p>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* EXPERIENCES TAB */}
-        {activeTab === 'experiences' && (
-          <div className="fade-in">
-            <div style={{display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '20px', marginBottom: '10px'}}>
-              <button 
-                onClick={() => setActiveIsland('all')} 
-                style={filterBtnStyle(activeIsland === 'all', '#666')}
-              >
-                All Islands
-              </button>
-              {ISLANDS.map(isl => (
-                <button 
-                  key={isl.id} 
-                  onClick={() => setActiveIsland(isl.id)}
-                  style={filterBtnStyle(activeIsland === isl.id, isl.color)}
-                >
-                  {isl.icon} {isl.name}
-                </button>
-              ))}
-            </div>
-
-            <div style={{display: 'flex', flexDirection: 'column', gap: '15px'}}>
-              {EXPERIENCES.filter(e => activeIsland === 'all' || e.islandId === activeIsland).map(exp => {
-                const island = ISLANDS.find(i => i.id === exp.islandId);
-                const isInPlan = myTripState.some(p => p.experience_id === exp.id);
-
-                return (
-                  <div key={exp.id} style={{background: 'var(--card)', padding: '20px', borderRadius: '16px', display: 'flex', gap: '15px', position: 'relative', overflow: 'hidden'}}>
-                    <div style={{position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: island.color}}></div>
-                    <div style={{flex: 1, paddingLeft: '5px'}}>
-                      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px'}}>
-                        <h3 className="heading-serif" style={{margin: 0, fontSize: '1.2rem'}}>{exp.name}</h3>
-                        <div style={{background: 'var(--bg)', padding: '4px 8px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)'}}>
-                          ⭐ {exp.rating}
-                        </div>
+                
+                <h2 className="heading-serif" style={{fontSize: '1.4rem', marginBottom: '15px', padding: '0 10px'}}>The Plan</h2>
+                <div style={{display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '30px'}}>
+                  {DESTINATION.recommendedSplit.days.map((day, i) => (
+                    <div key={i} style={{background: 'white', borderRadius: '16px', padding: '16px', display: 'flex', gap: '15px', border: '1px solid rgba(0,0,0,0.05)'}}>
+                      <div style={{color: 'var(--primary)', fontWeight: 800, fontSize: '0.9rem', minWidth: '40px'}}>DAY {day.range}</div>
+                      <div>
+                        <div style={{fontWeight: 700, marginBottom: '2px'}}>{day.islandName}</div>
+                        <p style={{fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0}}>{day.description}</p>
                       </div>
-                      <div style={{fontSize: '0.85rem', color: island.color, fontWeight: 700, marginBottom: '8px'}}>{island.name} • {exp.cost}</div>
-                      <p style={{fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: 1.5, margin: 0}}>{exp.description}</p>
                     </div>
-                    <div style={{display: 'flex', alignItems: 'center'}}>
-                      <button 
-                        onClick={() => !isInPlan && addToPlan(exp.id)}
-                        disabled={isInPlan}
-                        style={{
-                          background: isInPlan ? 'var(--bg)' : 'var(--primary)',
-                          color: isInPlan ? 'var(--text-muted)' : 'white',
-                          border: 'none', width: '40px', height: '40px', borderRadius: '50%',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem',
-                          cursor: isInPlan ? 'default' : 'pointer', transition: 'all 0.2s', fontWeight: 500
-                        }}
-                      >
-                        {isInPlan ? '✓' : '+'}
-                      </button>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
+                  ))}
+                </div>
+              </>
+            )}
 
-        {/* MY TRIP TAB */}
-        {activeTab === 'mytrip' && (
-          <div className="fade-in">
-            {loadingTrip ? (
-              <div style={{textAlign: 'center', padding: '40px', color: 'var(--text-muted)'}}>Loading your plan...</div>
-            ) : plannedExperiences.length === 0 ? (
-              <div style={{textAlign: 'center', padding: '60px 20px', background: 'var(--card)', borderRadius: '16px'}}>
-                <div style={{fontSize: '3rem', marginBottom: '15px'}}>✈️</div>
-                <h3 className="heading-serif" style={{marginBottom: '10px'}}>Your trip is empty</h3>
-                <p style={{color: 'var(--text-muted)'}}>Explore the 'Experiences' tab and add activities to build your itinerary.</p>
-                <button onClick={() => setActiveTab('experiences')} style={{marginTop: '20px', background: 'var(--primary)', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '20px', fontWeight: 600, cursor: 'pointer'}}>
-                  Browse Experiences
-                </button>
-              </div>
-            ) : (
-              <div style={{display: 'flex', flexDirection: 'column', gap: '15px'}}>
-                {plannedExperiences.map((plan) => {
-                  const island = ISLANDS.find(i => i.id === plan.xp.islandId) || {};
-                  const isCompleted = plan.status === 'completed';
-
+            {activeTab === 'checklist' && (
+              <div style={{display: 'flex', flexDirection: 'column', gap: '30px'}}>
+                {['CRITICAL', 'HIGH'].map(priority => {
+                  const items = CHECKLIST_DATA.filter(c => c.priority === priority);
                   return (
-                    <div key={plan.id} style={{background: 'var(--card)', padding: '16px', borderRadius: '16px', display: 'flex', gap: '16px', opacity: isCompleted ? 0.6 : 1, transition: 'all 0.3s'}}>
-                      <div 
-                        onClick={() => toggleStatus(plan)}
-                        style={{width: '28px', height: '28px', borderRadius: '8px', border: isCompleted ? 'none' : '2px solid var(--border)', background: isCompleted ? 'var(--success)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0, cursor: 'pointer', marginTop: '2px'}}
-                      >
-                        {isCompleted ? '✓' : ''}
+                    <div key={priority}>
+                      <h3 style={{fontSize: '0.8rem', fontWeight: 800, color: priority === 'CRITICAL' ? '#e74c3c' : '#e67e22', letterSpacing: '1px', marginBottom: '15px', paddingLeft: '5px'}}>{priority} TASKS</h3>
+                      <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
+                        {items.map(chk => {
+                          const isCompleted = myTripState.some(p => p.experience_id === `chk-${chk.id}`);
+                          return (
+                            <div 
+                              key={chk.id} 
+                              onClick={() => toggleChecklistStatus(chk)}
+                              style={{
+                                background: 'white', 
+                                padding: '16px', 
+                                borderRadius: '16px', 
+                                display: 'flex', 
+                                gap: '12px',
+                                border: '1px solid rgba(0,0,0,0.05)',
+                                opacity: isCompleted ? 0.5 : 1,
+                                transition: 'all 0.2s'
+                              }}
+                            >
+                              <div style={{
+                                minWidth: '24px', height: '24px', borderRadius: '50%',
+                                border: '2px solid',
+                                borderColor: isCompleted ? 'var(--success)' : 'rgba(0,0,0,0.1)',
+                                background: isCompleted ? 'var(--success)' : 'transparent',
+                                color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: '12px', fontWeight: 900
+                              }}> {isCompleted ? '✓' : ''} </div>
+                              <div>
+                                <div style={{fontWeight: 700, fontSize: '1rem', textDecoration: isCompleted ? 'line-through' : 'none'}}>{chk.task}</div>
+                                <div style={{fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px', lineHeight: 1.4}}>{chk.why}</div>
+                              </div>
+                            </div>
+                          )
+                        })}
                       </div>
-                      <div style={{flex: 1}}>
-                        <div style={{fontWeight: 600, fontSize: '1.1rem', textDecoration: isCompleted ? 'line-through' : 'none', marginBottom: '4px'}}>{plan.xp.name}</div>
-                        <div style={{fontSize: '0.8rem', color: island.color || 'var(--text-muted)', fontWeight: 600, marginBottom: '4px'}}>{island.icon} {island.name}</div>
-                        <div style={{fontSize: '0.9rem', color: 'var(--text-muted)', textDecoration: isCompleted ? 'line-through' : 'none'}}>{plan.xp.cost} • Rating: {plan.xp.rating}</div>
-                      </div>
-                      <button 
-                        onClick={() => removeFromPlan(plan.id)}
-                        style={{background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1.2rem', opacity: 0.3, alignSelf: 'flex-start'}}
-                        onMouseOver={(e) => e.currentTarget.style.opacity = '1'}
-                        onMouseOut={(e) => e.currentTarget.style.opacity = '0.3'}
-                      >
-                        🗑️
-                      </button>
                     </div>
                   )
                 })}
               </div>
             )}
+
+            {activeTab === 'experiences' && (
+               <div style={{display: 'flex', flexDirection: 'column', gap: '15px'}}>
+                 <div style={{display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '15px', scrollbarWidth: 'none'}}>
+                    <button onClick={() => setActiveIsland('all')} style={filterBtnStyle(activeIsland === 'all', '#1d3557')}>All</button>
+                    {ISLANDS.map(isl => (
+                      <button key={isl.id} onClick={() => setActiveIsland(isl.id)} style={filterBtnStyle(activeIsland === isl.id, isl.color)}>{isl.icon} {isl.name}</button>
+                    ))}
+                 </div>
+                 {EXPERIENCES.filter(e => activeIsland === 'all' || e.islandId === activeIsland).map(exp => {
+                    const isl = ISLANDS.find(i => i.id === exp.islandId);
+                    const isInPlan = myTripState.some(p => p.experience_id === exp.id);
+                    return (
+                      <div key={exp.id} style={{background: 'white', padding: '16px', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid rgba(0,0,0,0.05)'}}>
+                        <div style={{flex: 1, paddingRight: '15px'}}>
+                          <div style={{fontSize: '0.7rem', fontWeight: 800, color: isl.color, textTransform: 'uppercase', marginBottom: '4px'}}>{isl.name}</div>
+                          <div style={{fontWeight: 700, fontSize: '1.1rem'}}>{exp.name}</div>
+                          <div style={{fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px', lineHeight: 1.4}}>{exp.description}</div>
+                        </div>
+                        <button 
+                          onClick={() => !isInPlan && addToPlan(exp.id)}
+                          style={{
+                            minWidth: '44px', height: '44px', borderRadius: '50%', border: 'none',
+                            background: isInPlan ? '#f0f0f0' : 'var(--primary)',
+                            color: isInPlan ? '#bbb' : 'white',
+                            fontSize: '1.4rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                          }}
+                        > {isInPlan ? '✓' : '+'} </button>
+                      </div>
+                    )
+                 })}
+               </div>
+            )}
           </div>
         )}
 
-        {/* CHECKLIST TAB */}
-        {activeTab === 'checklist' && (
+        {/* BOOKED PHASE CONTENT */}
+        {tripPhase === 'booked' && (
           <div className="fade-in">
-             <div style={{marginBottom: '20px', padding: '15px', background: 'var(--card)', borderRadius: '16px', borderLeft: '4px solid #f39c12'}}>
-               <h3 className="heading-serif" style={{margin: '0 0 10px 0'}}>Hawaii Trip Pre-flight Checklist</h3>
-               <p style={{margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)'}}>
-                 Follow this prioritized timeline to secure flights, cars, and high-risk activities before they sell out.
-               </p>
-             </div>
-             
-             <div style={{display: 'flex', flexDirection: 'column', gap: '20px'}}>
-               {['CRITICAL', 'HIGH', 'MEDIUM', 'FLEXIBLE', 'ON-TRIP'].map(priority => {
-                 const items = CHECKLIST_DATA.filter(c => c.priority === priority);
-                 if (items.length === 0) return null;
-                 
-                 const colorMap = {
-                   'CRITICAL': '#e74c3c',
-                   'HIGH': '#e67e22',
-                   'MEDIUM': '#f1c40f',
-                   'FLEXIBLE': '#2ecc71',
-                   'ON-TRIP': '#3498db'
-                 };
-                 const color = colorMap[priority];
-                 
-                 return (
-                   <div key={priority}>
-                     <h3 style={{color, borderBottom: `2px solid ${color}40`, paddingBottom: '8px', marginBottom: '15px'}}>{priority}</h3>
-                     <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
-                       {items.map(chk => {
-                         const isCompleted = myTripState.some(p => p.experience_id === `chk-${chk.id}`);
-                         return (
-                           <div key={chk.id} style={{background: 'var(--card)', padding: '16px', borderRadius: '12px', display: 'flex', gap: '16px', opacity: isCompleted ? 0.6 : 1, transition: 'all 0.3s'}}>
-                             <div 
-                                onClick={() => toggleChecklistStatus(chk)}
-                                style={{width: '24px', height: '24px', borderRadius: '6px', border: isCompleted ? 'none' : '2px solid var(--border)', background: isCompleted ? 'var(--success)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0, cursor: 'pointer', marginTop: '2px'}}
-                              >
-                                {isCompleted ? '✓' : ''}
-                              </div>
-                              <div style={{flex: 1}}>
-                                <div style={{fontWeight: 700, fontSize: '1.05rem', textDecoration: isCompleted ? 'line-through' : 'none', marginBottom: '4px'}}>{chk.task}</div>
-                                <div style={{fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600, marginBottom: '6px'}}>{chk.why}</div>
-                                <div style={{fontSize: '0.9rem', color: 'var(--text-muted)'}}>{chk.action}</div>
-                              </div>
-                           </div>
-                         );
-                       })}
-                     </div>
+            {activeTab === 'mytrip' && (
+              <div style={{display: 'flex', flexDirection: 'column', gap: '15px'}}>
+                {plannedExperiences.length === 0 ? (
+                   <div style={{textAlign: 'center', padding: '60px 20px'}}>
+                      <p style={{color: 'var(--text-muted)'}}>Nothing booked yet. Use Planning mode to build your trip.</p>
                    </div>
-                 );
-               })}
-             </div>
+                ) : (
+                  plannedExperiences.map(plan => (
+                    <div key={plan.id} style={{background: 'white', padding: '16px', borderRadius: '16px', display: 'flex', gap: '15px', border: '1px solid rgba(0,0,0,0.05)', alignItems: 'center'}}>
+                      <div style={{flex: 1}}>
+                         <div style={{fontWeight: 700, fontSize: '1.05rem'}}>{plan.xp.name}</div>
+                         <div style={{fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '2px'}}>{plan.xp.cost} • ⭐ {plan.xp.rating}</div>
+                      </div>
+                      <button onClick={() => removeFromPlan(plan.id)} style={{background: 'transparent', border: 'none', fontSize: '1.2rem', cursor: 'pointer', opacity: 0.3, padding: '10px'}}>🗑️</button>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {activeTab === 'checklist' && (
+               <div style={{display: 'flex', flexDirection: 'column', gap: '30px'}}>
+                 {['MEDIUM', 'FLEXIBLE'].map(priority => {
+                    const items = CHECKLIST_DATA.filter(c => c.priority === priority);
+                    return (
+                      <div key={priority}>
+                        <h3 style={{fontSize: '0.8rem', fontWeight: 800, color: '#f1c40f', marginBottom: '15px', paddingLeft: '5px'}}>{priority} LOGISTICS</h3>
+                        <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
+                          {items.map(chk => {
+                            const isCompleted = myTripState.some(p => p.experience_id === `chk-${chk.id}`);
+                            return (
+                              <div key={chk.id} onClick={() => toggleChecklistStatus(chk)} style={{background: 'white', padding: '16px', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)', opacity: isCompleted ? 0.5 : 1, display: 'flex', gap: '12px'}}>
+                                <div style={{
+                                  minWidth: '22px', height: '22px', borderRadius: '5px',
+                                  border: '2px solid',
+                                  borderColor: isCompleted ? 'var(--success)' : 'rgba(0,0,0,0.1)',
+                                  background: isCompleted ? 'var(--success)' : 'transparent',
+                                  color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px'
+                                }}> {isCompleted ? '✓' : ''} </div>
+                                <div>
+                                  <div style={{fontWeight: 700, fontSize: '1rem', textDecoration: isCompleted ? 'line-through' : 'none'}}>{chk.task}</div>
+                                  <div style={{fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px', lineHeight: 1.4}}>{chk.action}</div>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                 })}
+               </div>
+            )}
+          </div>
+        )}
+
+        {/* ON TRIP PHASE CONTENT */}
+        {tripPhase === 'ontrip' && (
+          <div className="fade-in">
+             {activeTab === 'itinerary' && (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '30px'}}>
+                   {ISLANDS.map(isl => {
+                      const islExp = plannedExperiences.filter(p => p.xp.islandId === isl.id);
+                      if (islExp.length === 0) return null;
+                      return (
+                        <div key={isl.id}>
+                           <div style={{display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '15px', padding: '0 5px'}}>
+                              <div style={{width: '36px', height: '36px', borderRadius: '10px', background: isl.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', color: 'white'}}>{isl.icon}</div>
+                              <h3 style={{fontSize: '1.3rem', margin: 0}}>{isl.name}</h3>
+                           </div>
+                           <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
+                              {islExp.map(plan => (
+                                <div 
+                                  key={plan.id} 
+                                  onClick={() => toggleStatus(plan)}
+                                  style={{
+                                    background: 'white', 
+                                    padding: '16px', 
+                                    borderRadius: '16px', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: '12px',
+                                    border: '1px solid rgba(0,0,0,0.05)',
+                                    opacity: plan.status === 'completed' ? 0.6 : 1
+                                  }}
+                                >
+                                  <div style={{
+                                    minWidth: '24px', height: '24px', borderRadius: '6px',
+                                    border: '2px solid',
+                                    borderColor: plan.status === 'completed' ? 'var(--success)' : 'rgba(0,0,0,0.1)',
+                                    background: plan.status === 'completed' ? 'var(--success)' : 'transparent',
+                                    color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px'
+                                  }}> {plan.status === 'completed' ? '✓' : ''} </div>
+                                  <div style={{flex: 1}}>
+                                     <div style={{fontWeight: 700, fontSize: '1.05rem', textDecoration: plan.status === 'completed' ? 'line-through' : 'none'}}>{plan.xp.name}</div>
+                                     <div style={{fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '2px'}}>{plan.xp.cost} • Rating: {plan.xp.rating}</div>
+                                  </div>
+                                </div>
+                              ))}
+                           </div>
+                        </div>
+                      )
+                   })}
+                </div>
+             )}
+
+             {activeTab === 'habits' && (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '20px'}}>
+                   <h3 style={{fontSize: '0.8rem', fontWeight: 800, color: 'var(--primary)', letterSpacing: '1px', paddingLeft: '5px'}}>TRIP HABITS & DISCIPLINE</h3>
+                   {CHECKLIST_DATA.filter(c => c.priority === 'ON-TRIP').map(chk => (
+                      <div key={chk.id} style={{background: 'white', padding: '20px', borderRadius: '20px', border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 4px 15px rgba(0,0,0,0.02)'}}>
+                         <div style={{fontWeight: 800, color: 'var(--primary)', marginBottom: '8px', fontSize: '1.1rem'}}>{chk.task}</div>
+                         <p style={{fontSize: '0.95rem', margin: 0, color: 'var(--text-muted)', lineHeight: 1.5}}>{chk.action}</p>
+                      </div>
+                   ))}
+                </div>
+             )}
           </div>
         )}
 
@@ -339,18 +458,28 @@ const TravelPlanner = () => {
 };
 
 // UI Helpers
-const tabStyle = (active) => ({
-  padding: '8px 24px', borderRadius: '10px', border: 'none', 
-  background: active ? 'white' : 'transparent',
-  color: active ? '#1d3557' : 'white',
-  fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
-  display: 'flex', alignItems: 'center'
+const filterBtnStyle = (active, color) => ({
+  padding: '10px 18px', 
+  background: active ? color : 'white',
+  color: active ? 'white' : 'var(--text-muted)', 
+  border: active ? 'none' : '1px solid rgba(0,0,0,0.05)', 
+  borderRadius: '24px', 
+  fontWeight: 700, 
+  fontSize: '0.9rem',
+  cursor: 'pointer', 
+  whiteSpace: 'nowrap', 
+  transition: 'all 0.2s',
+  boxShadow: active ? '0 4px 12px rgba(0,0,0,0.1)' : 'none',
+  WebkitTapHighlightColor: 'transparent'
 });
 
-const filterBtnStyle = (active, color) => ({
-  padding: '8px 16px', background: active ? color : 'var(--card)',
-  color: active ? 'white' : 'var(--text-muted)', border: 'none', borderRadius: '20px', 
-  fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s'
-});
+const tabStyle = (active) => ({
+    padding: '8px 24px', borderRadius: '10px', border: 'none', 
+    background: active ? 'white' : 'transparent',
+    color: active ? '#1d3557' : 'white',
+    fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
+    display: 'flex', alignItems: 'center'
+  });
 
 export default TravelPlanner;
+
