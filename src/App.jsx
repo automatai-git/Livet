@@ -9,6 +9,7 @@ import WorkoutFinder from './pages/WorkoutFinder';
 import ColourPalette from './pages/ColourPalette';
 import BucketList from './pages/BucketList';
 import TravelPlanner from './pages/TravelPlanner';
+import DecisionMatrix from './pages/DecisionMatrix';
 import { supabase } from './services/supabase';
 import Auth from './components/meal-planner/Auth';
 
@@ -42,6 +43,7 @@ function App() {
             <Route path="/colour" element={<ColourPalette />} />
             <Route path="/bucket" element={<BucketList />} />
             <Route path="/travel" element={<TravelPlanner />} />
+            <Route path="/decision" element={<DecisionMatrix />} />
           </Routes>
         )}
       </div>

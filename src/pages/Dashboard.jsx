@@ -214,6 +214,15 @@ const Dashboard = () => {
           </p>
           <span className="app-badge">Goals</span>
         </Link>
+
+        <Link to="/decision" className="app-card">
+          <div className="app-icon" style={{background: 'transparent'}}><img src="icons/decision.png" alt="Decision Matrix" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
+          <div className="app-title">Decision <em>Matrix</em></div>
+          <p className="app-description">
+            Solve complex choices with weighted criteria and objective scoring.
+          </p>
+          <span className="app-badge">Strategy</span>
+        </Link>
       </div>
 
       <footer className="dashboard-footer">
