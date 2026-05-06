@@ -1,51 +1,44 @@
-const CACHE_NAME = 'life-training-hub-v2';
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/timeline.html',
-  '/mobility.html',
-  '/mobility.js',
-  '/mobility.css',
-  '/mobility-data.js',
-  '/workout-finder.html',
-  '/colour-palette.html',
-  '/bucketlist.html',
-  '/manifest.json',
-  'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Nunito+Sans:wght@300;400;600&display=swap'
+const CACHE_NAME = 'life-training-hub-v3';
+const SHELL = [
+  '/Livet/',
+  '/Livet/index.html',
+  '/Livet/manifest.json',
+  '/Livet/favicon.svg',
 ];
 
-self.addEventListener('install', event => {
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.addAll(SHELL).catch(() => undefined)
+    )
   );
   self.skipWaiting();
 });
 
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(response => {
-      if (response) return response;
-      return fetch(event.request).then(response => {
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response;
-        }
-        const responseToCache = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseToCache));
-        return response;
-      });
-    })
-  );
-});
-
-self.addEventListener('activate', event => {
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then(cacheNames =>
-      Promise.all(
-        cacheNames
-          .filter(name => name !== CACHE_NAME)
-          .map(name => caches.delete(name))
-      )
+    caches.keys().then((names) =>
+      Promise.all(names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n)))
     )
   );
   self.clients.claim();
+});
+
+// Cache-first for same-origin GETs; network-first fallback for others.
+// Block + mobility data is cached opportunistically by the data layer in localStorage,
+// so mobility sessions survive offline once viewed.
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  if (req.method !== 'GET') return;
+  event.respondWith(
+    caches.match(req).then((cached) => {
+      if (cached) return cached;
+      return fetch(req).then((res) => {
+        if (!res || res.status !== 200 || res.type !== 'basic') return res;
+        const clone = res.clone();
+        caches.open(CACHE_NAME).then((c) => c.put(req, clone));
+        return res;
+      }).catch(() => cached);
+    })
+  );
 });

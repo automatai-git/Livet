@@ -39,7 +39,7 @@ function App() {
             <Route path="/menu" element={<MenuPlanner />} />
             <Route path="/timeline" element={<Timeline />} />
             <Route path="/mobility" element={<Mobility />} />
-            <Route path="/workout" element={<WorkoutFinder />} />
+            <Route path="/workout/*" element={<WorkoutFinder />} />
             <Route path="/colour" element={<ColourPalette />} />
             <Route path="/bucket" element={<BucketList />} />
             <Route path="/travel" element={<TravelPlanner />} />
