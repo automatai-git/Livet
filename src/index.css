@@ -629,6 +629,8 @@ button {
     gap: 12px;
     border: 2px solid transparent;
     transition: background 0.2s, border-color 0.2s;
+    overflow: hidden;
+    min-width: 0;
 }
 .meal-day-row.drag-over {
     background: var(--primary-light);
@@ -650,6 +652,8 @@ button {
     align-items: center;
     justify-content: space-between;
     gap: 8px;
+    min-width: 0;
+    overflow: hidden;
 }
 .meal-day-row .meal-slot.empty {
     background: var(--bg);
@@ -667,6 +671,7 @@ button {
     text-overflow: ellipsis;
     white-space: nowrap;
     flex: 1;
+    min-width: 0;
 }
 .meal-day-row .meal-slot .slot-actions {
     display: flex;
