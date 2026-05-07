@@ -4,8 +4,8 @@
 --     - Strength 3x/wk (MacroFactor: Upper / Lower / Full Body, hypertrophy, 60min cap)
 --     - Run Tue/Thu/Sun (Runna: Train Your Way, endurance, long run Sunday)
 --     - Wed mobility non-negotiable (Locked Principle #1)
---   The Sheet does not pin which weekday gets Upper vs Full Body, so this seed
---   places: Mon=Full Body, Fri=Upper, Sat=flex (Lower / sport / rest).
+--   Per athlete clarification 2026-05-07: all 3 strength days are Full Body,
+--   with rotating emphasis: Mon=chest-forward, Fri=back-focused, Sat=leg-focused.
 
 -- 1. Tables ------------------------------------------------------------------
 
@@ -94,7 +94,7 @@ INSERT INTO blocks (
        "bias":{"strength":"maintain hypertrophy; protect long-run recovery","running":"Tue easy + Thu mid-tempo + Sun long progressing 14→18 km; W11 18 km test","mobility":"Wed full + targeted ankle/groin snippets pre-run"}}
     ]'::jsonb,
     '{
-      "monday":   {"kind":"strength","focus":"Full Body — chest +2, posterior chain +1, core +1, arms +1","intensity":"moderate","route_to":"macrofactor","rpe_target":"RPE 6-7","notes":"60min cap. No heavy OH press during shoulder flares; goblet only for deep squat work."},
+      "monday":   {"kind":"strength","focus":"Full Body — chest forward","intensity":"moderate","route_to":"macrofactor","rpe_target":"RPE 6-7","notes":"60min cap. Chest emphasis. No heavy OH press during shoulder flares; submaximal DB pressing."},
       "tuesday":  {"kind":"run","quality":"easy","route_to":"runna","rpe_target":"RPE 4-5, conversational","notes":"Easy aerobic. Pre-run: ankle circles + leg swings."},
       "wednesday":{"kind":"mobility","session_id":"wed-corrective-full","route_to":"internal"},
       "thursday": {"kind":"run","quality":"easy","route_to":"runna","rpe_target":"RPE 4-5","notes":"Mid-week. Phase determines quality.",
@@ -102,14 +102,8 @@ INSERT INTO blocks (
                      "realization":{"quality":"tempo","rpe_target":"RPE 6-7"},
                      "deload":{"quality":"recovery","rpe_target":"RPE 3-4"}
                    }},
-      "friday":   {"kind":"strength","focus":"Upper — chest emphasis (no heavy OH press during shoulder flares)","intensity":"moderate","route_to":"macrofactor","rpe_target":"RPE 6-7","notes":"60min cap. Submaximal pressing — shoulder stability is the limiter."},
-      "saturday": {"kind":"flex","notes":"Sport ceiling: padel + football combined <=2/wk. Tournament weeks max 1.",
-                   "options":[
-                     {"kind":"sport","activity":"padel","cap_check":true},
-                     {"kind":"sport","activity":"football","cap_check":true},
-                     {"kind":"strength","focus":"Lower — knee-friendly (goblet/SL work, no deep heavy squats)","intensity":"moderate","route_to":"macrofactor","rpe_target":"RPE 6-7"},
-                     {"kind":"rest"}
-                   ]},
+      "friday":   {"kind":"strength","focus":"Full Body — back focused","intensity":"moderate","route_to":"macrofactor","rpe_target":"RPE 6-7","notes":"60min cap. Pull/row emphasis, posterior chain."},
+      "saturday": {"kind":"strength","focus":"Full Body — leg focused","intensity":"moderate","route_to":"macrofactor","rpe_target":"RPE 6-7","notes":"60min cap. Knee-friendly: goblet / single-leg work, no deep heavy back squats."},
       "sunday":   {"kind":"run","quality":"long","route_to":"runna","rpe_target":"RPE 4-5 (Z2, <=170 bpm, 6:30–7:00/km)","notes":"Long run. Build distance week-over-week toward 18 km W11 test.",
                    "phase_overrides":{
                      "realization":{"notes":"Build from 14 km W8 → 18 km W11. Strict Z2."},

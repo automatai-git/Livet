@@ -360,3 +360,194 @@ button {
 .timeline-node.visible {
     animation: fadeUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
+
+/* ---------- Workout / Mobility shared styles ---------- */
+
+.tight-card {
+    background: var(--card);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    padding: 16px;
+    box-shadow: 0 1px 4px rgba(27, 59, 47, 0.04);
+}
+
+.tight-card.hero {
+    padding: 22px 20px;
+    border-radius: 18px;
+    box-shadow: 0 2px 12px rgba(27, 59, 47, 0.06);
+}
+
+.muted-row {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    letter-spacing: 0.2px;
+}
+
+.eyebrow {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.kind-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+}
+.kind-chip::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.7;
+}
+.kind-chip.strength { background: #f1ead9; color: #7a5a25; }
+.kind-chip.run      { background: #e3edee; color: #2d5a6c; }
+.kind-chip.mobility { background: var(--success-bg); color: var(--primary); }
+.kind-chip.sport    { background: #ede4eb; color: #6a3d5d; }
+.kind-chip.rest     { background: #efeeea; color: var(--text-muted); }
+.kind-chip.flex     { background: #f1ede4; color: #6b6256; }
+
+.tag-chip {
+    display: inline-block;
+    padding: 2px 8px;
+    background: rgba(27, 59, 47, 0.06);
+    color: var(--primary-light);
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 11px 18px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.btn-primary:hover { background: var(--primary-light); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-ghost {
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+.btn-ghost:hover { border-color: var(--primary); }
+
+.day-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 6px;
+}
+@media (max-width: 520px) {
+    .day-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+}
+
+.day-cell {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 92px;
+}
+.day-cell:hover { border-color: var(--primary-light); }
+.day-cell.today { border-color: var(--primary); border-width: 2px; padding: 9px; }
+
+.day-cell .day-letter {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1rem;
+    color: var(--text);
+}
+.day-cell .day-date {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 0.3px;
+}
+
+.phase-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+}
+.phase-cell {
+    width: 30px; height: 36px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text);
+    background: var(--card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: transform 0.15s;
+}
+.phase-cell:hover { transform: translateY(-1px); }
+.phase-cell.current { border: 2px solid var(--primary); }
+.phase-cell.deload { background: repeating-linear-gradient(45deg, #fff, #fff 4px, #efeeea 4px, #efeeea 8px); }
+.phase-cell.realization { background: #eaf4eb; }
+.phase-cell.accumulation { background: #f7f4ed; }
+.phase-cell .star { position: absolute; top: 1px; right: 3px; font-size: 0.55rem; color: var(--primary); }
+
+.movement-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    transition: border-left-color 0.2s;
+}
+.movement-card.done { border-left-color: var(--success); background: var(--success-bg); }
+
+.movement-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+.movement-row input[type=checkbox] {
+    margin-top: 2px;
+    width: 18px; height: 18px;
+    accent-color: var(--primary);
+    flex-shrink: 0;
+}
+
+.section-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin: 18px 0 10px;
+}
+.section-title h3 {
+    font-family: 'DM Serif Display', serif;
+    font-weight: 400;
+    font-size: 1.15rem;
+    color: var(--text);
+    margin: 0;
+}

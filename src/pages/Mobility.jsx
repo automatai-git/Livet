@@ -18,21 +18,19 @@ const InlineTimer = ({ initialSeconds = 60 }) => {
 
   const mins = Math.floor(timeLeft / 60);
   const secs = timeLeft % 60;
-  
+
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '15px', background: 'var(--bg)', padding: '10px 20px', borderRadius: '12px', marginTop: '15px', border: '1px solid var(--border)' }}>
-      <div style={{ fontSize: '1.5rem', fontWeight: 600, width: '60px', textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}>
-        {mins}:{secs < 10 ? '0'+secs : secs}
-      </div>
-      <button onClick={() => setIsRunning(!isRunning)} style={{ background: isRunning ? '#c48b47' : 'var(--primary)', color: '#fff', border: 'none', padding: '8px 15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, padding: '8px 10px', background: 'var(--bg)', borderRadius: 10, border: '1px solid var(--border)' }}>
+      <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, fontSize: '0.95rem', minWidth: 42 }}>
+        {mins}:{secs < 10 ? '0' + secs : secs}
+      </span>
+      <button onClick={() => setIsRunning(!isRunning)} className="btn-primary" style={{ padding: '4px 12px', fontSize: '0.78rem' }}>
         {isRunning ? 'Pause' : 'Start'}
       </button>
-      <button onClick={() => { setIsRunning(false); setTimeLeft(initialSeconds); }} style={{ background: 'transparent', color: 'var(--text-muted)', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
-        Reset
-      </button>
-      <div style={{ flex: 1, display: 'flex', gap: '5px', justifyContent: 'flex-end' }}>
-         <button onClick={() => setTimeLeft(60)} style={{background: 'var(--card)', border: '1px solid var(--border)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', cursor: 'pointer'}}>1m</button>
-         <button onClick={() => setTimeLeft(120)} style={{background: 'var(--card)', border: '1px solid var(--border)', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', cursor: 'pointer'}}>2m</button>
+      <button onClick={() => { setIsRunning(false); setTimeLeft(initialSeconds); }} className="btn-ghost" style={{ padding: '4px 10px', fontSize: '0.78rem' }}>Reset</button>
+      <div style={{ flex: 1, display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+        <button onClick={() => setTimeLeft(60)} className="btn-ghost" style={{ padding: '4px 8px', fontSize: '0.7rem' }}>1m</button>
+        <button onClick={() => setTimeLeft(120)} className="btn-ghost" style={{ padding: '4px 8px', fontSize: '0.7rem' }}>2m</button>
       </div>
     </div>
   );
@@ -202,44 +200,56 @@ const Mobility = () => {
     const routines = MOBILITY_DATA[selectedDay].routines || {};
     const entries = Object.entries(routines);
     if (entries.length === 0) {
-      return <p style={{color: 'var(--text-muted)', textAlign: 'center', marginTop: '40px'}}>No mobility routine for this day. Tap another day above.</p>;
+      return <p className="muted-row" style={{ textAlign: 'center', marginTop: 32 }}>No mobility routine for this day.</p>;
     }
-    return entries.map(([key, rot]) => (
-      <div 
-        key={key} 
-        className="app-card" 
-        onClick={() => setSelectedRoutine(rot)}
-        style={{ cursor: 'pointer', marginBottom: '16px' }}
-      >
-        <h3 className="heading-serif" style={{fontSize: '1.4rem'}}>{rot.name}</h3>
-        <p style={{color: 'var(--text-muted)'}}>{rot.exercises.length} exercises</p>
+    return (
+      <div style={{ display: 'grid', gap: 10 }}>
+        {entries.map(([key, rot]) => (
+          <button
+            key={key}
+            className="tight-card"
+            onClick={() => setSelectedRoutine(rot)}
+            style={{ cursor: 'pointer', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}
+          >
+            <div>
+              <div className="heading-serif" style={{ fontSize: '1.05rem', lineHeight: 1.2 }}>{rot.name}</div>
+              <div className="muted-row" style={{ marginTop: 2 }}>{rot.exercises.length} exercises</div>
+            </div>
+            <span style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>›</span>
+          </button>
+        ))}
       </div>
-    ));
+    );
   };
 
   const renderExercises = () => {
     if (!selectedRoutine) return null;
     return (
       <div>
-        <button onClick={() => setSelectedRoutine(null)} style={{background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.9rem', cursor: 'pointer', fontWeight: 600, marginBottom: '20px'}}>
-          ← Back to routines
+        <button onClick={() => setSelectedRoutine(null)} className="back-home" style={{ background: 'none', border: 'none', cursor: 'pointer', marginBottom: 12, fontSize: '0.85rem' }}>
+          ← Back
         </button>
-        <h2 className="heading-serif" style={{fontSize: '2rem', marginBottom: '20px'}}>{selectedRoutine.name}</h2>
-        {selectedRoutine.exercises.map((ex, i) => (
-          <div key={i} style={{background: 'var(--card)', padding: '20px', borderRadius: '16px', marginBottom: '16px', border: '1.5px solid var(--border)'}}>
-            <h3 style={{fontWeight: 700, marginBottom: '8px'}}>{ex.order}. {ex.name}</h3>
-            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: 'var(--text-muted)', fontSize: '0.9rem'}}>
-              <span><strong>Sets:</strong> {ex.sets}</span>
-              <span><strong>Load:</strong> {ex.load}</span>
+        <h2 className="heading-serif" style={{ fontSize: '1.4rem', marginBottom: 14 }}>{selectedRoutine.name}</h2>
+        <div style={{ display: 'grid', gap: 10 }}>
+          {selectedRoutine.exercises.map((ex, i) => (
+            <div key={i} className="tight-card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+                <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{ex.order}. {ex.name}</div>
+                <span className="muted-row" style={{ whiteSpace: 'nowrap' }}>{ex.sets}</span>
+              </div>
+              {ex.load && ex.load !== 'None' && (
+                <div className="muted-row" style={{ marginTop: 2 }}>{ex.load}</div>
+              )}
+              <div style={{ fontSize: '0.85rem', marginTop: 6, lineHeight: 1.5 }}>{ex.cue}</div>
+              {ex.purpose && (
+                <div style={{ marginTop: 6 }}>
+                  <span className="tag-chip">{ex.purpose}</span>
+                </div>
+              )}
+              <InlineTimer initialSeconds={60} />
             </div>
-            <p style={{fontSize: '0.85rem', color: 'var(--text)'}}><strong>Focus:</strong> {ex.purpose}</p>
-            <p style={{fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600, marginTop: '4px', marginBottom: '10px'}}><em>Cue: {ex.cue}</em></p>
-            <InlineTimer initialSeconds={60} />
-          </div>
-        ))}
-        <button style={{width: '100%', padding: '16px', background: 'var(--success)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, fontSize: '1.1rem', marginTop: '10px'}}>
-          Complete Workout
-        </button>
+          ))}
+        </div>
       </div>
     );
   };
@@ -249,39 +259,39 @@ const Mobility = () => {
       <div className="sticky-header">
         <div className="header-row">
           <Link to="/" className="back-home">← Dashboard</Link>
-          <h1 className="heading-serif">Mobility</h1>
-          <div style={{width: '80px'}}></div>
+          <h1 className="heading-serif" style={{ fontSize: '1.25rem' }}>Mobility</h1>
+          <div style={{ width: 60 }} />
         </div>
       </div>
 
-      <div style={{padding: '0 20px'}}>
+      <div style={{ padding: '4px 16px 24px', maxWidth: 720, margin: '0 auto' }}>
         {!selectedRoutine && (
           <>
-            <div style={{display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '20px', margin: '0 -20px 20px', padding: '0 20px 20px'}}>
+            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 14, marginBottom: 14, scrollbarWidth: 'none' }}>
               {Object.keys(MOBILITY_DATA).map(day => {
                 const isToday = day === todayName;
+                const isSelected = selectedDay === day;
                 return (
                   <button
                     key={day}
                     onClick={() => setSelectedDay(day)}
                     style={{
-                      flexShrink: 0, padding: '10px 20px', borderRadius: '20px',
-                      background: selectedDay === day ? 'var(--text)' : 'var(--card)',
-                      color: selectedDay === day ? 'white' : 'var(--text)',
-                      border: isToday ? '2px solid var(--success)' : ('1.5px solid ' + (selectedDay === day ? 'var(--text)' : 'var(--border)')),
-                      textTransform: 'capitalize', fontWeight: 600,
-                      position: 'relative'
+                      flexShrink: 0, padding: '7px 14px', borderRadius: 999,
+                      background: isSelected ? 'var(--primary)' : 'var(--card)',
+                      color: isSelected ? '#fff' : 'var(--text)',
+                      border: '1px solid ' + (isSelected ? 'var(--primary)' : 'var(--border)'),
+                      textTransform: 'capitalize', fontWeight: 500, fontSize: '0.82rem',
+                      cursor: 'pointer',
+                      boxShadow: isToday && !isSelected ? 'inset 0 0 0 1px var(--primary)' : 'none',
                     }}
                   >
-                    {isToday && <span style={{position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', background: 'var(--success)', color: 'white', fontSize: '0.6rem', padding: '2px 6px', borderRadius: '4px', fontWeight: 800}}>TODAY</span>}
                     {day}
+                    {isToday && <span style={{ marginLeft: 6, fontSize: '0.62rem', color: isSelected ? 'rgba(255,255,255,0.8)' : 'var(--primary-light)', fontWeight: 600, letterSpacing: 0.5 }}>·TODAY</span>}
                   </button>
                 );
               })}
             </div>
-            <div>
-              {selectedDay ? renderRoutines() : <p style={{color: 'var(--text-muted)', textAlign: 'center', marginTop: '40px'}}>Select a day to view mobility routines.</p>}
-            </div>
+            {renderRoutines()}
           </>
         )}
 

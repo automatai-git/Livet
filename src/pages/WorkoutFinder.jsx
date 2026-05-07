@@ -15,40 +15,25 @@ import {
   openExternal,
 } from '../lib/blocks';
 
-// ---------- shared bits -----------------------------------------------------
-
-const KIND_COLOURS = {
-  strength: '#c4763a',
-  run:      '#3a6fb0',
-  mobility: '#3a8a5a',
-  sport:    '#7a4ea8',
-  rest:     '#8a8a8a',
-  flex:     '#5d5d5d',
-};
+// ---------- helpers ---------------------------------------------------------
 
 const fmtDate = (d) =>
   d.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
 
+const fmtShort = (d) =>
+  d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+
 function kindLabel(day) {
   if (!day) return '—';
   switch (day.kind) {
-    case 'strength': return `Strength — ${day.focus}`;
-    case 'run':      return `Run — ${day.quality?.[0].toUpperCase() + day.quality?.slice(1)}`;
+    case 'strength': return day.focus ? `Strength · ${day.focus.split('—')[0].trim()}` : 'Strength';
+    case 'run':      return `Run · ${day.quality?.[0].toUpperCase() + day.quality?.slice(1)}`;
     case 'mobility': return 'Mobility';
-    case 'sport':    return `Sport — ${day.activity}`;
+    case 'sport':    return `Sport · ${day.activity}`;
     case 'rest':     return 'Rest';
     case 'flex':     return 'Flex — pick one';
     default:         return day.kind;
   }
-}
-
-function Chip({ text, bg, fg = '#fff' }) {
-  return (
-    <span style={{
-      padding: '3px 10px', background: bg, color: fg, borderRadius: 999,
-      fontSize: '0.75rem', fontWeight: 600, whiteSpace: 'nowrap',
-    }}>{text}</span>
-  );
 }
 
 function StickyHeader({ title, back = '/' }) {
@@ -56,25 +41,10 @@ function StickyHeader({ title, back = '/' }) {
     <div className="sticky-header">
       <div className="header-row">
         <Link to={back} className="back-home">← Back</Link>
-        <h1 className="heading-serif">{title}</h1>
-        <div style={{ width: 80 }} />
+        <h1 className="heading-serif" style={{ fontSize: '1.25rem' }}>{title}</h1>
+        <div style={{ width: 60 }} />
       </div>
     </div>
-  );
-}
-
-function ExternalButton({ scheme, webUrl, label }) {
-  return (
-    <button
-      onClick={() => openExternal(scheme, webUrl)}
-      style={{
-        background: 'var(--primary)', color: '#fff', border: 'none',
-        padding: '12px 18px', borderRadius: 12, fontWeight: 700, cursor: 'pointer',
-        marginTop: 12,
-      }}
-    >
-      {label}
-    </button>
   );
 }
 
@@ -105,18 +75,16 @@ function MovementTimer({ seconds }) {
   const m = Math.floor(left / 60), s = left % 60;
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
-      <div style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>
+      <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, fontSize: '0.95rem', minWidth: 42 }}>
         {m}:{s < 10 ? '0' + s : s}
-      </div>
-      <button onClick={() => setRunning(!running)} style={timerBtn}>
+      </span>
+      <button onClick={() => setRunning(!running)} className="btn-primary" style={{ padding: '4px 12px', fontSize: '0.78rem' }}>
         {running ? 'Pause' : 'Start'}
       </button>
-      <button onClick={() => { setRunning(false); setLeft(seconds); }} style={timerBtnGhost}>Reset</button>
+      <button onClick={() => { setRunning(false); setLeft(seconds); }} className="btn-ghost" style={{ padding: '4px 10px', fontSize: '0.78rem' }}>Reset</button>
     </div>
   );
 }
-const timerBtn = { background: 'var(--primary)', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: 6, cursor: 'pointer', fontWeight: 600 };
-const timerBtnGhost = { background: 'transparent', border: '1px solid var(--border)', padding: '4px 10px', borderRadius: 6, cursor: 'pointer' };
 
 function MobilityRenderer({ sessionId }) {
   const [session, setSession] = useState(null);
@@ -141,7 +109,7 @@ function MobilityRenderer({ sessionId }) {
     return () => { cancelled = true; };
   }, [sessionId]);
 
-  if (!session) return <div style={{ padding: 16, color: 'var(--text-muted)' }}>Loading mobility session…</div>;
+  if (!session) return <div className="muted-row" style={{ padding: 14 }}>Loading mobility session…</div>;
 
   const toggle = (id) => {
     const next = new Set(done);
@@ -157,7 +125,7 @@ function MobilityRenderer({ sessionId }) {
         rpe: rpe ? Number(rpe) : undefined,
         notes: notes || undefined,
       });
-      setSavedMsg('Logged. Nice work.');
+      setSavedMsg('Logged.');
       const k = await getMobilityStreak(sessionId);
       setStreak(k);
     } catch (e) {
@@ -166,50 +134,45 @@ function MobilityRenderer({ sessionId }) {
     }
   };
 
+  const totalMovements = (session.blocks || []).reduce((n, b) => n + b.movements.length, 0);
+
   return (
-    <div style={{ marginTop: 20 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 8 }}>
-        <h2 className="heading-serif" style={{ margin: 0 }}>{session.name}</h2>
-        <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-          ~{session.duration_min} min · streak: {streak} wk{streak === 1 ? '' : 's'}
-        </div>
+    <div style={{ marginTop: 18 }}>
+      <div className="section-title">
+        <h3>{session.name}</h3>
+        <span className="muted-row">~{session.duration_min} min · streak {streak}w · {done.size}/{totalMovements}</span>
       </div>
       {(session.prerequisites || []).length > 0 && (
-        <div style={{ marginTop: 8, fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+        <div className="muted-row" style={{ marginBottom: 10 }}>
           {session.prerequisites.join(' ')}
         </div>
       )}
 
       {(session.blocks || []).map((blk) => (
-        <section key={blk.name} style={{ marginTop: 18 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <h3 style={{ margin: 0 }}>{blk.name}</h3>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{blk.duration_min} min</span>
+        <section key={blk.name} style={{ marginTop: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+            <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{blk.name}</div>
+            <span className="muted-row">{blk.duration_min} min</span>
           </div>
-          <div style={{ display: 'grid', gap: 10, marginTop: 10 }}>
+          <div style={{ display: 'grid', gap: 8 }}>
             {blk.movements.map((mv) => {
               const sec = parseDurationSeconds(mv.reps_or_time);
               const isDone = done.has(mv.id);
               return (
-                <div key={mv.id} className="app-card" style={{
-                  padding: 14, borderLeft: `4px solid ${isDone ? 'var(--success, #3a8a5a)' : 'var(--primary)'}`,
-                }}>
-                  <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer' }}>
-                    <input
-                      type="checkbox" checked={isDone} onChange={() => toggle(mv.id)}
-                      style={{ marginTop: 4, width: 20, height: 20 }}
-                    />
+                <div key={mv.id} className={`movement-card ${isDone ? 'done' : ''}`}>
+                  <label className="movement-row" style={{ cursor: 'pointer' }}>
+                    <input type="checkbox" checked={isDone} onChange={() => toggle(mv.id)} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 600 }}>{mv.name}</div>
-                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                      <div style={{ fontWeight: 600, fontSize: '0.92rem' }}>{mv.name}</div>
+                      <div className="muted-row" style={{ marginTop: 2 }}>
                         {mv.sets} × {mv.reps_or_time}{mv.load ? ` · ${mv.load}` : ''}
                       </div>
-                      <div style={{ fontSize: '0.9rem', marginTop: 4 }}>{mv.cue}</div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
-                        {(mv.target || []).map((t) => (
-                          <Chip key={t} text={t} bg="var(--bg)" fg="var(--text)" />
-                        ))}
-                      </div>
+                      <div style={{ fontSize: '0.85rem', marginTop: 4, lineHeight: 1.45 }}>{mv.cue}</div>
+                      {(mv.target || []).length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
+                          {mv.target.map((t) => <span key={t} className="tag-chip">{t}</span>)}
+                        </div>
+                      )}
                       {sec !== null && <MovementTimer seconds={sec} />}
                     </div>
                   </label>
@@ -220,32 +183,30 @@ function MobilityRenderer({ sessionId }) {
         </section>
       ))}
 
-      <div className="app-card" style={{ padding: 14, marginTop: 20 }}>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <label>RPE (1-10)
+      <div className="tight-card" style={{ marginTop: 18 }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+          <label style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+            RPE
             <input type="number" min="1" max="10" value={rpe} onChange={(e) => setRpe(e.target.value)}
-                   style={{ marginLeft: 6, width: 60, padding: '4px 6px', borderRadius: 6, border: '1px solid var(--border)' }} />
+              style={{ width: 56, padding: '6px 8px', borderRadius: 8, border: '1px solid var(--border)', fontFamily: 'inherit' }} />
           </label>
         </div>
         <textarea
           value={notes} onChange={(e) => setNotes(e.target.value)}
           placeholder="Notes (optional)"
           rows={2}
-          style={{ width: '100%', marginTop: 10, padding: 8, borderRadius: 8, border: '1px solid var(--border)', resize: 'vertical', fontFamily: 'inherit' }}
+          style={{ width: '100%', marginTop: 10, padding: 10, borderRadius: 10, border: '1px solid var(--border)', resize: 'vertical', fontFamily: 'inherit', fontSize: '0.88rem' }}
         />
-        <button
-          onClick={markComplete}
-          style={{ marginTop: 12, background: 'var(--primary)', color: '#fff', border: 'none', padding: '12px 18px', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}
-        >
+        <button onClick={markComplete} className="btn-primary" style={{ marginTop: 12, width: '100%' }}>
           Mark session complete
         </button>
-        {savedMsg && <div style={{ marginTop: 8, color: 'var(--text-muted)' }}>{savedMsg}</div>}
+        {savedMsg && <div className="muted-row" style={{ marginTop: 8, textAlign: 'center' }}>{savedMsg}</div>}
       </div>
     </div>
   );
 }
 
-// ---------- Day session card ------------------------------------------------
+// ---------- Day session card -----------------------------------------------
 
 function ActiveModifiers({ block, weekNumber }) {
   const items = (block.modifiers || []).filter(
@@ -254,15 +215,17 @@ function ActiveModifiers({ block, weekNumber }) {
   const [open, setOpen] = useState(false);
   if (items.length === 0) return null;
   return (
-    <div className="app-card" style={{ padding: 14, marginTop: 16 }}>
-      <button onClick={() => setOpen(!open)} style={{ background: 'none', border: 'none', padding: 0, fontWeight: 600, cursor: 'pointer', color: 'var(--text)' }}>
-        {open ? '▾' : '▸'} Active modifiers ({items.length})
+    <div className="tight-card" style={{ marginTop: 14 }}>
+      <button onClick={() => setOpen(!open)}
+        style={{ background: 'none', border: 'none', padding: 0, fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{open ? '▾' : '▸'}</span>
+        Modifiers ({items.length})
       </button>
       {open && (
-        <ul style={{ marginTop: 8, paddingLeft: 18 }}>
+        <ul style={{ marginTop: 8, paddingLeft: 16, fontSize: '0.85rem', lineHeight: 1.55 }}>
           {items.map((m, i) => (
-            <li key={i} style={{ marginBottom: 6 }}>
-              <strong style={{ textTransform: 'capitalize' }}>{m.type.replace('_', ' ')}:</strong> {m.description}
+            <li key={i} style={{ marginBottom: 4 }}>
+              <strong style={{ textTransform: 'capitalize' }}>{m.type.replace('_', ' ')}.</strong> {m.description}
             </li>
           ))}
         </ul>
@@ -275,15 +238,16 @@ function DaySessionCard({ day, onPickFlex }) {
   if (!day) return null;
   if (day.kind === 'flex') {
     return (
-      <div className="app-card" style={{ padding: 18 }}>
-        <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{kindLabel(day)}</div>
-        {day.notes && <div style={{ marginTop: 6, color: 'var(--text-muted)' }}>{day.notes}</div>}
-        <div style={{ display: 'grid', gap: 10, marginTop: 14 }}>
+      <div className="tight-card hero">
+        <div className="eyebrow">Today</div>
+        <div className="heading-serif" style={{ fontSize: '1.6rem', marginTop: 2 }}>{kindLabel(day)}</div>
+        {day.notes && <div className="muted-row" style={{ marginTop: 6 }}>{day.notes}</div>}
+        <div style={{ display: 'grid', gap: 8, marginTop: 14 }}>
           {(day.options || []).map((opt, i) => (
-            <button key={i} onClick={() => onPickFlex(opt)} className="app-card"
-              style={{ textAlign: 'left', padding: 12, cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--card)' }}>
-              <Chip text={opt.kind} bg={KIND_COLOURS[opt.kind] || '#555'} />
-              <div style={{ marginTop: 6 }}>{kindLabel(opt)}</div>
+            <button key={i} onClick={() => onPickFlex(opt)} className="tight-card"
+              style={{ textAlign: 'left', cursor: 'pointer', padding: 12, border: '1px solid var(--border)' }}>
+              <span className={`kind-chip ${opt.kind}`}>{opt.kind}</span>
+              <div style={{ marginTop: 6, fontSize: '0.92rem' }}>{kindLabel(opt)}</div>
             </button>
           ))}
         </div>
@@ -292,35 +256,47 @@ function DaySessionCard({ day, onPickFlex }) {
   }
 
   return (
-    <div className="app-card" style={{ padding: 18 }}>
-      <Chip text={day.kind} bg={KIND_COLOURS[day.kind] || '#555'} />
-      <div style={{ fontSize: '1.6rem', fontWeight: 700, marginTop: 8 }}>{kindLabel(day)}</div>
+    <div className="tight-card hero">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+        <div className="eyebrow">Today</div>
+        <span className={`kind-chip ${day.kind}`}>{day.kind}</span>
+      </div>
+      <div className="heading-serif" style={{ fontSize: '1.6rem', marginTop: 4, lineHeight: 1.2 }}>{kindLabel(day)}</div>
+      {day.kind === 'strength' && day.focus && day.focus.includes('—') && (
+        <div className="muted-row" style={{ marginTop: 4 }}>{day.focus.split('—').slice(1).join('—').trim()}</div>
+      )}
       {day.rpe_target && (
-        <div style={{ marginTop: 6, fontWeight: 600 }}>{day.rpe_target}</div>
+        <div style={{ marginTop: 10, fontWeight: 600, fontSize: '0.92rem' }}>{day.rpe_target}</div>
       )}
       {day.notes && (
-        <div style={{ marginTop: 6, color: 'var(--text-muted)' }}>{day.notes}</div>
+        <div className="muted-row" style={{ marginTop: 6, lineHeight: 1.55 }}>{day.notes}</div>
       )}
 
       {day.kind === 'strength' && day.route_to === 'macrofactor' && (
-        <ExternalButton scheme="macrofactor://" webUrl="https://app.macrofactorapp.com/" label="Open in MacroFactor" />
+        <button onClick={() => openExternal('macrofactor://', 'https://app.macrofactorapp.com/')}
+          className="btn-primary" style={{ marginTop: 14, width: '100%' }}>
+          Open in MacroFactor
+        </button>
       )}
       {day.kind === 'run' && day.route_to === 'runna' && (
-        <ExternalButton scheme="runna://" webUrl="https://app.runna.com/" label="Open in Runna" />
+        <button onClick={() => openExternal('runna://', 'https://app.runna.com/')}
+          className="btn-primary" style={{ marginTop: 14, width: '100%' }}>
+          Open in Runna
+        </button>
       )}
       {day.kind === 'sport' && day.cap_check && (
-        <div style={{ marginTop: 12, padding: 10, background: 'var(--bg)', borderRadius: 8 }}>
-          ⚠️ Check your sport ceiling for the week.
+        <div className="muted-row" style={{ marginTop: 10, padding: 10, background: 'var(--bg)', borderRadius: 10, fontSize: '0.82rem' }}>
+          ⚠ Check sport ceiling for the week.
         </div>
       )}
       {day.kind === 'rest' && (
-        <div style={{ marginTop: 10, color: 'var(--text-muted)' }}>Rest day. Sleep, eat, walk.</div>
+        <div className="muted-row" style={{ marginTop: 10 }}>Rest day. Sleep, eat, walk.</div>
       )}
     </div>
   );
 }
 
-// ---------- Day View --------------------------------------------------------
+// ---------- Day View -------------------------------------------------------
 
 function DayView() {
   const [searchParams] = useSearchParams();
@@ -349,41 +325,30 @@ function DayView() {
   }, [dateParam, date]);
 
   if (state.loading) {
-    return (
-      <>
-        <StickyHeader title="Workout" />
-        <div style={{ padding: 20, color: 'var(--text-muted)' }}>Loading…</div>
-      </>
-    );
+    return (<><StickyHeader title="Workout" /><div style={{ padding: 16 }} className="muted-row">Loading…</div></>);
   }
   if (!state.block) {
-    return (
-      <>
-        <StickyHeader title="Workout" />
-        <div style={{ padding: 20 }}>No active block. Run the Block 4 seed migration.</div>
-      </>
-    );
+    return (<><StickyHeader title="Workout" /><div style={{ padding: 16 }}>No active block. Run the seed migration.</div></>);
   }
 
   const day = flexPick || state.dayType;
   const tomorrow = new Date(date); tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowWeek = getWeekNumber(state.block, tomorrow);
   const tomorrowPhase = getPhaseForWeek(state.block, tomorrowWeek);
-  const tomorrowBase = state.block.weekly_template[weekdayKey(tomorrow)];
-  const tomorrowDay = resolveDayForPhase(tomorrowBase, tomorrowPhase.name);
+  const tomorrowDay = resolveDayForPhase(state.block.weekly_template[weekdayKey(tomorrow)], tomorrowPhase.name);
 
   return (
     <>
       <StickyHeader title="Workout" />
-      <div style={{ padding: 20, maxWidth: 720, margin: '0 auto' }}>
-        <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>Today, {fmtDate(date)}</div>
-        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: 2 }}>
-          {state.block.name} · Week {state.week} of 12 · {state.phase.name} phase
+      <div style={{ padding: '4px 16px 24px', maxWidth: 720, margin: '0 auto' }}>
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: '1.4rem', lineHeight: 1.15 }}>{fmtDate(date)}</div>
+          <div className="muted-row" style={{ marginTop: 2 }}>
+            {state.block.name.split('—')[0].trim()} · Week {state.week}/12 · <span style={{ textTransform: 'capitalize' }}>{state.phase.name}</span>
+          </div>
         </div>
 
-        <div style={{ marginTop: 16 }}>
-          <DaySessionCard day={day} onPickFlex={setFlexPick} />
-        </div>
+        <DaySessionCard day={day} onPickFlex={setFlexPick} />
 
         {day?.kind === 'mobility' && day.route_to === 'internal' && (
           <MobilityRenderer sessionId={day.session_id} />
@@ -392,65 +357,38 @@ function DayView() {
         <ActiveModifiers block={state.block} weekNumber={state.week} />
 
         {tomorrowDay && (
-          <div style={{ marginTop: 18, fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-            Tomorrow: {kindLabel(tomorrowDay)}{tomorrowDay.rpe_target ? ` (${tomorrowDay.rpe_target})` : ''}
+          <div className="muted-row" style={{ marginTop: 14, fontSize: '0.82rem' }}>
+            Tomorrow · {kindLabel(tomorrowDay)}{tomorrowDay.rpe_target ? ` · ${tomorrowDay.rpe_target}` : ''}
           </div>
         )}
 
-        <div style={{ marginTop: 22, display: 'flex', gap: 10 }}>
-          <Link to="/workout/week" style={subNavBtn}>Week view →</Link>
-          <Link to="/workout/block" style={subNavBtn}>Block view →</Link>
+        <div style={{ marginTop: 18, display: 'flex', gap: 8 }}>
+          <Link to="/workout/week" className="btn-ghost" style={{ flex: 1, textAlign: 'center', textDecoration: 'none' }}>Week</Link>
+          <Link to="/workout/block" className="btn-ghost" style={{ flex: 1, textAlign: 'center', textDecoration: 'none' }}>Block</Link>
         </div>
       </div>
     </>
   );
 }
 
-const subNavBtn = {
-  background: 'var(--card)', border: '1px solid var(--border)',
-  padding: '10px 14px', borderRadius: 10, color: 'var(--text)', textDecoration: 'none', fontWeight: 600,
-};
-
 // ---------- Week View -------------------------------------------------------
-
-const WEEK_CHECKS_KEY = 'workout-week-checks-v1';
-
-function readWeekChecks(blockId, week) {
-  try {
-    const raw = JSON.parse(localStorage.getItem(WEEK_CHECKS_KEY) || '{}');
-    return raw[`${blockId}::${week}`] || {};
-  } catch { return {}; }
-}
-function writeWeekChecks(blockId, week, value) {
-  try {
-    const raw = JSON.parse(localStorage.getItem(WEEK_CHECKS_KEY) || '{}');
-    raw[`${blockId}::${week}`] = value;
-    localStorage.setItem(WEEK_CHECKS_KEY, JSON.stringify(raw));
-  } catch { /* quota */ }
-}
 
 function WeekView() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const [block, setBlock] = useState(null);
-  const [rev, setRev] = useState(0);
   useEffect(() => { getActiveBlock().then(setBlock).catch(console.error); }, []);
 
-  const currentWeek = block ? getWeekNumber(block, new Date()) : 1;
-  const week = Number(params.get('week')) || currentWeek;
-  const checks = useMemo(
-    () => (block ? readWeekChecks(block.id, week) : {}),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [block, week, rev]
-  );
-
   if (!block) {
-    return (<><StickyHeader title="Week" back="/workout" /><div style={{ padding: 20 }}>Loading…</div></>);
+    return (<><StickyHeader title="Week" back="/workout" /><div style={{ padding: 16 }} className="muted-row">Loading…</div></>);
   }
 
+  const currentWeek = getWeekNumber(block, new Date());
+  const week = Number(params.get('week')) || currentWeek;
   const { phase, days } = resolveWeek(block, week);
   const order = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
-  const letters = { monday:'M', tuesday:'T', wednesday:'W', thursday:'T', friday:'F', saturday:'S', sunday:'S' };
+  const todayKey = weekdayKey(new Date());
+  const isCurrentWeek = week === currentWeek;
 
   const setWeek = (n) => {
     const p = new URLSearchParams(params); p.set('week', String(n)); setParams(p);
@@ -462,63 +400,38 @@ function WeekView() {
     navigate(`/workout?date=${iso}`);
   };
 
-  const toggleCheck = (e, wd) => {
-    e.stopPropagation();
-    const next = { ...checks, [wd]: !checks[wd] };
-    writeWeekChecks(block.id, week, next);
-    setRev((r) => r + 1);
-  };
-
-  const doneCount = Object.values(checks).filter(Boolean).length;
-
   return (
     <>
       <StickyHeader title="Week" back="/workout" />
-      <div style={{ padding: 20, maxWidth: 720, margin: '0 auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+      <div style={{ padding: '4px 16px 24px', maxWidth: 720, margin: '0 auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
           <div>
-            <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>Week {week} of 12</div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'capitalize' }}>
-              {phase.name} phase · {doneCount}/7 done
-            </div>
+            <div className="heading-serif" style={{ fontSize: '1.3rem' }}>Week {week} <span style={{ color: 'var(--text-muted)', fontFamily: 'Inter', fontSize: '0.9rem' }}>of 12</span></div>
+            <div className="muted-row" style={{ textTransform: 'capitalize' }}>{phase.name} phase</div>
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={() => setWeek(Math.max(1, week - 1))} style={timerBtnGhost}>‹ Prev</button>
-            <button onClick={() => setWeek(Math.min(12, week + 1))} style={timerBtnGhost}>Next ›</button>
+            <button onClick={() => setWeek(Math.max(1, week - 1))} className="btn-ghost" disabled={week <= 1}>‹</button>
+            <button onClick={() => setWeek(Math.min(12, week + 1))} className="btn-ghost" disabled={week >= 12}>›</button>
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginTop: 16 }}>
+        <div className="day-grid" style={{ marginTop: 14 }}>
           {order.map((wd) => {
             const day = days[wd];
-            const bg = KIND_COLOURS[day?.kind] || '#555';
-            const stripe = day?.kind === 'flex' ? 'repeating-linear-gradient(45deg, #5d5d5d, #5d5d5d 6px, #888 6px, #888 12px)' : bg;
-            const isDone = !!checks[wd];
+            const d = dateForWeekday(block, week, wd);
+            const isToday = isCurrentWeek && wd === todayKey;
             return (
-              <div key={wd} className="app-card" onClick={() => goToDay(wd)}
-                style={{
-                  cursor: 'pointer', padding: 12, textAlign: 'left',
-                  border: '1px solid var(--border)', background: 'var(--card)',
-                  opacity: isDone ? 0.65 : 1,
-                  position: 'relative',
-                }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontWeight: 700 }}>
-                    {letters[wd]} <span style={{ fontWeight: 400, color: 'var(--text-muted)', textTransform: 'capitalize' }}>{wd}</span>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={isDone}
-                    onClick={(e) => e.stopPropagation()}
-                    onChange={(e) => toggleCheck(e, wd)}
-                    style={{ width: 20, height: 20, cursor: 'pointer' }}
-                    aria-label={`Mark ${wd} done`}
-                  />
+              <div key={wd} className={`day-cell ${isToday ? 'today' : ''}`} onClick={() => goToDay(wd)}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                  <span className="day-letter">{wd[0].toUpperCase()}{wd.slice(1, 3)}</span>
+                  <span className="day-date">{fmtShort(d)}</span>
                 </div>
-                <div style={{ marginTop: 6, padding: '6px 10px', borderRadius: 8, background: stripe, color: '#fff', fontSize: '0.8rem', fontWeight: 600, textDecoration: isDone ? 'line-through' : 'none' }}>
-                  {kindLabel(day)}
+                <span className={`kind-chip ${day?.kind || 'rest'}`}>{day?.kind || 'rest'}</span>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.35, marginTop: 'auto' }}>
+                  {day?.kind === 'strength' && day.focus ? day.focus.split('—').slice(1).join('—').trim() || day.focus : ''}
+                  {day?.kind === 'run' && day.quality}
+                  {day?.kind === 'mobility' && 'Wed corrective'}
                 </div>
-                {day?.rpe_target && <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 6 }}>{day.rpe_target}</div>}
               </div>
             );
           })}
@@ -534,7 +447,7 @@ function BlockView() {
   const [block, setBlock] = useState(null);
   const [expandedWeek, setExpandedWeek] = useState(null);
   useEffect(() => { getActiveBlock().then(setBlock).catch(console.error); }, []);
-  if (!block) return (<><StickyHeader title="Block" back="/workout" /><div style={{ padding: 20 }}>Loading…</div></>);
+  if (!block) return (<><StickyHeader title="Block" back="/workout" /><div style={{ padding: 16 }} className="muted-row">Loading…</div></>);
 
   const currentWeek = getWeekNumber(block, new Date());
   const totalWeeks = Math.max(...block.phases.flatMap((p) => p.weeks));
@@ -551,75 +464,68 @@ function BlockView() {
   return (
     <>
       <StickyHeader title="Block" back="/workout" />
-      <div style={{ padding: 20, maxWidth: 720, margin: '0 auto' }}>
-        <h2 className="heading-serif" style={{ margin: 0 }}>{block.name}</h2>
-        <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: 4 }}>
-          {block.start_date} → {block.end_date} · primary: <strong>{block.primary_domain}</strong> · Week {currentWeek} of {totalWeeks}
-        </div>
-
-        <div style={{ display: 'grid', gap: 10, marginTop: 16 }}>
-          <div className="app-card" style={{ padding: 16, borderLeft: '6px solid var(--primary)' }}>
-            <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--text-muted)' }}>GOAL A — OUTCOME</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 600, marginTop: 4 }}>{goals.a.statement}</div>
-            <div style={{ marginTop: 6, fontSize: '0.9rem' }}>{goals.a.metric}</div>
-            <div style={{ marginTop: 4, fontSize: '0.8rem', color: 'var(--text-muted)' }}>by {goals.a.deadline}</div>
-          </div>
-          <div className="app-card" style={{ padding: 14 }}>
-            <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--text-muted)' }}>GOAL B — PROCESS</div>
-            <ul style={{ margin: '8px 0 0', paddingLeft: 18 }}>
-              {goals.b.map((g, i) => (
-                <li key={i}><strong>{g.statement}</strong> — <span style={{ color: 'var(--text-muted)' }}>{g.metric}</span></li>
-              ))}
-            </ul>
-          </div>
-          <div className="app-card" style={{ padding: 14 }}>
-            <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--text-muted)' }}>GOAL C — STRETCH</div>
-            <div style={{ marginTop: 4 }}>{goals.c.statement}</div>
+      <div style={{ padding: '4px 16px 24px', maxWidth: 720, margin: '0 auto' }}>
+        <div style={{ marginBottom: 14 }}>
+          <div className="heading-serif" style={{ fontSize: '1.5rem', lineHeight: 1.15 }}>{block.name}</div>
+          <div className="muted-row" style={{ marginTop: 4 }}>
+            {block.start_date} → {block.end_date} · primary <strong style={{ color: 'var(--text)' }}>{block.primary_domain}</strong> · Week {currentWeek}/{totalWeeks}
           </div>
         </div>
 
-        <h3 style={{ marginTop: 22 }}>Phase timeline</h3>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 8 }}>
+        <div className="tight-card hero" style={{ marginBottom: 10 }}>
+          <div className="eyebrow">A · Outcome</div>
+          <div style={{ fontSize: '1.05rem', fontWeight: 600, marginTop: 4, lineHeight: 1.35 }}>{goals.a.statement}</div>
+          <div className="muted-row" style={{ marginTop: 6, lineHeight: 1.5 }}>{goals.a.metric}</div>
+          <div className="muted-row" style={{ marginTop: 4, fontSize: '0.75rem' }}>by {goals.a.deadline}</div>
+        </div>
+        <div className="tight-card" style={{ marginBottom: 10 }}>
+          <div className="eyebrow">B · Process</div>
+          <ul style={{ margin: '8px 0 0', paddingLeft: 16, fontSize: '0.88rem', lineHeight: 1.55 }}>
+            {goals.b.map((g, i) => (
+              <li key={i}><strong>{g.statement}</strong><br /><span className="muted-row">{g.metric}</span></li>
+            ))}
+          </ul>
+        </div>
+        <div className="tight-card">
+          <div className="eyebrow">C · Stretch</div>
+          <div style={{ marginTop: 6, fontSize: '0.88rem', lineHeight: 1.55 }}>{goals.c.statement}</div>
+        </div>
+
+        <div className="section-title"><h3>Phase timeline</h3></div>
+        <div className="phase-bar">
           {weekArr.map((w) => {
             const ph = getPhaseForWeek(block, w);
             const isCurrent = w === currentWeek;
             const isDeload = deload_weeks.includes(w);
             const tests = testByWeek[w];
-            const colour = {
-              accumulation: '#3a8a5a', intensification: '#c4763a',
-              realization: '#7a4ea8', deload: '#8a8a8a',
-            }[ph.name] || '#555';
             return (
-              <button key={w} onClick={() => setExpandedWeek(expandedWeek === w ? null : w)}
+              <button key={w}
+                onClick={() => setExpandedWeek(expandedWeek === w ? null : w)}
                 title={`${ph.name}${tests ? ' · ' + tests.map(t=>t.what).join('; ') : ''}`}
-                style={{
-                  width: 38, height: 44, borderRadius: 6, border: isCurrent ? '2px solid var(--text)' : '1px solid var(--border)',
-                  background: colour, color: '#fff', cursor: 'pointer', fontWeight: 700, position: 'relative',
-                  outline: isDeload ? '2px dashed #fff' : 'none', outlineOffset: -4,
-                }}>
+                className={`phase-cell ${ph.name} ${isDeload ? 'deload' : ''} ${isCurrent ? 'current' : ''}`}>
                 {w}
-                {tests && <span style={{ position: 'absolute', top: 1, right: 3, fontSize: '0.6rem' }}>★</span>}
+                {tests && <span className="star">★</span>}
               </button>
             );
           })}
         </div>
-        <div style={{ display: 'flex', gap: 12, marginTop: 8, fontSize: '0.75rem', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
-          <span>★ test date</span>
-          <span>dashed = deload</span>
+        <div style={{ display: 'flex', gap: 12, marginTop: 8, fontSize: '0.7rem', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
+          <span>★ test</span>
+          <span>diagonal = deload</span>
           {block.phases.map((p) => (
-            <span key={p.name}><span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 2, background: { accumulation:'#3a8a5a', intensification:'#c4763a', realization:'#7a4ea8', deload:'#8a8a8a' }[p.name], marginRight: 4 }} />{p.name}</span>
+            <span key={p.name} style={{ textTransform: 'capitalize' }}>{p.name}</span>
           ))}
         </div>
 
         {expandedWeek && (() => {
-          const { phase, days } = resolveWeek(block, expandedWeek);
+          const { phase: ph, days } = resolveWeek(block, expandedWeek);
           return (
-            <div className="app-card" style={{ padding: 14, marginTop: 14 }}>
-              <div style={{ fontWeight: 700 }}>Week {expandedWeek} · {phase.name}</div>
-              <ul style={{ margin: '8px 0 0', paddingLeft: 18 }}>
+            <div className="tight-card" style={{ marginTop: 12 }}>
+              <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Week {expandedWeek} · <span style={{ textTransform: 'capitalize', color: 'var(--text-muted)' }}>{ph.name}</span></div>
+              <ul style={{ margin: '8px 0 0', paddingLeft: 14, fontSize: '0.85rem', lineHeight: 1.55 }}>
                 {['monday','tuesday','wednesday','thursday','friday','saturday','sunday'].map((d) => (
                   <li key={d} style={{ textTransform: 'capitalize' }}>
-                    <strong>{d}:</strong> {kindLabel(days[d])}{days[d]?.rpe_target ? ` — ${days[d].rpe_target}` : ''}
+                    <strong>{d}.</strong> <span style={{ textTransform: 'none' }}>{kindLabel(days[d])}{days[d]?.rpe_target ? ` — ${days[d].rpe_target}` : ''}</span>
                   </li>
                 ))}
               </ul>
@@ -629,20 +535,20 @@ function BlockView() {
 
         {(block.test_dates || []).length > 0 && (
           <>
-            <h3 style={{ marginTop: 22 }}>Test dates</h3>
-            <ul style={{ paddingLeft: 18 }}>
-              {block.test_dates.map((t, i) => <li key={i}><strong>{t.date}:</strong> {t.what}</li>)}
+            <div className="section-title"><h3>Test dates</h3></div>
+            <ul style={{ paddingLeft: 16, fontSize: '0.88rem', lineHeight: 1.6 }}>
+              {block.test_dates.map((t, i) => <li key={i}><strong>{t.date}.</strong> {t.what}</li>)}
             </ul>
           </>
         )}
 
         {modifiers.length > 0 && (
-          <details style={{ marginTop: 18 }}>
-            <summary style={{ cursor: 'pointer', fontWeight: 700 }}>Modifiers ({modifiers.length})</summary>
-            <ul style={{ paddingLeft: 18, marginTop: 8 }}>
+          <details style={{ marginTop: 14 }} className="tight-card">
+            <summary style={{ cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem' }}>Modifiers ({modifiers.length})</summary>
+            <ul style={{ paddingLeft: 16, marginTop: 8, fontSize: '0.85rem', lineHeight: 1.55 }}>
               {modifiers.map((m, i) => (
-                <li key={i} style={{ marginBottom: 6 }}>
-                  <strong style={{ textTransform: 'capitalize' }}>{m.type.replace('_',' ')}:</strong> {m.description}
+                <li key={i} style={{ marginBottom: 4 }}>
+                  <strong style={{ textTransform: 'capitalize' }}>{m.type.replace('_',' ')}.</strong> {m.description}
                 </li>
               ))}
             </ul>
@@ -650,7 +556,7 @@ function BlockView() {
         )}
 
         {block.mid_block_checkin && (
-          <div style={{ marginTop: 18, color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+          <div className="muted-row" style={{ marginTop: 14, fontSize: '0.8rem' }}>
             Mid-block check-in: <strong>{block.mid_block_checkin}</strong>
           </div>
         )}
