@@ -9,6 +9,14 @@
   "theme_color": "#8b9d83",
   "orientation": "portrait-primary",
   "categories": ["productivity", "health", "lifestyle"],
+  "icons": [
+    {
+      "src": "/Livet/favicon.svg?v=2",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ],
   "shortcuts": [
     {
       "name": "Milestone Timeline",

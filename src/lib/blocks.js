@@ -220,29 +220,13 @@ export function dateForWeekday(block, weekNumber, weekday) {
   return d;
 }
 
-/** Helper: open external app via custom scheme with web fallback.
- *  iOS PWAs block window.location to non-https schemes when standalone, so
- *  we use a hidden iframe for the scheme attempt and only fall back to the
- *  web URL if the page is still visible after the timeout. */
+/** Open an external app: prefer the universal/web URL so iOS hands off to
+ *  the installed app automatically, otherwise navigate to the custom scheme.
+ *  Must be called synchronously in a user-gesture handler so Safari does not
+ *  block the popup. */
 export function openExternal(scheme, webUrl) {
-  if (!scheme) { if (webUrl) window.open(webUrl, '_blank', 'noopener'); return; }
-
-  let opened = false;
-  const onHide = () => { if (document.hidden) opened = true; };
-  document.addEventListener('visibilitychange', onHide, { once: true });
-
-  // Hidden iframe avoids the PWA standalone-mode "Cannot Open Page" alert
-  // that window.location.href = customScheme triggers on iOS 17+.
-  const frame = document.createElement('iframe');
-  frame.style.cssText = 'position:absolute;width:0;height:0;border:0;visibility:hidden';
-  frame.src = scheme;
-  document.body.appendChild(frame);
-
-  setTimeout(() => {
-    frame.remove();
-    document.removeEventListener('visibilitychange', onHide);
-    if (!opened && !document.hidden && webUrl) {
-      window.open(webUrl, '_blank', 'noopener');
-    }
-  }, 1200);
+  const target = webUrl || scheme;
+  if (!target) return;
+  const win = window.open(target, '_blank', 'noopener');
+  if (!win) window.location.href = target;
 }
