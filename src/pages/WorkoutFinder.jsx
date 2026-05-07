@@ -413,18 +413,41 @@ const subNavBtn = {
 
 // ---------- Week View -------------------------------------------------------
 
+const WEEK_CHECKS_KEY = 'workout-week-checks-v1';
+
+function readWeekChecks(blockId, week) {
+  try {
+    const raw = JSON.parse(localStorage.getItem(WEEK_CHECKS_KEY) || '{}');
+    return raw[`${blockId}::${week}`] || {};
+  } catch { return {}; }
+}
+function writeWeekChecks(blockId, week, value) {
+  try {
+    const raw = JSON.parse(localStorage.getItem(WEEK_CHECKS_KEY) || '{}');
+    raw[`${blockId}::${week}`] = value;
+    localStorage.setItem(WEEK_CHECKS_KEY, JSON.stringify(raw));
+  } catch { /* quota */ }
+}
+
 function WeekView() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const [block, setBlock] = useState(null);
+  const [rev, setRev] = useState(0);
   useEffect(() => { getActiveBlock().then(setBlock).catch(console.error); }, []);
+
+  const currentWeek = block ? getWeekNumber(block, new Date()) : 1;
+  const week = Number(params.get('week')) || currentWeek;
+  const checks = useMemo(
+    () => (block ? readWeekChecks(block.id, week) : {}),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [block, week, rev]
+  );
 
   if (!block) {
     return (<><StickyHeader title="Week" back="/workout" /><div style={{ padding: 20 }}>Loading…</div></>);
   }
 
-  const currentWeek = getWeekNumber(block, new Date());
-  const week = Number(params.get('week')) || currentWeek;
   const { phase, days } = resolveWeek(block, week);
   const order = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
   const letters = { monday:'M', tuesday:'T', wednesday:'W', thursday:'T', friday:'F', saturday:'S', sunday:'S' };
@@ -439,6 +462,15 @@ function WeekView() {
     navigate(`/workout?date=${iso}`);
   };
 
+  const toggleCheck = (e, wd) => {
+    e.stopPropagation();
+    const next = { ...checks, [wd]: !checks[wd] };
+    writeWeekChecks(block.id, week, next);
+    setRev((r) => r + 1);
+  };
+
+  const doneCount = Object.values(checks).filter(Boolean).length;
+
   return (
     <>
       <StickyHeader title="Week" back="/workout" />
@@ -446,7 +478,9 @@ function WeekView() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <div>
             <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>Week {week} of 12</div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'capitalize' }}>{phase.name} phase</div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'capitalize' }}>
+              {phase.name} phase · {doneCount}/7 done
+            </div>
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
             <button onClick={() => setWeek(Math.max(1, week - 1))} style={timerBtnGhost}>‹ Prev</button>
@@ -454,20 +488,38 @@ function WeekView() {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 10, marginTop: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 10, marginTop: 16 }}>
           {order.map((wd) => {
             const day = days[wd];
             const bg = KIND_COLOURS[day?.kind] || '#555';
             const stripe = day?.kind === 'flex' ? 'repeating-linear-gradient(45deg, #5d5d5d, #5d5d5d 6px, #888 6px, #888 12px)' : bg;
+            const isDone = !!checks[wd];
             return (
-              <button key={wd} onClick={() => goToDay(wd)} className="app-card"
-                style={{ cursor: 'pointer', padding: 12, textAlign: 'left', border: '1px solid var(--border)', background: 'var(--card)' }}>
-                <div style={{ fontWeight: 700 }}>{letters[wd]} <span style={{ fontWeight: 400, color: 'var(--text-muted)', textTransform: 'capitalize' }}>{wd}</span></div>
-                <div style={{ marginTop: 6, padding: '6px 10px', borderRadius: 8, background: stripe, color: '#fff', fontSize: '0.8rem', fontWeight: 600 }}>
+              <div key={wd} className="app-card" onClick={() => goToDay(wd)}
+                style={{
+                  cursor: 'pointer', padding: 12, textAlign: 'left',
+                  border: '1px solid var(--border)', background: 'var(--card)',
+                  opacity: isDone ? 0.65 : 1,
+                  position: 'relative',
+                }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ fontWeight: 700 }}>
+                    {letters[wd]} <span style={{ fontWeight: 400, color: 'var(--text-muted)', textTransform: 'capitalize' }}>{wd}</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={isDone}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => toggleCheck(e, wd)}
+                    style={{ width: 20, height: 20, cursor: 'pointer' }}
+                    aria-label={`Mark ${wd} done`}
+                  />
+                </div>
+                <div style={{ marginTop: 6, padding: '6px 10px', borderRadius: 8, background: stripe, color: '#fff', fontSize: '0.8rem', fontWeight: 600, textDecoration: isDone ? 'line-through' : 'none' }}>
                   {kindLabel(day)}
                 </div>
                 {day?.rpe_target && <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 6 }}>{day.rpe_target}</div>}
-              </button>
+              </div>
             );
           })}
         </div>
