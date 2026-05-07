@@ -13,7 +13,9 @@
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
       "mcp__claude_ai_Google_Drive__search_files",
-      "mcp__claude_ai_Google_Drive__read_file_content"
+      "mcp__claude_ai_Google_Drive__read_file_content",
+      "Bash(cmd *)",
+      "Bash(npm install *)"
     ]
   },
   "CLAUDE_CODE_MAX_OUTPUT_TOKENS": 10000

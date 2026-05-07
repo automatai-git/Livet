@@ -2,6 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { trainingService } from '../services/trainingService';
+import AppIcon from '../components/AppIcon';
+
+// Single source of truth for dashboard cards. Each card pulls its accent
+// from --accent-* variables defined in index.css (style guide). Adding a
+// new app: append here, define a CSS var, and add an icon to the sprite.
+const APPS = [
+  { to: '/menu',     icon: 'menu',     title: ['Menu ', { em: 'Planner' }],          desc: "Plan dinners, build shopping lists, track what you've cooked.",   cta: 'Open planner',  accent: 'var(--accent-menu)' },
+  { to: '/timeline', icon: 'timeline', title: 'Milestone Timeline',                  desc: "Track and visualize life's significant moments.",                 cta: 'Open timeline', accent: 'var(--accent-timeline)' },
+  { to: '/mobility', icon: 'mobility', title: 'Mobility Tracker',                    desc: 'Structured weekly mobility workouts with progress tracking.',      cta: 'Open mobility', accent: 'var(--accent-mobility)' },
+  { to: '/workout',  icon: 'workout',  title: 'Workout Finder',                      desc: 'Your structured training block and daily sessions.',               cta: 'Open workouts', accent: 'var(--accent-workout)' },
+  { to: '/colour',   icon: 'palette',  title: 'Soft Summer Palette',                 desc: 'Personal colour analysis guide and outfit combinations.',          cta: 'Open palette',  accent: 'var(--accent-palette)' },
+  { to: '/travel',   icon: 'travel',   title: 'Trip Planner',                        desc: 'Itineraries, experiences, and a satellite map of your trips.',     cta: 'Open trips',    accent: 'var(--accent-travel)' },
+  { to: '/bucket',   icon: 'bucket',   title: 'Bucket List',                         desc: '425 lifetime experiences to track and unlock.',                    cta: 'Open list',     accent: 'var(--accent-bucket)' },
+  { to: '/decision', icon: 'decision', title: ['Decision ', { em: 'Matrix' }],       desc: 'Solve complex choices with weighted criteria and scoring.',        cta: 'Open matrix',   accent: 'var(--accent-decision)' },
+];
+
+const renderTitle = (t) => Array.isArray(t)
+  ? t.map((seg, i) => typeof seg === 'string' ? seg : <em key={i}>{seg.em}</em>)
+  : t;
 
 const Dashboard = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -149,80 +168,22 @@ const Dashboard = () => {
       )}
 
       <div className="app-grid">
-        <Link to="/menu" className="app-card featured">
-          <div className="app-icon" style={{background: 'transparent'}}><img src="icons/menu.png" alt="Menu Planner" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
-          <div className="app-title">Menu <em>Planner</em></div>
-          <p className="app-description">
-            Plan dinners, build shopping lists, track what you've cooked and get suggestions for what to make next.
-          </p>
-          <div className="cta-row">
-            <span className="arrow">↗</span>
-            Open planner
-          </div>
-        </Link>
-
-        <Link to="/timeline" className="app-card">
-          <div className="app-icon" style={{background: 'transparent'}}><img src="icons/timeline.png" alt="Timeline" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
-          <div className="app-title">Milestone Timeline</div>
-          <p className="app-description">
-            Track and visualize life's significant moments with a beautiful snaking timeline.
-          </p>
-          <span className="app-badge">Life Planning</span>
-        </Link>
-
-        <Link to="/mobility" className="app-card">
-          <div className="app-icon" style={{background: 'transparent'}}><img src="icons/mobility.png" alt="Mobility Tracker" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
-          <div className="app-title">Mobility Tracker</div>
-          <p className="app-description">
-            Structured weekly mobility workouts with progress tracking.
-          </p>
-          <span className="app-badge">Wellness</span>
-        </Link>
-
-        <Link to="/workout" className="app-card">
-          <div className="app-icon" style={{background: 'transparent'}}><img src="icons/workout.png" alt="Workout Finder" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
-          <div className="app-title">Workout Finder</div>
-          <p className="app-description">
-            Access your structured Block 3 training plan and daily sessions.
-          </p>
-          <span className="app-badge">Fitness</span>
-        </Link>
-
-        <Link to="/colour" className="app-card">
-          <div className="app-icon" style={{background: 'transparent'}}><img src="icons/palette.png" alt="Palette" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
-          <div className="app-title">Soft Summer Palette</div>
-          <p className="app-description">
-            Your personal colour analysis guide and outfit combinations.
-          </p>
-          <span className="app-badge">Style</span>
-        </Link>
-        
-        <Link to="/travel" className="app-card">
-          <div className="app-icon" style={{background: 'transparent'}}><img src="icons/travel.png" alt="Trip Planner" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
-          <div className="app-title">Trip Planner</div>
-          <p className="app-description">
-            Manage your destination itineraries, explore experiences, and plan your trips.
-          </p>
-          <span className="app-badge">Travel</span>
-        </Link>
-
-        <Link to="/bucket" className="app-card">
-          <div className="app-icon" style={{background: 'transparent'}}><img src="icons/bucket.png" alt="Bucket List" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
-          <div className="app-title">Bucket List</div>
-          <p className="app-description">
-            Your 425 lifetime experiences to track and unlock.
-          </p>
-          <span className="app-badge">Goals</span>
-        </Link>
-
-        <Link to="/decision" className="app-card">
-          <div className="app-icon" style={{background: 'transparent'}}><img src="icons/decision.png" alt="Decision Matrix" style={{width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover'}} /></div>
-          <div className="app-title">Decision <em>Matrix</em></div>
-          <p className="app-description">
-            Solve complex choices with weighted criteria and objective scoring.
-          </p>
-          <span className="app-badge">Strategy</span>
-        </Link>
+        {APPS.map((app) => (
+          <Link
+            key={app.to}
+            to={app.to}
+            className="app-card"
+            style={{ '--app-accent': app.accent }}
+          >
+            <div className="app-icon"><AppIcon name={app.icon} size={28} /></div>
+            <div className="app-title">{renderTitle(app.title)}</div>
+            <p className="app-description">{app.desc}</p>
+            <div className="cta-row">
+              <span className="arrow">↗</span>
+              {app.cta}
+            </div>
+          </Link>
+        ))}
       </div>
 
       <footer className="dashboard-footer">

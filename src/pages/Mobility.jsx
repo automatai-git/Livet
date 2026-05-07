@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import AppShell from '../components/AppShell';
 
 const InlineTimer = ({ initialSeconds = 60 }) => {
   const [timeLeft, setTimeLeft] = useState(initialSeconds);
@@ -20,17 +20,15 @@ const InlineTimer = ({ initialSeconds = 60 }) => {
   const secs = timeLeft % 60;
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, padding: '8px 10px', background: 'var(--bg)', borderRadius: 10, border: '1px solid var(--border)' }}>
-      <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, fontSize: '0.95rem', minWidth: 42 }}>
-        {mins}:{secs < 10 ? '0' + secs : secs}
-      </span>
-      <button onClick={() => setIsRunning(!isRunning)} className="btn-primary" style={{ padding: '4px 12px', fontSize: '0.78rem' }}>
+    <div className="timer-row">
+      <span className="timer-display">{mins}:{secs < 10 ? '0' + secs : secs}</span>
+      <button onClick={() => setIsRunning(!isRunning)} className="timer-btn primary">
         {isRunning ? 'Pause' : 'Start'}
       </button>
-      <button onClick={() => { setIsRunning(false); setTimeLeft(initialSeconds); }} className="btn-ghost" style={{ padding: '4px 10px', fontSize: '0.78rem' }}>Reset</button>
-      <div style={{ flex: 1, display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-        <button onClick={() => setTimeLeft(60)} className="btn-ghost" style={{ padding: '4px 8px', fontSize: '0.7rem' }}>1m</button>
-        <button onClick={() => setTimeLeft(120)} className="btn-ghost" style={{ padding: '4px 8px', fontSize: '0.7rem' }}>2m</button>
+      <button onClick={() => { setIsRunning(false); setTimeLeft(initialSeconds); }} className="timer-btn ghost">Reset</button>
+      <div className="timer-presets">
+        <button onClick={() => setTimeLeft(60)} className="timer-btn ghost">1m</button>
+        <button onClick={() => setTimeLeft(120)} className="timer-btn ghost">2m</button>
       </div>
     </div>
   );
@@ -255,16 +253,8 @@ const Mobility = () => {
   };
 
   return (
-    <div>
-      <div className="sticky-header">
-        <div className="header-row">
-          <Link to="/" className="back-home">← Dashboard</Link>
-          <h1 className="heading-serif" style={{ fontSize: '1.25rem' }}>Mobility</h1>
-          <div style={{ width: 60 }} />
-        </div>
-      </div>
-
-      <div style={{ padding: '4px 16px 24px', maxWidth: 720, margin: '0 auto' }}>
+    <AppShell title="Mobility" accent="var(--accent-mobility)">
+      <>
         {!selectedRoutine && (
           <>
             <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 14, marginBottom: 14, scrollbarWidth: 'none' }}>
@@ -296,8 +286,8 @@ const Mobility = () => {
         )}
 
         {selectedRoutine && renderExercises()}
-      </div>
-    </div>
+      </>
+    </AppShell>
   );
 };
 

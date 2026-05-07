@@ -1,4 +1,4 @@
-const CACHE_NAME = 'life-training-hub-v4';
+const CACHE_NAME = 'life-training-hub-v5';
 const SHELL = [
   '/Livet/',
   '/Livet/index.html',

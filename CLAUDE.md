@@ -49,10 +49,36 @@ page load → localStorage.getItem(key) → JSON.parse → render
 ```
 
 ### Design system
-CSS custom properties defined in each file's `:root`:
-- `--primary: #1B3B2F` (dark green)
-- `--bg: #F2F0EB` (warm off-white)
-- Google Fonts: DM Serif Display + Inter (hub/timeline); Cormorant Garamond + Nunito Sans (mobility)
+Global tokens live in `src/index.css` `:root` and apply across every page.
+- `--primary: #1B3B2F` (dark green) · `--bg: #F2F0EB` (warm off-white)
+- Per-app accents (used by dashboard cards and sub-page header underline):
+  `--accent-menu` (primary green), `--accent-timeline` (terracotta `#C57B57`),
+  `--accent-mobility` (sage `#6B9E72`), `--accent-workout` (slate teal `#2D5A6C`),
+  `--accent-palette` (dusty rose `#B5838D`), `--accent-bucket` (lavender `#8E7CC3`),
+  `--accent-travel` (ocean `#2F7DA0`), `--accent-decision` (amber `#C8804A`).
+- Fonts: DM Serif Display (display) + Inter (body).
+
+### Shared components
+- `src/components/AppShell.jsx` — every sub-page wraps in this. Pass `title`,
+  optional `accent` (defaults to `--primary`), optional `actions` and `back`.
+  The shell paints the header underline in the app's accent.
+- `src/components/AppIcon.jsx` — line-icon sprite (24×24, 1.6 stroke,
+  currentColor, round caps). Add a new icon by appending a `<symbol>` to
+  `IconSprite` then `<AppIcon name="…" />`. The sprite is mounted once in
+  `main.jsx` so all `<use href="#icon-…">` references resolve globally.
+- `src/components/TravelMap.jsx` — Leaflet map with Esri World Imagery
+  satellite tiles. Click in edit mode to add a labelled pin; drag to move;
+  right-click / long-press to delete. Custom pins persist to
+  `localStorage` under `travel_custom_pins_v1`.
+
+### Dashboard card anatomy
+All cards are "featured" style: solid `--app-accent` background, white text,
+`AppIcon` glyph in a translucent rounded square, serif title (em accent
+allowed), short description, CTA row with arrow chip. Each card sets its
+own accent inline: `style={{ '--app-accent': 'var(--accent-foo)' }}`.
+The list of cards lives in the `APPS` array at the top of `Dashboard.jsx` —
+add a new card by appending an entry and (if needed) a new `--accent-*` var
+plus a sprite icon.
 
 ## Service Worker Updates
 

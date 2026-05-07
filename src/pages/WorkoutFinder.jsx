@@ -36,14 +36,17 @@ function kindLabel(day) {
   }
 }
 
+// Lightweight in-page header that mirrors AppShell's look. Local because
+// WorkoutFinder uses nested routes and doesn't wrap each route with AppShell.
 function StickyHeader({ title, back = '/' }) {
   return (
-    <div className="sticky-header">
+    <div className="sticky-header" style={{ '--app-accent': 'var(--accent-workout)' }}>
       <div className="header-row">
-        <Link to={back} className="back-home">← Back</Link>
-        <h1 className="heading-serif" style={{ fontSize: '1.25rem' }}>{title}</h1>
-        <div style={{ width: 60 }} />
+        <Link to={back} className="back-home">{back === '/' ? '← Dashboard' : '← Back'}</Link>
+        <h1 className="heading-serif page-title" style={{ fontSize: '1.25rem' }}>{title}</h1>
+        <div style={{ width: 80 }} />
       </div>
+      <div style={{ height: 2, margin: '0 16px', background: 'var(--accent-workout)', opacity: 0.85, borderRadius: 2 }} />
     </div>
   );
 }
@@ -74,14 +77,12 @@ function MovementTimer({ seconds }) {
   }, [running]);
   const m = Math.floor(left / 60), s = left % 60;
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
-      <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, fontSize: '0.95rem', minWidth: 42 }}>
-        {m}:{s < 10 ? '0' + s : s}
-      </span>
-      <button onClick={() => setRunning(!running)} className="btn-primary" style={{ padding: '4px 12px', fontSize: '0.78rem' }}>
+    <div className="timer-row">
+      <span className="timer-display">{m}:{s < 10 ? '0' + s : s}</span>
+      <button onClick={() => setRunning(!running)} className="timer-btn primary">
         {running ? 'Pause' : 'Start'}
       </button>
-      <button onClick={() => { setRunning(false); setLeft(seconds); }} className="btn-ghost" style={{ padding: '4px 10px', fontSize: '0.78rem' }}>Reset</button>
+      <button onClick={() => { setRunning(false); setLeft(seconds); }} className="timer-btn ghost">Reset</button>
     </div>
   );
 }
@@ -272,14 +273,16 @@ function DaySessionCard({ day, onPickFlex }) {
         <div className="muted-row" style={{ marginTop: 6, lineHeight: 1.55 }}>{day.notes}</div>
       )}
 
-      {day.kind === 'strength' && day.route_to === 'macrofactor' && (
-        <button onClick={() => openExternal('macrofactor://', 'https://app.macrofactorapp.com/')}
+      {day.kind === 'strength' && (day.route_to === 'macrofactor' || day.route_to === 'workouts') && (
+        <button
+          onClick={() => openExternal('x-apple-fitness://', 'https://apps.apple.com/app/fitness/id1208224953')}
           className="btn-primary" style={{ marginTop: 14, width: '100%' }}>
-          Open in MacroFactor
+          Open in Workouts
         </button>
       )}
       {day.kind === 'run' && day.route_to === 'runna' && (
-        <button onClick={() => openExternal('runna://', 'https://app.runna.com/')}
+        <button
+          onClick={() => openExternal('runna://open', 'https://runna.app.link/open')}
           className="btn-primary" style={{ marginTop: 14, width: '100%' }}>
           Open in Runna
         </button>
