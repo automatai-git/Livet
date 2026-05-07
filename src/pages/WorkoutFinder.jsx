@@ -282,7 +282,7 @@ function DaySessionCard({ day, onPickFlex }) {
       )}
       {day.kind === 'run' && day.route_to === 'runna' && (
         <button
-          onClick={() => openExternal('runna://open', 'https://runna.app.link/open')}
+          onClick={() => openExternal('runna://', 'https://apps.apple.com/app/id1594204443')}
           className="btn-primary" style={{ marginTop: 14, width: '100%' }}>
           Open in Runna
         </button>
