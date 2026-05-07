@@ -6,7 +6,14 @@
       "Bash(grep -n localStorage /c/Users/enga/OneDrive/Documents/GitHub/Timeline/*.js /c/Users/enga/OneDrive/Documents/GitHub/Timeline/*.html)",
       "Bash(grep -n \"fetch\\\\|axios\\\\|XMLHttpRequest\\\\|api\\\\|endpoint\" /c/Users/enga/OneDrive/Documents/GitHub/Timeline/*.html /c/Users/enga/OneDrive/Documents/GitHub/Timeline/*.js)",
       "Bash(grep -n \"localStorage\\\\|sessionStorage\\\\|IndexedDB\" /c/Users/enga/OneDrive/Documents/GitHub/Timeline/*.html)",
-      "Bash(powershell -Command \":*)"
+      "Bash(powershell -Command \":*)",
+      "Bash(npx vite *)",
+      "Bash(npx eslint *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "mcp__claude_ai_Google_Drive__search_files",
+      "mcp__claude_ai_Google_Drive__read_file_content"
     ]
   },
   "CLAUDE_CODE_MAX_OUTPUT_TOKENS": 10000
