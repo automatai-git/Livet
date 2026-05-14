@@ -1,4 +1,4 @@
-const CACHE_NAME = 'life-training-hub-v6';
+const CACHE_NAME = 'life-training-hub-v7';
 const SHELL = [
   '/Livet/',
   '/Livet/index.html',
@@ -24,19 +24,43 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Cache-first for same-origin GETs; network-first fallback for others.
-// Block + mobility data is cached opportunistically by the data layer in localStorage,
-// so mobility sessions survive offline once viewed.
+const isNavigation = (req) =>
+  req.mode === 'navigate' || (req.method === 'GET' && req.destination === 'document');
+
+// Strategy:
+//  - HTML / navigation requests   → network-first, fall back to cached shell.
+//    Critical so a new deploy is picked up immediately (the previous
+//    cache-first strategy would pin clients to a stale index.html that
+//    referenced bundle hashes no longer present on the server).
+//  - Everything else (hashed JS/CSS, images, etc.) → cache-first.
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
+
+  if (isNavigation(req)) {
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          if (res && res.status === 200 && res.type === 'basic') {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then((c) => c.put(req, clone)).catch(() => {});
+          }
+          return res;
+        })
+        .catch(() =>
+          caches.match(req).then((cached) => cached || caches.match('/Livet/index.html'))
+        )
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(req).then((cached) => {
       if (cached) return cached;
       return fetch(req).then((res) => {
         if (!res || res.status !== 200 || res.type !== 'basic') return res;
         const clone = res.clone();
-        caches.open(CACHE_NAME).then((c) => c.put(req, clone));
+        caches.open(CACHE_NAME).then((c) => c.put(req, clone)).catch(() => {});
         return res;
       }).catch(() => cached);
     })
