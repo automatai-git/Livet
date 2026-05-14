@@ -1,292 +1,383 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useReducer, useState, useCallback } from 'react';
 import AppShell from '../components/AppShell';
+import { MOBILITY_DATA, DAYS } from '../data/mobilityData';
+import { parseSets } from '../lib/mobility';
+import { mobilityService } from '../services/mobilityService';
+import RoutineOverview from '../components/mobility/RoutineOverview';
+import FocusMode from '../components/mobility/FocusMode';
+import SessionSummary from '../components/mobility/SessionSummary';
 
-const InlineTimer = ({ initialSeconds = 60 }) => {
-  const [timeLeft, setTimeLeft] = useState(initialSeconds);
-  const [isRunning, setIsRunning] = useState(false);
+const ACTIVE_SESSION_KEY = 'mobilitySession:active';
+const todayISO = () => new Date().toISOString().split('T')[0];
 
-  useEffect(() => {
-    if (!isRunning) return;
-    const interval = setInterval(() => {
-      setTimeLeft((t) => {
-        if (t <= 1) { setIsRunning(false); return 0; }
-        return t - 1;
+const buildInitialSession = (routine) => ({
+  status: 'in-progress',
+  startedAt: Date.now(),
+  finishedAt: null,
+  currentExerciseIndex: 0,
+  exercises: Object.fromEntries(
+    routine.exercises.map((ex) => {
+      const p = parseSets(ex.sets);
+      return [
+        ex.order,
+        {
+          skipped: false,
+          sets: Array.from({ length: p.setCount }, () => ({
+            completed: false,
+            reps: null,
+            holdSeconds: p.holdSeconds,
+            weightKg: null,
+            failed: false,
+            note: null,
+          })),
+        },
+      ];
+    })
+  ),
+  notes: '',
+});
+
+const sessionReducer = (state, action) => {
+  switch (action.type) {
+    case 'HYDRATE':
+      return action.state;
+    case 'START':
+      return buildInitialSession(action.routine);
+    case 'TOGGLE_SET': {
+      const ex = state.exercises[action.order];
+      if (!ex) return state;
+      const sets = ex.sets.map((s, i) => {
+        if (i !== action.setIndex) return s;
+        const completed = !s.completed;
+        const next = { ...s, completed };
+        if (completed && next.reps == null && action.parsed?.repTarget != null) {
+          next.reps = Array.isArray(action.parsed.repTarget) ? action.parsed.repTarget[1] : action.parsed.repTarget;
+        }
+        return next;
       });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [isRunning]);
-
-  const mins = Math.floor(timeLeft / 60);
-  const secs = timeLeft % 60;
-
-  return (
-    <div className="timer-row">
-      <span className="timer-display">{mins}:{secs < 10 ? '0' + secs : secs}</span>
-      <button onClick={() => setIsRunning(!isRunning)} className="timer-btn primary">
-        {isRunning ? 'Pause' : 'Start'}
-      </button>
-      <button onClick={() => { setIsRunning(false); setTimeLeft(initialSeconds); }} className="timer-btn ghost">Reset</button>
-      <div className="timer-presets">
-        <button onClick={() => setTimeLeft(60)} className="timer-btn ghost">1m</button>
-        <button onClick={() => setTimeLeft(120)} className="timer-btn ghost">2m</button>
-      </div>
-    </div>
-  );
-};
-
-const MOBILITY_DATA = {
-  monday: {
-    name: "Monday - Strength",
-    routines: {
-      "pre-workout": {
-        name: "Pre-Workout Support",
-        exercises: [
-          { order: 1, name: "Ankle Circles", sets: "10 each direction/foot", load: "None", purpose: "Ankle mobility", cue: "Slow, full ROM" },
-          { order: 2, name: "Hip Airplane", sets: "2x5 each side", load: "None", purpose: "Hip control through ROM", cue: "Hinge at hip, rotate pelvis" },
-          { order: 3, name: "Dead Bug", sets: "2x8 each side", load: "None", purpose: "Core anti-extension", cue: "Press low back into floor" },
-          { order: 4, name: "90/90 Hip Transition", sets: "5 transitions", load: "None", purpose: "Hip internal/external rotation", cue: "Keep chest tall" },
-          { order: 5, name: "Goblet Squat Hold", sets: "2x20s", load: "12-16kg", purpose: "Squat pattern prep", cue: "Elbows push knees out" }
-        ]
-      },
-      "post-workout": {
-        name: "Post-Workout Support",
-        exercises: [
-          { order: 1, name: "Glute Bridge w/ Posterior Tilt", sets: "2x12", load: "None", purpose: "End-range glute control", cue: "Squeeze + tuck pelvis under" },
-          { order: 2, name: "Jefferson Curl", sets: "2x8", load: "5-10kg", purpose: "Posterior chain mobility", cue: "Segment by segment" }
-        ]
-      }
+      return { ...state, exercises: { ...state.exercises, [action.order]: { ...ex, sets } } };
     }
-  },
-  tuesday: {
-    name: "Tuesday - Run",
-    routines: {
-      "pre-run": {
-        name: "Pre-Run Support",
-        exercises: [
-          { order: 1, name: "Ankle Circles", sets: "10 each direction/foot", load: "None", purpose: "Ankle prep", cue: "Full ROM" },
-          { order: 2, name: "Calf Raises (slow eccentric)", sets: "2x10", load: "Bodyweight", purpose: "Calf activation", cue: "3s down" },
-          { order: 3, name: "Leg Swings (front/back)", sets: "10 each leg", load: "None", purpose: "Hip flexor/hamstring prep", cue: "Controlled swing" },
-          { order: 4, name: "ATG Split Squat Hold", sets: "30s each side", load: "None", purpose: "Hip flexor + ankle stretch", cue: "Back knee to floor" }
-        ]
-      },
-      "post-run": {
-        name: "Post-Run Support",
-        exercises: [
-          { order: 1, name: "Wall Ankle Stretch (weighted)", sets: "3x30s each", load: "5-10kg plate on knee", purpose: "Dorsiflexion improvement", cue: "Knee over 2nd toe" },
-          { order: 2, name: "Cossack Squat", sets: "2x8 each side", load: "Goblet 8-12kg", purpose: "Adductor stretch + ankle", cue: "Heel stays down" },
-          { order: 3, name: "90/90 Flow", sets: "2x5 transitions", load: "None", purpose: "Hip mobility cooldown", cue: "Breathe into tight spots" }
-        ]
-      }
+    case 'UPDATE_SET': {
+      const ex = state.exercises[action.order];
+      if (!ex) return state;
+      const sets = ex.sets.map((s, i) => (i === action.setIndex ? { ...s, ...action.patch } : s));
+      return { ...state, exercises: { ...state.exercises, [action.order]: { ...ex, sets } } };
     }
-  },
-  wednesday: {
-    name: "Wednesday - Mobility",
-    routines: {
-      "full-session": {
-        name: "Full Corrective Session",
-        exercises: [
-          { order: 1, name: "Foam Roller T-Spine Extension", sets: "2x10", load: "None", purpose: "Thoracic mobility", cue: "Extend over roller at each segment" },
-          { order: 2, name: "Dead Bug (full)", sets: "3x10/side", load: "None", purpose: "Core anti-extension (BUTT WINK)", cue: "Low back STAYS on floor" },
-          { order: 3, name: "Pallof Press", sets: "3x10/side", load: "Band/Cable", purpose: "Core anti-rotation (BUTT WINK)", cue: "No rotation, brace hard" },
-          { order: 4, name: "Copenhagen Plank", sets: "3x8-12/side", load: "Bodyweight", purpose: "Adductor strength (GROIN)", cue: "Progress: bent → straight leg" },
-          { order: 5, name: "90/90 Flow + Holds", sets: "3x5 transitions + 30s hold weak side", load: "None", purpose: "Hip rotation (HIPS)", cue: "Extra time on left" },
-          { order: 6, name: "Wall Ankle Stretch (weighted)", sets: "3x45s each", load: "10kg plate", purpose: "Dorsiflexion (ANKLES)", cue: "Track knee over toe" },
-          { order: 7, name: "Tibialis Raise", sets: "3x15", load: "Bodyweight or band", purpose: "Anterior ankle strength (ANKLES)", cue: "Toes up, control down" },
-          { order: 8, name: "Jefferson Curl", sets: "3x8", load: "10-15kg", purpose: "Posterior chain under load", cue: "Slow, segmental" },
-          { order: 9, name: "Cossack Squat", sets: "3x8 each", load: "Goblet 12-16kg", purpose: "Adductors + ankle (GROIN/ANKLES)", cue: "Heel down, chest up" },
-          { order: 10, name: "ATG Split Squat", sets: "3x8 each", load: "DBs 5-10kg", purpose: "Hip flexor length (HIPS/BUTT WINK)", cue: "Back knee touches floor" },
-          { order: 11, name: "Goblet Squat Hold + Pulses", sets: "2x30s + 10 pulses", load: "16-20kg", purpose: "End-range squat strength", cue: "Elbows push knees, stay deep" },
-          { order: 12, name: "Glute Bridge w/ Posterior Tilt", sets: "3x12", load: "None", purpose: "Glute control at end-range (BUTT WINK)", cue: "Tuck pelvis, squeeze top" }
-        ]
-      }
+    case 'SKIP_EXERCISE': {
+      const ex = state.exercises[action.order];
+      if (!ex) return state;
+      return {
+        ...state,
+        exercises: { ...state.exercises, [action.order]: { ...ex, skipped: true } },
+      };
     }
-  },
-  thursday: {
-    name: "Thursday - Run",
-    routines: {
-      "pre-run": {
-        name: "Pre-Run Support",
-        exercises: [
-          { order: 1, name: "Ankle Circles", sets: "10 each direction/foot", load: "None", purpose: "Ankle prep", cue: "Full ROM" },
-          { order: 2, name: "Calf Raises (slow eccentric)", sets: "2x10", load: "Bodyweight", purpose: "Calf activation", cue: "3s down" },
-          { order: 3, name: "Leg Swings (front/back)", sets: "10 each leg", load: "None", purpose: "Hip flexor/hamstring prep", cue: "Controlled swing" },
-          { order: 4, name: "ATG Split Squat Hold", sets: "30s each side", load: "None", purpose: "Hip flexor + ankle stretch", cue: "Back knee to floor" }
-        ]
-      },
-      "post-run": {
-        name: "Post-Run Support",
-        exercises: [
-          { order: 1, name: "Wall Ankle Stretch (weighted)", sets: "3x30s each", load: "5-10kg plate on knee", purpose: "Dorsiflexion improvement", cue: "Knee over 2nd toe" },
-          { order: 2, name: "Cossack Squat", sets: "2x8 each side", load: "Goblet 8-12kg", purpose: "Adductor stretch + ankle", cue: "Heel stays down" },
-          { order: 3, name: "90/90 Flow", sets: "2x5 transitions", load: "None", purpose: "Hip mobility cooldown", cue: "Breathe into tight spots" }
-        ]
-      }
+    case 'NEXT_EXERCISE': {
+      const next = Math.min(state.currentExerciseIndex + 1, action.max ?? state.currentExerciseIndex + 1);
+      return { ...state, currentExerciseIndex: next };
     }
-  },
-  friday: {
-    name: "Friday - Strength (Upper)",
-    routines: {
-      "pre-workout": {
-        name: "Pre-Workout Support",
-        exercises: [
-          { order: 1, name: "Arm Circles (forward/back)", sets: "2 x 10 each direction", load: "None", purpose: "Shoulder warm-up", cue: "Small, controlled circles" },
-          { order: 2, name: "Banded Shoulder Dislocates", sets: "2 x 10", load: "Band or dowel", purpose: "Shoulder mobility (right shoulder management)", cue: "Move arms overhead and behind, no pain" },
-          { order: 3, name: "Banded Pull-Aparts", sets: "2 x 10", load: "Light band", purpose: "Scapular activation", cue: "Pull at chest level, squeeze blades" },
-          { order: 4, name: "Band External Rotation", sets: "2 x 10 each arm", load: "Light band", purpose: "Rotator cuff prep", cue: "Elbow at side, rotate forearm out" },
-          { order: 5, name: "Wall Slides", sets: "2x8", load: "None", purpose: "Shoulder + T-spine", cue: "Back stays on wall" },
-          { order: 6, name: "Dead Bug", sets: "2x8 each side", load: "None", purpose: "Core anti-extension", cue: "Press low back into floor" }
-        ]
-      },
-      "post-workout": {
-        name: "Post-Workout Support",
-        exercises: [
-          { order: 1, name: "Prone Y-T-W", sets: "2x8 each position", load: "None or 1-2kg", purpose: "Thoracic extension + posture", cue: "Squeeze at top" },
-          { order: 2, name: "Jefferson Curl", sets: "2x8", load: "5-10kg", purpose: "Posterior chain", cue: "Slow" }
-        ]
-      }
-    }
-  },
-  saturday: {
-    name: "Saturday - Flex / Sport",
-    routines: {
-      "pre-sport": {
-        name: "Pre-Sport Activation",
-        exercises: [
-          { order: 1, name: "Ankle Circles", sets: "10 each direction/foot", load: "None", purpose: "General prep", cue: "Full ROM" },
-          { order: 2, name: "Leg Swings (lateral)", sets: "10 each leg", load: "None", purpose: "Adductor prep", cue: "Controlled" },
-          { order: 3, name: "Walking Lunges", sets: "10 each leg", load: "None", purpose: "Hip activation", cue: "Upright torso" },
-          { order: 4, name: "Calf Raises", sets: "2x10", load: "Bodyweight", purpose: "Calf activation", cue: "Full ROM" }
-        ]
-      }
-    }
-  },
-  sunday: {
-    name: "Sunday - Long Run",
-    routines: {
-      "pre-run": {
-        name: "Pre-Long-Run Activation",
-        exercises: [
-          { order: 1, name: "Ankle Circles", sets: "10 each direction/foot", load: "None", purpose: "Ankle prep", cue: "Slow, full ROM" },
-          { order: 2, name: "Hip Airplane", sets: "2x5 each side", load: "None", purpose: "Hip control through ROM", cue: "Hinge at hip, rotate pelvis" },
-          { order: 3, name: "Leg Swings (front/back)", sets: "10 each leg", load: "None", purpose: "Hip flexor/hamstring prep", cue: "Controlled swing" },
-          { order: 4, name: "ATG Split Squat Hold", sets: "30s each side", load: "None", purpose: "Hip flexor + ankle stretch", cue: "Back knee to floor" }
-        ]
-      },
-      "post-run": {
-        name: "Post-Long-Run Cooldown",
-        exercises: [
-          { order: 1, name: "Wall Ankle Stretch (weighted)", sets: "3x45s each", load: "10kg plate", purpose: "Dorsiflexion (ANKLES)", cue: "Knee tracks over toe" },
-          { order: 2, name: "Cossack Squat", sets: "3x8 each", load: "Goblet 12kg", purpose: "Adductors (GROIN)", cue: "Heel down" },
-          { order: 3, name: "90/90 Flow", sets: "3x5 transitions", load: "None", purpose: "Hip rotation (HIPS)", cue: "Breathe into stretch" },
-          { order: 4, name: "ATG Split Squat", sets: "2x8 each + 1 extra left", load: "Bodyweight", purpose: "Hip flexors (HIPS asymmetry)", cue: "Extra left side" },
-          { order: 5, name: "Jefferson Curl", sets: "2x8", load: "5-10kg", purpose: "Hamstring cooldown", cue: "Slow" }
-        ]
-      }
-    }
+    case 'PREV_EXERCISE':
+      return { ...state, currentExerciseIndex: Math.max(0, state.currentExerciseIndex - 1) };
+    case 'GOTO_EXERCISE':
+      return { ...state, currentExerciseIndex: action.index };
+    case 'FINISH':
+      return { ...state, status: 'finished', finishedAt: Date.now() };
+    case 'UPDATE_NOTES':
+      return { ...state, notes: action.notes };
+    case 'RESET':
+      return null;
+    default:
+      return state;
   }
 };
 
-const DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+const buildSetLogs = (routine, state) => {
+  const logs = [];
+  for (const ex of routine.exercises) {
+    const exState = state.exercises[ex.order];
+    if (!exState || exState.skipped) continue;
+    const parsed = parseSets(ex.sets);
+    exState.sets.forEach((set, i) => {
+      if (!set.completed) return;
+      logs.push({
+        exercise_order: ex.order,
+        exercise_name: ex.name,
+        set_number: i + 1,
+        reps: set.reps ?? null,
+        hold_seconds: set.holdSeconds ?? null,
+        weight_kg: set.weightKg ?? null,
+        each_side: !!parsed.eachSide,
+        side: null,
+        failed: !!set.failed,
+        note: set.note ?? null,
+      });
+    });
+  }
+  return logs;
+};
+
+const sessionStatus = (state) => {
+  let any = false;
+  let all = true;
+  for (const key of Object.keys(state.exercises)) {
+    const ex = state.exercises[key];
+    const done = ex.sets.some((s) => s.completed);
+    if (done) any = true;
+    if (!done && !ex.skipped) all = false;
+  }
+  if (!any) return 'skipped';
+  return all ? 'completed' : 'partial';
+};
 
 const Mobility = () => {
   const todayName = DAYS[new Date().getDay()];
+  const [view, setView] = useState('day-pick');
   const [selectedDay, setSelectedDay] = useState(todayName);
-  const [selectedRoutine, setSelectedRoutine] = useState(null);
+  const [routineKey, setRoutineKey] = useState(null);
+  const [sessionState, dispatch] = useReducer(sessionReducer, null);
+  const [lastWeights, setLastWeights] = useState({});
+  const [blockWeek, setBlockWeek] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [hydratedOnce, setHydratedOnce] = useState(false);
 
-  const renderRoutines = () => {
-    if (!selectedDay || !MOBILITY_DATA[selectedDay]) return null;
-    const routines = MOBILITY_DATA[selectedDay].routines || {};
-    const entries = Object.entries(routines);
-    if (entries.length === 0) {
-      return <p className="muted-row" style={{ textAlign: 'center', marginTop: 32 }}>No mobility routine for this day.</p>;
+  const routine = routineKey ? MOBILITY_DATA[selectedDay]?.routines?.[routineKey] : null;
+
+  useEffect(() => {
+    mobilityService.flushOfflineQueue().catch(() => {});
+    mobilityService.getBlockWeek().then(setBlockWeek).catch(() => {});
+
+    const saved = sessionStorage.getItem(ACTIVE_SESSION_KEY);
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        if (data.date === todayISO() && MOBILITY_DATA[data.dayName]?.routines?.[data.routineKey]) {
+          setSelectedDay(data.dayName);
+          setRoutineKey(data.routineKey);
+          dispatch({ type: 'HYDRATE', state: data.state });
+          setView(data.state.status === 'finished' ? 'summary' : 'focus');
+        } else {
+          sessionStorage.removeItem(ACTIVE_SESSION_KEY);
+        }
+      } catch {
+        sessionStorage.removeItem(ACTIVE_SESSION_KEY);
+      }
     }
-    return (
-      <div style={{ display: 'grid', gap: 10 }}>
-        {entries.map(([key, rot]) => (
-          <button
-            key={key}
-            className="tight-card"
-            onClick={() => setSelectedRoutine(rot)}
-            style={{ cursor: 'pointer', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}
-          >
-            <div>
-              <div className="heading-serif" style={{ fontSize: '1.05rem', lineHeight: 1.2 }}>{rot.name}</div>
-              <div className="muted-row" style={{ marginTop: 2 }}>{rot.exercises.length} exercises</div>
-            </div>
-            <span style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>›</span>
-          </button>
-        ))}
-      </div>
+    setHydratedOnce(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydratedOnce) return;
+    if (!sessionState || !routineKey || view === 'day-pick' || view === 'overview') return;
+    sessionStorage.setItem(
+      ACTIVE_SESSION_KEY,
+      JSON.stringify({
+        date: todayISO(),
+        dayName: selectedDay,
+        routineKey,
+        state: sessionState,
+      })
     );
+  }, [sessionState, routineKey, selectedDay, view, hydratedOnce]);
+
+  const prefetchLastWeights = useCallback(async (rt) => {
+    if (!rt) return;
+    const names = rt.exercises
+      .filter((ex) => ex.load && ex.load !== 'None' && !/bodyweight/i.test(ex.load))
+      .map((ex) => ex.name);
+    if (names.length === 0) {
+      setLastWeights({});
+      return;
+    }
+    const map = await mobilityService.getLastWeightsFor(names);
+    setLastWeights(map);
+  }, []);
+
+  const handleSelectRoutine = (key) => {
+    setRoutineKey(key);
+    setView('overview');
+    prefetchLastWeights(MOBILITY_DATA[selectedDay].routines[key]);
   };
 
-  const renderExercises = () => {
-    if (!selectedRoutine) return null;
+  const handleStartRoutine = () => {
+    if (!routine) return;
+    dispatch({ type: 'START', routine });
+    setView('focus');
+  };
+
+  const handleSkipToday = async () => {
+    if (!routine) return;
+    setSaving(true);
+    await mobilityService.saveSession(
+      {
+        day_name: selectedDay,
+        day_label: MOBILITY_DATA[selectedDay].name,
+        routine_key: routineKey,
+        routine_name: routine.name,
+        status: 'skipped',
+        duration_seconds: 0,
+      },
+      []
+    );
+    setSaving(false);
+    setView('day-pick');
+    setRoutineKey(null);
+  };
+
+  const handleExitFocus = () => {
+    setView('overview');
+  };
+
+  const handleFinishRoutine = () => {
+    dispatch({ type: 'FINISH' });
+    setView('summary');
+  };
+
+  const guardedNext = useCallback(
+    (action) => {
+      if (action.type === 'NEXT_EXERCISE' && routine) {
+        dispatch({ ...action, max: routine.exercises.length - 1 });
+      } else {
+        dispatch(action);
+      }
+    },
+    [routine]
+  );
+
+  const handleSaveSession = async () => {
+    if (!routine || !sessionState) return;
+    setSaving(true);
+    const status = sessionStatus(sessionState);
+    const durationSec = sessionState.finishedAt && sessionState.startedAt
+      ? Math.round((sessionState.finishedAt - sessionState.startedAt) / 1000)
+      : 0;
+    const setLogs = buildSetLogs(routine, sessionState);
+
+    await mobilityService.saveSession(
+      {
+        day_name: selectedDay,
+        day_label: MOBILITY_DATA[selectedDay].name,
+        routine_key: routineKey,
+        routine_name: routine.name,
+        status,
+        duration_seconds: durationSec,
+        notes: sessionState.notes || null,
+      },
+      setLogs
+    );
+    setSaving(false);
+    sessionStorage.removeItem(ACTIVE_SESSION_KEY);
+    dispatch({ type: 'RESET' });
+    setView('day-pick');
+    setRoutineKey(null);
+  };
+
+  const handleDiscardSession = () => {
+    if (!window.confirm('Discard this session without saving?')) return;
+    sessionStorage.removeItem(ACTIVE_SESSION_KEY);
+    dispatch({ type: 'RESET' });
+    setView('day-pick');
+    setRoutineKey(null);
+  };
+
+  const dayLabel = useMemo(() => MOBILITY_DATA[selectedDay]?.name ?? selectedDay, [selectedDay]);
+
+  const renderDayPicker = () => {
+    const routines = MOBILITY_DATA[selectedDay]?.routines ?? {};
+    const entries = Object.entries(routines);
     return (
-      <div>
-        <button onClick={() => setSelectedRoutine(null)} className="back-home" style={{ background: 'none', border: 'none', cursor: 'pointer', marginBottom: 12, fontSize: '0.85rem' }}>
-          ← Back
-        </button>
-        <h2 className="heading-serif" style={{ fontSize: '1.4rem', marginBottom: 14 }}>{selectedRoutine.name}</h2>
-        <div style={{ display: 'grid', gap: 10 }}>
-          {selectedRoutine.exercises.map((ex, i) => (
-            <div key={i} className="tight-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-                <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{ex.order}. {ex.name}</div>
-                <span className="muted-row" style={{ whiteSpace: 'nowrap' }}>{ex.sets}</span>
-              </div>
-              {ex.load && ex.load !== 'None' && (
-                <div className="muted-row" style={{ marginTop: 2 }}>{ex.load}</div>
-              )}
-              <div style={{ fontSize: '0.85rem', marginTop: 6, lineHeight: 1.5 }}>{ex.cue}</div>
-              {ex.purpose && (
-                <div style={{ marginTop: 6 }}>
-                  <span className="tag-chip">{ex.purpose}</span>
-                </div>
-              )}
-              <InlineTimer initialSeconds={60} />
-            </div>
-          ))}
+      <>
+        <div className="day-pill-row" role="tablist" aria-label="Day of week">
+          {DAYS.map((day) => {
+            const isToday = day === todayName;
+            const isSelected = selectedDay === day;
+            return (
+              <button
+                key={day}
+                role="tab"
+                aria-selected={isSelected}
+                aria-current={isToday ? 'date' : undefined}
+                className={`day-pill ${isSelected ? 'selected' : ''} ${isToday && !isSelected ? 'today' : ''}`}
+                onClick={() => setSelectedDay(day)}
+              >
+                <span className="day-pill-label">{day}</span>
+                {isToday && <span className="day-pill-today">·TODAY</span>}
+              </button>
+            );
+          })}
         </div>
-      </div>
+
+        {blockWeek && (
+          <div className="muted-row" style={{ textAlign: 'center', margin: '4px 0 14px' }}>
+            Block {blockWeek.block} · Week {blockWeek.week}
+          </div>
+        )}
+
+        {entries.length === 0 ? (
+          <div className="empty-state">
+            <p className="heading-serif" style={{ fontSize: '1.15rem' }}>Rest day</p>
+            <p className="muted-row">Nothing scheduled for {selectedDay}.</p>
+          </div>
+        ) : (
+          <div className="routine-list">
+            <div className="eyebrow" style={{ marginBottom: 8 }}>{dayLabel}</div>
+            {entries.map(([key, rot]) => (
+              <button
+                key={key}
+                type="button"
+                className="routine-list-card"
+                onClick={() => handleSelectRoutine(key)}
+              >
+                <div>
+                  <div className="heading-serif routine-list-name">{rot.name}</div>
+                  <div className="muted-row routine-list-meta">
+                    {rot.exercises.length} exercises
+                  </div>
+                </div>
+                <span className="routine-list-arrow" aria-hidden="true">›</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </>
     );
   };
 
   return (
-    <AppShell title="Mobility" accent="var(--accent-mobility)">
-      <>
-        {!selectedRoutine && (
-          <>
-            <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 14, marginBottom: 14, scrollbarWidth: 'none' }}>
-              {Object.keys(MOBILITY_DATA).map(day => {
-                const isToday = day === todayName;
-                const isSelected = selectedDay === day;
-                return (
-                  <button
-                    key={day}
-                    onClick={() => setSelectedDay(day)}
-                    style={{
-                      flexShrink: 0, padding: '7px 14px', borderRadius: 999,
-                      background: isSelected ? 'var(--primary)' : 'var(--card)',
-                      color: isSelected ? '#fff' : 'var(--text)',
-                      border: '1px solid ' + (isSelected ? 'var(--primary)' : 'var(--border)'),
-                      textTransform: 'capitalize', fontWeight: 500, fontSize: '0.82rem',
-                      cursor: 'pointer',
-                      boxShadow: isToday && !isSelected ? 'inset 0 0 0 1px var(--primary)' : 'none',
-                    }}
-                  >
-                    {day}
-                    {isToday && <span style={{ marginLeft: 6, fontSize: '0.62rem', color: isSelected ? 'rgba(255,255,255,0.8)' : 'var(--primary-light)', fontWeight: 600, letterSpacing: 0.5 }}>·TODAY</span>}
-                  </button>
-                );
-              })}
-            </div>
-            {renderRoutines()}
-          </>
-        )}
+    <AppShell title="Mobility" accent="var(--accent-mobility)" maxWidth={760}>
+      {view === 'day-pick' && renderDayPicker()}
 
-        {selectedRoutine && renderExercises()}
-      </>
+      {view === 'overview' && routine && (
+        <RoutineOverview
+          dayLabel={dayLabel}
+          routine={routine}
+          blockWeek={blockWeek}
+          onStart={handleStartRoutine}
+          onSkip={handleSkipToday}
+          onBack={() => { setView('day-pick'); setRoutineKey(null); }}
+        />
+      )}
+
+      {view === 'focus' && routine && sessionState && (
+        <FocusMode
+          routine={routine}
+          state={sessionState}
+          dispatch={guardedNext}
+          lastWeights={lastWeights}
+          blockWeek={blockWeek}
+          onFinish={handleFinishRoutine}
+          onExit={handleExitFocus}
+        />
+      )}
+
+      {view === 'summary' && routine && sessionState && (
+        <SessionSummary
+          routine={routine}
+          state={sessionState}
+          lastWeights={lastWeights}
+          saving={saving}
+          onSave={handleSaveSession}
+          onDiscard={handleDiscardSession}
+        />
+      )}
     </AppShell>
   );
 };
