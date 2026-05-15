@@ -1,40 +1,59 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { ISLANDS } from '../data/travelData';
+import hawaii from '../data/destinations/hawaii';
 
-const STORAGE_KEY = 'travel_custom_pins_v1';
+const LEGACY_STORAGE_KEY = 'travel_custom_pins_v1';
+const tripStorageKey = (tripId) => tripId ? `travel_custom_pins_v1:${tripId}` : LEGACY_STORAGE_KEY;
 
-// Fallback geographic anchors so existing islands have real lat/lng even
-// though travelData.js only has SVG coordinates.
-const ISLAND_LATLNG = {
-  'big-island': [19.6, -155.5],
-  'oahu':      [21.45, -157.95],
-  'maui':      [20.8, -156.3],
-  'kauai':     [22.05, -159.5],
+// Pins were originally stored under a single global key. When opening a
+// specific trip for the first time, migrate the global pins onto that
+// trip's namespaced key so they don't get lost.
+const loadCustomPins = (tripId) => {
+  const tripKey = tripStorageKey(tripId);
+  try {
+    const tripData = localStorage.getItem(tripKey);
+    if (tripData) return JSON.parse(tripData);
+    if (tripId) {
+      const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+      if (legacy) {
+        localStorage.setItem(tripKey, legacy);
+        return JSON.parse(legacy);
+      }
+    }
+    return [];
+  } catch { return []; }
 };
 
-const loadCustomPins = () => {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
-  catch { return []; }
-};
-const saveCustomPins = (pins) => localStorage.setItem(STORAGE_KEY, JSON.stringify(pins));
+const saveCustomPins = (tripId, pins) =>
+  localStorage.setItem(tripStorageKey(tripId), JSON.stringify(pins));
 
-const TravelMap = ({ onSelectIsland, activeIsland, editable = true }) => {
+const TravelMap = ({ destination = hawaii, tripId, onSelectIsland, activeIsland, editable = true }) => {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const islandLayerRef = useRef(null);
   const customLayerRef = useRef(null);
-  const [pins, setPins] = useState(loadCustomPins);
+  const [pins, setPins] = useState(() => loadCustomPins(tripId));
   const [editing, setEditing] = useState(false);
+
+  const islands = destination?.islands ?? [];
+  const mapView = useMemo(
+    () => destination?.mapView ?? { center: [20.7, -157.5], zoom: 7 },
+    [destination]
+  );
+
+  // Reload pins if tripId changes (e.g. navigating between trips).
+  useEffect(() => {
+    setPins(loadCustomPins(tripId));
+  }, [tripId]);
 
   // Init map once
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
     const map = L.map(containerRef.current, {
-      center: [20.7, -157.5],
-      zoom: 7,
+      center: mapView.center,
+      zoom: mapView.zoom,
       scrollWheelZoom: false,
       zoomControl: true,
     });
@@ -53,6 +72,7 @@ const TravelMap = ({ onSelectIsland, activeIsland, editable = true }) => {
     customLayerRef.current = L.layerGroup().addTo(map);
 
     return () => { map.remove(); mapRef.current = null; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Draw built-in islands whenever activeIsland changes
@@ -62,8 +82,8 @@ const TravelMap = ({ onSelectIsland, activeIsland, editable = true }) => {
     if (!map || !layer) return;
     layer.clearLayers();
 
-    ISLANDS.forEach((isl) => {
-      const ll = ISLAND_LATLNG[isl.id];
+    islands.forEach((isl) => {
+      const ll = isl.latLng;
       if (!ll) return;
       const isActive = activeIsland === isl.id;
       const marker = L.circleMarker(ll, {
@@ -76,7 +96,7 @@ const TravelMap = ({ onSelectIsland, activeIsland, editable = true }) => {
       marker.on('click', () => onSelectIsland?.(isl.id));
       marker.addTo(layer);
     });
-  }, [activeIsland, onSelectIsland]);
+  }, [activeIsland, onSelectIsland, islands]);
 
   // Draw custom pins whenever they change
   useEffect(() => {
@@ -91,7 +111,7 @@ const TravelMap = ({ onSelectIsland, activeIsland, editable = true }) => {
         const { lat, lng } = e.target.getLatLng();
         setPins(prev => {
           const next = prev.map((p, idx) => idx === i ? { ...p, lat, lng } : p);
-          saveCustomPins(next);
+          saveCustomPins(tripId, next);
           return next;
         });
       });
@@ -113,19 +133,19 @@ const TravelMap = ({ onSelectIsland, activeIsland, editable = true }) => {
       const pin = { lat: e.latlng.lat, lng: e.latlng.lng, label: label.trim() || 'Untitled' };
       setPins(prev => {
         const next = [...prev, pin];
-        saveCustomPins(next);
+        saveCustomPins(tripId, next);
         return next;
       });
     };
     map.on('click', handler);
     return () => map.off('click', handler);
-  }, [editing]);
+  }, [editing, tripId]);
 
   const removePin = (i) => {
     if (!window.confirm('Remove this pin?')) return;
     setPins(prev => {
       const next = prev.filter((_, idx) => idx !== i);
-      saveCustomPins(next);
+      saveCustomPins(tripId, next);
       return next;
     });
   };
@@ -136,6 +156,8 @@ const TravelMap = ({ onSelectIsland, activeIsland, editable = true }) => {
       {editable && (
         <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 500, display: 'flex', gap: 6 }}>
           <button
+            type="button"
+            aria-label={editing ? 'Finish editing pins' : 'Edit pins on map'}
             onClick={() => setEditing(!editing)}
             style={{
               padding: '6px 12px', borderRadius: 8, border: 'none',

@@ -4,12 +4,16 @@ import { SECTIONS, coreColours, sisterColours, neutralColours, cautionColours, m
 
 const ColourCard = ({ c }) => {
   return (
-    <div style={{
-      background: c.hex, 
-      border: c.hex === '#FFFFFF' || c.hex === '#EDE8E3' ? '1.5px solid #D0CCC7' : 'none',
-      borderRadius: '14px', padding: '22px 24px', minHeight: '120px', display: 'flex', flexDirection: 'column', 
-      justifyContent: 'flex-end', boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-    }}>
+    <div
+      role="img"
+      aria-label={`${c.name}, hex ${c.hex}`}
+      style={{
+        background: c.hex,
+        border: c.hex === '#FFFFFF' || c.hex === '#EDE8E3' ? '1.5px solid #D0CCC7' : 'none',
+        borderRadius: '14px', padding: '22px 24px', minHeight: '120px', display: 'flex', flexDirection: 'column',
+        justifyContent: 'flex-end', boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+      }}
+    >
       <div style={{fontWeight: 600, fontSize: '15px', color: (c.hex === '#FFFFFF' || c.hex === '#EDE8E3') ? '#3D3D3D' : '#F5F0EB'}}>{c.name}</div>
       <div style={{fontFamily: 'monospace', fontSize: '11px', textTransform: 'uppercase', color: (c.hex === '#FFFFFF' || c.hex === '#EDE8E3') ? '#3D3D3D' : '#F5F0EB', opacity: 0.8}}>{c.hex}</div>
     </div>
@@ -27,15 +31,17 @@ const ColourPalette = () => {
           <h1 className="heading-serif">Palette</h1>
           <div style={{width: '80px'}}></div>
         </div>
-        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '0 20px 10px', scrollbarWidth: 'none' }}>
+        <div role="tablist" aria-label="Palette sections" style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '0 20px 10px', scrollbarWidth: 'none' }}>
            {Object.entries(SECTIONS).map(([key, title]) => (
              <button
                key={key}
+               role="tab"
+               aria-selected={section === key}
                onClick={() => setSection(key)}
                style={{
                  background: section === key ? 'var(--text)' : 'transparent',
                  color: section === key ? 'white' : 'var(--text-muted)',
-                 padding: '8px 16px', borderRadius: '20px', border: section === key ? '1.5px solid var(--text)' : '1.5px solid var(--border)',
+                 padding: '8px 16px', minHeight: 44, borderRadius: '20px', border: section === key ? '1.5px solid var(--text)' : '1.5px solid var(--border)',
                  whiteSpace: 'nowrap', cursor: 'pointer', fontWeight: 600
                }}
              >

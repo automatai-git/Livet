@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { trainingService } from '../services/trainingService';
+import { mobilityService } from '../services/mobilityService';
+import { MOBILITY_DATA, DAYS as MOBILITY_DAYS } from '../data/mobilityData';
+import { pickRoutineForTime } from '../lib/mobility';
 import AppIcon from '../components/AppIcon';
+import LoadingState from '../components/feedback/LoadingState';
 
 // Single source of truth for dashboard cards. Each card pulls its accent
 // from --accent-* variables defined in index.css (style guide). Adding a
@@ -26,7 +30,8 @@ const Dashboard = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
-  const [todayAgenda, setTodayAgenda] = useState({ meal: null, workout: null, loading: true });
+  const [todayAgenda, setTodayAgenda] = useState({ meal: null, workout: null, mobility: null, loading: true });
+  const [mobilityStreak, setMobilityStreak] = useState(null);
 
   useEffect(() => {
     // Check if the device is iOS
@@ -57,12 +62,21 @@ const Dashboard = () => {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const today = new Date();
     const dayName = days[today.getDay()];
-    
+
     // DD.MM.YYYY format for calendar backup
     const dd = String(today.getDate()).padStart(2, '0');
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const yyyy = today.getFullYear();
     const dateStr = `${dd}.${mm}.${yyyy}`;
+
+    // Mobility row: picked from local data (no fetch needed). The pre/post
+    // routine is chosen by hour-of-day per design overview §H1.
+    const mobilityDay = MOBILITY_DAYS[today.getDay()];
+    const mobilityRoutines = MOBILITY_DATA[mobilityDay]?.routines ?? {};
+    const picked = pickRoutineForTime(mobilityRoutines, today.getHours());
+    const mobility = picked
+      ? { day: mobilityDay, routineKey: picked.key, name: picked.routine.name, count: picked.routine.exercises.length }
+      : null;
 
     try {
       // Get program start date
@@ -79,22 +93,25 @@ const Dashboard = () => {
         workoutQuery = workoutQuery.eq('date', dateStr).maybeSingle();
       }
 
-      const [mealRes, workoutRes] = await Promise.all([
+      const [mealRes, workoutRes, streak] = await Promise.all([
         supabase.from('weekly_menu').select('meals(emoji, name)').eq('day_of_week', dayName).maybeSingle(),
-        workoutQuery
+        workoutQuery,
+        mobilityService.getWeeklyCount().catch(() => 0),
       ]).catch(err => {
         console.error("Supabase parallel fetch failed:", err);
-        return [ {data: null, error: err}, {data: null, error: err} ];
+        return [ {data: null, error: err}, {data: null, error: err}, 0 ];
       });
 
       setTodayAgenda({
         meal: mealRes?.data?.meals || null,
         workout: workoutRes?.data || null,
+        mobility,
         loading: false
       });
+      setMobilityStreak(typeof streak === 'number' ? streak : 0);
     } catch (e) {
       console.error("Dashboard fetchAgenda crash prevented:", e);
-      setTodayAgenda({ meal: null, workout: null, loading: false });
+      setTodayAgenda({ meal: null, workout: null, mobility, loading: false });
     }
   };
 
@@ -122,9 +139,17 @@ const Dashboard = () => {
 
       {/* TODAY'S AGENDA WIDGET */}
       <div style={{ background: 'var(--card)', margin: '0 20px 20px', padding: '20px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
-        <h2 className="heading-serif" style={{ fontSize: '1.2rem', marginBottom: '15px', color: 'var(--text)' }}>⚡ Today's Agenda</h2>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '15px', gap: '10px', flexWrap: 'wrap' }}>
+          <h2 className="heading-serif" style={{ fontSize: '1.2rem', color: 'var(--text)' }}>⚡ Today's Agenda</h2>
+          {mobilityStreak != null && (
+            <Link to="/mobility" aria-label={`Mobility: ${mobilityStreak} of last 7 days`} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'var(--success-bg)', color: 'var(--text)', padding: '4px 10px', borderRadius: '999px', fontSize: '0.78rem', fontWeight: 500, border: '1px solid var(--border)' }}>
+              <span style={{ color: 'var(--accent-mobility)', fontWeight: 700 }}>{mobilityStreak}</span>
+              <span style={{ color: 'var(--text-muted)' }}>of last 7 days</span>
+            </Link>
+          )}
+        </div>
         {todayAgenda.loading ? (
-           <p style={{ color: 'var(--text-muted)' }}>Loading agenda...</p>
+           <LoadingState label="Loading agenda…" variant="inline" />
         ) : (
            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
              <Link to="/menu" style={{ textDecoration: 'none', color: 'var(--text)' }}>
@@ -136,7 +161,7 @@ const Dashboard = () => {
                  </div>
                </div>
              </Link>
-             
+
              <Link to="/workout" style={{ textDecoration: 'none', color: 'var(--text)' }}>
                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', background: 'var(--bg)', padding: '12px', borderRadius: '12px', transition: 'transform 0.2s' }}>
                  <div style={{ fontSize: '1.5rem', background: 'var(--card)', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>💪</div>
@@ -146,13 +171,32 @@ const Dashboard = () => {
                  </div>
                </div>
              </Link>
+
+             <Link
+               to={todayAgenda.mobility ? `/mobility?day=${todayAgenda.mobility.day}&routine=${todayAgenda.mobility.routineKey}` : '/mobility'}
+               style={{ textDecoration: 'none', color: 'var(--text)' }}
+             >
+               <div style={{ display: 'flex', alignItems: 'center', gap: '15px', background: 'var(--bg)', padding: '12px', borderRadius: '12px', transition: 'transform 0.2s' }}>
+                 <div style={{ background: 'var(--card)', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-mobility)' }}>
+                   <AppIcon name="mobility" size={20} />
+                 </div>
+                 <div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '2px' }}>Mobility</div>
+                    <div style={{ fontWeight: 600 }}>
+                      {todayAgenda.mobility
+                        ? `${todayAgenda.mobility.name} · ${todayAgenda.mobility.count} exercises`
+                        : 'Rest day'}
+                    </div>
+                 </div>
+               </div>
+             </Link>
            </div>
         )}
       </div>
 
       {showInstallPrompt && (
         <div className="install-prompt show">
-          <button className="close-prompt" onClick={() => setShowInstallPrompt(false)}>×</button>
+          <button className="close-prompt" aria-label="Close install prompt" onClick={() => setShowInstallPrompt(false)}>×</button>
           <p style={{ color: 'var(--text)', fontWeight: 600, marginBottom: '5px' }}>Install App</p>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '10px' }}>
             Add to your home screen for quick access

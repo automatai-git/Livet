@@ -12,6 +12,7 @@ import TravelPlanner from './pages/TravelPlanner';
 import DecisionMatrix from './pages/DecisionMatrix';
 import { supabase } from './services/supabase';
 import Auth from './components/meal-planner/Auth';
+import ErrorBoundary from './components/feedback/ErrorBoundary';
 
 function App() {
   const [session, setSession] = useState(null);
@@ -35,15 +36,15 @@ function App() {
           <Auth onLogin={(sess) => setSession(sess)} />
         ) : (
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/menu" element={<MenuPlanner />} />
-            <Route path="/timeline" element={<Timeline />} />
-            <Route path="/mobility" element={<Mobility />} />
-            <Route path="/workout/*" element={<WorkoutFinder />} />
-            <Route path="/colour" element={<ColourPalette />} />
-            <Route path="/bucket" element={<BucketList />} />
-            <Route path="/travel" element={<TravelPlanner />} />
-            <Route path="/decision" element={<DecisionMatrix />} />
+            <Route path="/" element={<ErrorBoundary key="dashboard"><Dashboard /></ErrorBoundary>} />
+            <Route path="/menu" element={<ErrorBoundary key="menu"><MenuPlanner /></ErrorBoundary>} />
+            <Route path="/timeline" element={<ErrorBoundary key="timeline"><Timeline /></ErrorBoundary>} />
+            <Route path="/mobility" element={<ErrorBoundary key="mobility"><Mobility /></ErrorBoundary>} />
+            <Route path="/workout/*" element={<ErrorBoundary key="workout"><WorkoutFinder /></ErrorBoundary>} />
+            <Route path="/colour" element={<ErrorBoundary key="colour"><ColourPalette /></ErrorBoundary>} />
+            <Route path="/bucket" element={<ErrorBoundary key="bucket"><BucketList /></ErrorBoundary>} />
+            <Route path="/travel/*" element={<ErrorBoundary key="travel"><TravelPlanner /></ErrorBoundary>} />
+            <Route path="/decision" element={<ErrorBoundary key="decision"><DecisionMatrix /></ErrorBoundary>} />
           </Routes>
         )}
       </div>

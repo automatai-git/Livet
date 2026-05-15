@@ -72,29 +72,32 @@ const Timeline = () => {
         </div>
       </div>
 
-      <div style={{display: 'flex', justifyContent: 'space-around', padding: '24px 16px', background: 'var(--card)', borderRadius: '16px', marginBottom: '20px'}}>
+      <section aria-label="Milestone statistics" style={{display: 'flex', justifyContent: 'space-around', padding: '24px 16px', background: 'var(--card)', borderRadius: '16px', marginBottom: '20px'}}>
         <div style={{textAlign: 'center'}}>
-          <div style={{fontSize: '2rem', fontWeight: 700}}>{stats.past}</div>
+          <div style={{fontSize: '2rem', fontWeight: 700}} aria-label={`${stats.past} past milestones`}>{stats.past}</div>
           <div style={{fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase'}}>Past</div>
         </div>
         <div style={{textAlign: 'center'}}>
-          <div style={{fontSize: '2rem', fontWeight: 700, color: 'var(--primary)'}}>{stats.total}</div>
+          <div style={{fontSize: '2rem', fontWeight: 700, color: 'var(--primary)'}} aria-label={`${stats.total} total milestones`}>{stats.total}</div>
           <div style={{fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase'}}>Total</div>
         </div>
         <div style={{textAlign: 'center'}}>
-          <div style={{fontSize: '2rem', fontWeight: 700, color: 'var(--success)'}}>{stats.future}</div>
+          <div style={{fontSize: '2rem', fontWeight: 700, color: 'var(--success)'}} aria-label={`${stats.future} future milestones`}>{stats.future}</div>
           <div style={{fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase'}}>Future</div>
         </div>
-      </div>
+      </section>
 
-      <div style={{display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '24px'}}>
+      <div role="group" aria-label="Filter milestones by time" style={{display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '24px'}}>
         {['all', 'past', 'future'].map(f => (
-          <button 
+          <button
             key={f}
+            type="button"
+            aria-pressed={filter === f}
+            aria-label={`Show ${f} milestones`}
             onClick={() => setFilter(f)}
             style={{
-              padding: '10px 20px', 
-              background: filter === f ? 'var(--text)' : 'transparent', 
+              padding: '10px 20px', minHeight: 44,
+              background: filter === f ? 'var(--text)' : 'transparent',
               color: filter === f ? '#fff' : 'var(--text-muted)',
               border: `1.5px solid ${filter === f ? 'var(--text)' : 'var(--border)'}`,
               borderRadius: '20px', cursor: 'pointer', textTransform: 'capitalize', fontWeight: 500

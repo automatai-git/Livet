@@ -1,14 +1,30 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../services/supabase';
+
+// Autosave debounce window. Edits flush 1.5 s after the last keystroke
+// (or immediately on Cmd/Ctrl+S, or before navigating away).
+const AUTOSAVE_MS = 1500;
+
+const snapshotOf = (m) => m ? JSON.stringify({ title: m.title, data: m.data }) : null;
 
 const DecisionMatrix = () => {
     const [matrices, setMatrices] = useState([]);
     const [activeMatrix, setActiveMatrix] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
+    const [saveState, setSaveState] = useState('idle'); // 'idle' | 'pending' | 'saving' | 'error'
+    const [lastSavedAt, setLastSavedAt] = useState(null);
     const [showNewModal, setShowNewModal] = useState(false);
     const [newTitle, setNewTitle] = useState('');
+
+    // The snapshot of `activeMatrix` as it was last persisted. Compared
+    // against the current state to derive `dirty`.
+    const savedSnapshotRef = useRef(null);
+    const autosaveTimerRef = useRef(null);
+    const activeMatrixRef = useRef(null);
+    activeMatrixRef.current = activeMatrix;
+
+    const dirty = activeMatrix != null && snapshotOf(activeMatrix) !== savedSnapshotRef.current;
 
     useEffect(() => {
         fetchMatrices();
@@ -20,11 +36,12 @@ const DecisionMatrix = () => {
             .from('decision_matrices')
             .select('*')
             .order('updated_at', { ascending: false });
-        
+
         if (!error && data) {
             setMatrices(data);
             if (data.length > 0 && !activeMatrix) {
                 setActiveMatrix(data[0]);
+                savedSnapshotRef.current = snapshotOf(data[0]);
             }
         }
         setLoading(false);
@@ -59,33 +76,90 @@ const DecisionMatrix = () => {
         if (!error && data) {
             setMatrices([data, ...matrices]);
             setActiveMatrix(data);
+            savedSnapshotRef.current = snapshotOf(data);
             setShowNewModal(false);
             setNewTitle('');
         }
     };
 
-    const saveMatrix = async () => {
-        if (!activeMatrix) return;
-        setSaving(true);
-        
+    // Persist the *current* activeMatrix (read via ref so debounced calls
+    // pick up the latest edits, not whatever the closure captured).
+    const saveMatrix = useCallback(async () => {
+        const current = activeMatrixRef.current;
+        if (!current) return;
+        const pendingSnapshot = snapshotOf(current);
+        if (pendingSnapshot === savedSnapshotRef.current) return;
+
+        setSaveState('saving');
         const { error } = await supabase
             .from('decision_matrices')
-            .update({ 
-                data: activeMatrix.data,
-                title: activeMatrix.title,
+            .update({
+                data: current.data,
+                title: current.title,
                 updated_at: new Date().toISOString()
             })
-            .eq('id', activeMatrix.id);
+            .eq('id', current.id);
 
-        if (!error) {
-            setMatrices(matrices.map(m => m.id === activeMatrix.id ? activeMatrix : m));
+        if (error) {
+            console.warn('[DecisionMatrix] save failed:', error.message);
+            setSaveState('error');
+            return;
         }
-        setSaving(false);
+        savedSnapshotRef.current = pendingSnapshot;
+        setLastSavedAt(Date.now());
+        setSaveState('idle');
+        setMatrices((prev) => prev.map(m => m.id === current.id ? current : m));
+    }, []);
+
+    // Debounced autosave: every edit schedules a save 1.5s later.
+    useEffect(() => {
+        if (!activeMatrix) return;
+        if (snapshotOf(activeMatrix) === savedSnapshotRef.current) return;
+        setSaveState('pending');
+        if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+        autosaveTimerRef.current = setTimeout(() => { saveMatrix(); }, AUTOSAVE_MS);
+        return () => {
+            if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+        };
+    }, [activeMatrix, saveMatrix]);
+
+    // Cmd/Ctrl+S forces an immediate flush.
+    useEffect(() => {
+        const onKey = (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+                e.preventDefault();
+                if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+                saveMatrix();
+            }
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [saveMatrix]);
+
+    // Warn before leaving the tab with unsaved changes (e.g. autosave hadn't fired yet).
+    useEffect(() => {
+        if (!dirty) return;
+        const handler = (e) => { e.preventDefault(); e.returnValue = ''; };
+        window.addEventListener('beforeunload', handler);
+        return () => window.removeEventListener('beforeunload', handler);
+    }, [dirty]);
+
+    // When the user switches active matrix, flush any pending save first
+    // and reset the saved snapshot to the new matrix.
+    const selectMatrix = (m) => {
+        if (autosaveTimerRef.current) {
+            clearTimeout(autosaveTimerRef.current);
+            autosaveTimerRef.current = null;
+            saveMatrix();
+        }
+        setActiveMatrix(m);
+        savedSnapshotRef.current = snapshotOf(m);
+        setSaveState('idle');
     };
 
     const deleteMatrix = async (id) => {
         if (!window.confirm("Are you sure you want to delete this matrix?")) return;
-        
+
         const { error } = await supabase
             .from('decision_matrices')
             .delete()
@@ -95,7 +169,10 @@ const DecisionMatrix = () => {
             const updated = matrices.filter(m => m.id !== id);
             setMatrices(updated);
             if (activeMatrix?.id === id) {
-                setActiveMatrix(updated[0] || null);
+                const next = updated[0] || null;
+                setActiveMatrix(next);
+                savedSnapshotRef.current = snapshotOf(next);
+                setSaveState('idle');
             }
         }
     };
@@ -234,35 +311,22 @@ const DecisionMatrix = () => {
                             />
                             <p style={{color: 'var(--text-muted)', fontSize: '0.9rem'}}>Adjust criteria weights and scores to find the best choice.</p>
                         </div>
-                        <div style={{display: 'flex', gap: '10px'}}>
-                            <button 
-                                onClick={saveMatrix}
-                                disabled={saving}
-                                style={{
-                                    background: 'var(--primary)', 
-                                    color: 'white', 
-                                    border: 'none', 
-                                    padding: '12px 24px', 
-                                    borderRadius: '12px', 
-                                    fontWeight: 600, 
-                                    cursor: 'pointer',
-                                    opacity: saving ? 0.7 : 1
-                                }}
-                            >
-                                {saving ? 'Saving...' : 'Save Matrix'}
-                            </button>
-                            <button 
+                        <div style={{display: 'flex', gap: '10px', alignItems: 'center'}}>
+                            <SaveIndicator state={saveState} dirty={dirty} lastSavedAt={lastSavedAt} onRetry={saveMatrix} />
+                            <button
+                                type="button"
+                                aria-label="Delete matrix"
                                 onClick={() => deleteMatrix(activeMatrix.id)}
                                 style={{
-                                    background: 'transparent', 
-                                    color: '#ff4d4d', 
-                                    border: '1px solid #ff4d4d', 
-                                    padding: '12px', 
-                                    borderRadius: '12px', 
+                                    background: 'transparent',
+                                    color: '#ff4d4d',
+                                    border: '1px solid #ff4d4d',
+                                    padding: '12px', minHeight: 44, minWidth: 44,
+                                    borderRadius: '12px',
                                     cursor: 'pointer'
                                 }}
                             >
-                                🗑️
+                                <span aria-hidden="true">🗑️</span>
                             </button>
                         </div>
                     </div>
@@ -285,7 +349,7 @@ const DecisionMatrix = () => {
                                                 onChange={(e) => updateCriteria(crit.id, 'name', e.target.value)}
                                                 style={{background: 'transparent', border: 'none', fontWeight: 600, color: 'var(--text)', outline: 'none', flex: 1}}
                                             />
-                                            <button onClick={() => removeCriteria(crit.id)} style={{background: 'none', border: 'none', opacity: 0.3, cursor: 'pointer'}}>×</button>
+                                            <button type="button" aria-label={`Remove criterion ${crit.name || ''}`.trim()} onClick={() => removeCriteria(crit.id)} style={{background: 'none', border: 'none', opacity: 0.3, cursor: 'pointer', padding: 8, minWidth: 36, minHeight: 36}}>×</button>
                                         </div>
                                         <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
                                             <input 
@@ -360,10 +424,12 @@ const DecisionMatrix = () => {
                                                             onChange={(e) => updateOption(opt.id, e.target.value)}
                                                             style={{background: 'transparent', border: 'none', fontWeight: 600, color: 'var(--text)', outline: 'none', width: '100%'}}
                                                         />
-                                                        <button 
+                                                        <button
+                                                            type="button"
+                                                            aria-label={`Remove option ${opt.name || ''}`.trim()}
                                                             onClick={() => removeOption(opt.id)}
-                                                            style={{background: 'none', border: 'none', opacity: 0.2, cursor: 'pointer'}}
-                                                        >🗑️</button>
+                                                            style={{background: 'none', border: 'none', opacity: 0.2, cursor: 'pointer', padding: 8, minWidth: 36, minHeight: 36}}
+                                                        ><span aria-hidden="true">🗑️</span></button>
                                                     </div>
                                                 </td>
                                                 {activeMatrix.data.criteria.map(crit => (
@@ -437,12 +503,14 @@ const DecisionMatrix = () => {
                 <h4 style={{marginBottom: '10px', fontSize: '0.9rem', color: 'var(--text-muted)'}}>Your Decisions</h4>
                 <div style={{display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '5px'}}>
                     {matrices.map(m => (
-                        <button 
+                        <button
                             key={m.id}
-                            onClick={() => setActiveMatrix(m)}
+                            type="button"
+                            aria-pressed={activeMatrix?.id === m.id}
+                            onClick={() => selectMatrix(m)}
                             style={{
                                 whiteSpace: 'nowrap',
-                                padding: '8px 16px',
+                                padding: '8px 16px', minHeight: 36,
                                 borderRadius: '10px',
                                 background: activeMatrix?.id === m.id ? 'var(--primary)' : 'var(--bg)',
                                 color: activeMatrix?.id === m.id ? 'white' : 'var(--text)',
@@ -458,6 +526,70 @@ const DecisionMatrix = () => {
             </div>
         </div>
     );
+};
+
+// Live save-state pill. Replaces the old "Save Matrix" button. Reflects
+// the autosave lifecycle and offers a retry tap if a save errored out.
+const SaveIndicator = ({ state, dirty, lastSavedAt, onRetry }) => {
+    let label, fg, bg, ring;
+    if (state === 'saving') {
+        label = 'Saving…'; fg = 'var(--primary)'; bg = 'var(--success-bg)'; ring = 'var(--success)';
+    } else if (state === 'error') {
+        label = 'Save failed · retry'; fg = '#fff'; bg = 'var(--accent-decision)'; ring = 'var(--accent-decision)';
+    } else if (dirty || state === 'pending') {
+        label = 'Unsaved changes'; fg = 'var(--text-muted)'; bg = 'var(--card)'; ring = 'var(--border)';
+    } else if (lastSavedAt) {
+        label = `Saved · ${formatRelative(lastSavedAt)}`; fg = 'var(--text-muted)'; bg = 'transparent'; ring = 'var(--border)';
+    } else {
+        label = 'All changes saved'; fg = 'var(--text-muted)'; bg = 'transparent'; ring = 'var(--border)';
+    }
+
+    const handleClick = state === 'error' && onRetry ? onRetry : undefined;
+    const Tag = handleClick ? 'button' : 'div';
+    return (
+        <Tag
+            type={handleClick ? 'button' : undefined}
+            onClick={handleClick}
+            role="status"
+            aria-live="polite"
+            aria-label={label}
+            style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                padding: '8px 14px', minHeight: 36,
+                borderRadius: 999, border: `1px solid ${ring}`,
+                background: bg, color: fg, fontWeight: 500, fontSize: '0.85rem',
+                cursor: handleClick ? 'pointer' : 'default'
+            }}
+        >
+            {state === 'saving' && <SpinnerDot />}
+            {state !== 'saving' && state !== 'error' && (dirty || state === 'pending') && (
+                <span aria-hidden="true" style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent-decision)' }} />
+            )}
+            {!dirty && state === 'idle' && lastSavedAt && (
+                <span aria-hidden="true" style={{ color: 'var(--success)' }}>✓</span>
+            )}
+            <span>{label}</span>
+        </Tag>
+    );
+};
+
+const SpinnerDot = () => (
+    <span
+        aria-hidden="true"
+        style={{
+            width: 10, height: 10, borderRadius: '50%',
+            border: '2px solid var(--success)', borderTopColor: 'transparent',
+            display: 'inline-block', animation: 'spin 0.8s linear infinite'
+        }}
+    />
+);
+
+const formatRelative = (ts) => {
+    const diff = Math.round((Date.now() - ts) / 1000);
+    if (diff < 5) return 'just now';
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.round(diff / 60)}m ago`;
+    return new Date(ts).toLocaleTimeString();
 };
 
 export default DecisionMatrix;

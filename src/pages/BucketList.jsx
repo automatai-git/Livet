@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useId } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { ANDREAS_CATEGORIES, JULIE_CATEGORIES } from '../data/bucketData.js';
@@ -12,10 +12,23 @@ const BucketList = () => {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newItem, setNewItem] = useState({ title: '', difficulty: 'Medium', description: '', category_id: '' });
+  const modalTitleId = useId();
+  const fieldTitleId = useId();
+  const fieldCategoryId = useId();
+  const fieldDifficultyId = useId();
+  const fieldDescriptionId = useId();
 
   useEffect(() => {
     fetchItems();
   }, [activeUser]);
+
+  // ESC closes the add-item modal.
+  useEffect(() => {
+    if (!showAddModal) return;
+    const onKey = (e) => { if (e.key === 'Escape') setShowAddModal(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showAddModal]);
 
   const fetchItems = async () => {
     setLoading(true);
@@ -108,11 +121,13 @@ const BucketList = () => {
       </div>
 
       <div style={{background: 'linear-gradient(135deg, #3d5a32 0%, #5a7a4a 50%, #7a9a5a 100%)', color: 'white', padding: '40px 20px', textAlign: 'center'}}>
-         <div style={{display: 'inline-flex', background: 'rgba(0,0,0,0.2)', padding: '4px', borderRadius: '12px', marginBottom: '25px'}}>
-            <button 
+         <div role="tablist" aria-label="Choose whose bucket list to view" style={{display: 'inline-flex', background: 'rgba(0,0,0,0.2)', padding: '4px', borderRadius: '12px', marginBottom: '25px'}}>
+            <button
+              role="tab"
+              aria-selected={activeUser === 'andreas'}
               onClick={() => setActiveUser('andreas')}
               style={{
-                padding: '8px 24px', borderRadius: '10px', border: 'none', 
+                padding: '8px 24px', minHeight: 44, borderRadius: '10px', border: 'none',
                 background: activeUser === 'andreas' ? 'white' : 'transparent',
                 color: activeUser === 'andreas' ? '#3d5a32' : 'white',
                 fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
@@ -120,10 +135,12 @@ const BucketList = () => {
             >
               Andreas
             </button>
-            <button 
+            <button
+              role="tab"
+              aria-selected={activeUser === 'julie'}
               onClick={() => setActiveUser('julie')}
               style={{
-                padding: '8px 24px', borderRadius: '10px', border: 'none', 
+                padding: '8px 24px', minHeight: 44, borderRadius: '10px', border: 'none',
                 background: activeUser === 'julie' ? 'white' : 'transparent',
                 color: activeUser === 'julie' ? '#3d5a32' : 'white',
                 fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
@@ -145,26 +162,31 @@ const BucketList = () => {
          </div>
       </div>
 
-      <div style={{display: 'flex', gap: '8px', overflowX: 'auto', padding: '20px', background: 'var(--card)', borderBottom: '1px solid var(--border)'}}>
-        <button 
-          onClick={() => setActiveCategory('all')} 
+      <div role="group" aria-label="Filter by category" style={{display: 'flex', gap: '8px', overflowX: 'auto', padding: '20px', background: 'var(--card)', borderBottom: '1px solid var(--border)'}}>
+        <button
+          type="button"
+          aria-pressed={activeCategory === 'all'}
+          onClick={() => setActiveCategory('all')}
           style={{
-            padding: '8px 16px', background: activeCategory === 'all' ? 'var(--text)' : 'transparent',
+            padding: '8px 16px', minHeight: 44, background: activeCategory === 'all' ? 'var(--text)' : 'transparent',
             color: activeCategory === 'all' ? 'white' : 'var(--text-muted)', border: 'none', borderRadius: '20px', fontWeight: 600, cursor: 'pointer'
           }}
         >
           All
         </button>
         {currentCategories.map(c => (
-          <button 
-            key={c.id} 
+          <button
+            key={c.id}
+            type="button"
+            aria-pressed={activeCategory === c.id}
+            aria-label={`Filter by ${c.name}`}
             onClick={() => setActiveCategory(c.id)}
             style={{
-              padding: '8px 16px', background: activeCategory === c.id ? c.color : 'transparent',
+              padding: '8px 16px', minHeight: 44, background: activeCategory === c.id ? c.color : 'transparent',
               color: activeCategory === c.id ? 'white' : 'var(--text-muted)', border: 'none', borderRadius: '20px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap'
             }}
           >
-            {c.icon} {c.name}
+            <span aria-hidden="true">{c.icon}</span> {c.name}
           </button>
         ))}
       </div>
@@ -172,10 +194,14 @@ const BucketList = () => {
       <div style={{padding: '20px', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', background: 'var(--bg)', borderBottom: '1px solid var(--border)'}}>
          <span style={{color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 600}}>Difficulty:</span>
          {difficulties.map(d => (
-           <button 
-             key={d} onClick={() => setDifficultyFilter(d)} 
+           <button
+             key={d}
+             type="button"
+             aria-pressed={difficultyFilter === d}
+             aria-label={`Filter by ${d} difficulty`}
+             onClick={() => setDifficultyFilter(d)}
              style={{
-               padding: '6px 12px', borderRadius: '12px', border: '1px solid var(--border)', cursor: 'pointer',
+               padding: '6px 12px', minHeight: 36, borderRadius: '12px', border: '1px solid var(--border)', cursor: 'pointer',
                background: difficultyFilter === d ? 'var(--primary)' : 'var(--card)', color: difficultyFilter === d ? 'white' : 'var(--text-muted)',
                fontSize: '0.85rem', fontWeight: 600
              }}
@@ -214,12 +240,16 @@ const BucketList = () => {
                       key={item.id} 
                       style={{background: 'var(--card)', padding: '16px', borderRadius: '12px', display: 'flex', gap: '16px', opacity: item.is_completed ? 0.6 : 1, position: 'relative'}}
                     >
-                      <div 
+                      <button
+                        type="button"
+                        role="checkbox"
+                        aria-checked={item.is_completed}
+                        aria-label={`Mark "${item.title}" as ${item.is_completed ? 'not done' : 'done'}`}
                         onClick={() => toggleItem(item.id, item.is_completed)}
-                        style={{width: '24px', height: '24px', borderRadius: '6px', border: item.is_completed ? 'none' : '2px solid var(--border)', background: item.is_completed ? 'var(--success)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0, cursor: 'pointer'}}
+                        style={{width: '28px', height: '28px', padding: 0, borderRadius: '6px', border: item.is_completed ? 'none' : '2px solid var(--border)', background: item.is_completed ? 'var(--success)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0, cursor: 'pointer'}}
                       >
-                        {item.is_completed ? '✓' : ''}
-                      </div>
+                        <span aria-hidden="true">{item.is_completed ? '✓' : ''}</span>
+                      </button>
                       <div style={{flex: 1}}>
                         <div style={{fontWeight: 600, fontSize: '1.05rem', textDecoration: item.is_completed ? 'line-through' : 'none', marginBottom: '4px'}}>{item.title}</div>
                         {item.description && <div style={{fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '8px'}}>{item.description}</div>}
@@ -227,13 +257,17 @@ const BucketList = () => {
                           {item.difficulty.toUpperCase()}
                         </div>
                       </div>
-                      <button 
+                      <button
+                        type="button"
+                        aria-label={`Remove "${item.title}"`}
                         onClick={() => removeItem(item.id)}
-                        style={{background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1.2rem', opacity: 0.3, alignSelf: 'flex-start'}}
+                        style={{background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1.2rem', opacity: 0.3, alignSelf: 'flex-start', padding: 8, minWidth: 36, minHeight: 36}}
                         onMouseOver={(e) => e.currentTarget.style.opacity = '1'}
                         onMouseOut={(e) => e.currentTarget.style.opacity = '0.3'}
+                        onFocus={(e) => e.currentTarget.style.opacity = '1'}
+                        onBlur={(e) => e.currentTarget.style.opacity = '0.3'}
                       >
-                        🗑️
+                        <span aria-hidden="true">🗑️</span>
                       </button>
                     </div>
                   ))}
@@ -245,22 +279,31 @@ const BucketList = () => {
       </div>
 
       {showAddModal && (
-        <div style={{position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px'}}>
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={modalTitleId}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowAddModal(false); }}
+          style={{position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px'}}
+        >
           <div style={{background: 'var(--card)', width: '100%', maxWidth: '500px', borderRadius: '20px', padding: '30px', boxShadow: '0 20px 50px rgba(0,0,0,0.3)'}}>
-            <h2 className="heading-serif" style={{marginBottom: '20px'}}>Add New Item</h2>
+            <h2 id={modalTitleId} className="heading-serif" style={{marginBottom: '20px'}}>Add New Item</h2>
             <div style={{display: 'flex', flexDirection: 'column', gap: '15px'}}>
               <div>
-                <label style={{display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '5px'}}>Title</label>
-                <input 
-                  value={newItem.title} 
+                <label htmlFor={fieldTitleId} style={{display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '5px'}}>Title</label>
+                <input
+                  id={fieldTitleId}
+                  autoFocus
+                  value={newItem.title}
                   onChange={e => setNewItem({...newItem, title: e.target.value})}
                   style={{width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)'}}
                 />
               </div>
               <div>
-                <label style={{display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '5px'}}>Category</label>
-                <select 
-                  value={newItem.category_id} 
+                <label htmlFor={fieldCategoryId} style={{display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '5px'}}>Category</label>
+                <select
+                  id={fieldCategoryId}
+                  value={newItem.category_id}
                   onChange={e => setNewItem({...newItem, category_id: e.target.value})}
                   style={{width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)'}}
                 >
@@ -270,9 +313,10 @@ const BucketList = () => {
               </div>
               <div style={{display: 'flex', gap: '15px'}}>
                 <div style={{flex: 1}}>
-                  <label style={{display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '5px'}}>Difficulty</label>
-                  <select 
-                    value={newItem.difficulty} 
+                  <label htmlFor={fieldDifficultyId} style={{display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '5px'}}>Difficulty</label>
+                  <select
+                    id={fieldDifficultyId}
+                    value={newItem.difficulty}
                     onChange={e => setNewItem({...newItem, difficulty: e.target.value})}
                     style={{width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)'}}
                   >
@@ -281,23 +325,26 @@ const BucketList = () => {
                 </div>
               </div>
               <div>
-                <label style={{display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '5px'}}>Description (Optional)</label>
-                <textarea 
-                  value={newItem.description} 
+                <label htmlFor={fieldDescriptionId} style={{display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '5px'}}>Description (Optional)</label>
+                <textarea
+                  id={fieldDescriptionId}
+                  value={newItem.description}
                   onChange={e => setNewItem({...newItem, description: e.target.value})}
                   style={{width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', minHeight: '80px'}}
                 />
               </div>
               <div style={{display: 'flex', gap: '10px', marginTop: '10px'}}>
-                <button 
+                <button
+                  type="button"
                   onClick={() => setShowAddModal(false)}
-                  style={{flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text)', fontWeight: 600, cursor: 'pointer'}}
+                  style={{flex: 1, padding: '12px', minHeight: 44, borderRadius: '12px', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text)', fontWeight: 600, cursor: 'pointer'}}
                 >
                   Cancel
                 </button>
-                <button 
+                <button
+                  type="button"
                   onClick={addItem}
-                  style={{flex: 2, padding: '12px', borderRadius: '12px', border: 'none', background: 'var(--primary)', color: 'white', fontWeight: 600, cursor: 'pointer'}}
+                  style={{flex: 2, padding: '12px', minHeight: 44, borderRadius: '12px', border: 'none', background: 'var(--primary)', color: 'white', fontWeight: 600, cursor: 'pointer'}}
                 >
                   Add to List
                 </button>

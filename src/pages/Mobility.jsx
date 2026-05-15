@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useReducer, useState, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import { MOBILITY_DATA, DAYS } from '../data/mobilityData';
 import { parseSets } from '../lib/mobility';
@@ -130,6 +131,7 @@ const sessionStatus = (state) => {
 
 const Mobility = () => {
   const todayName = DAYS[new Date().getDay()];
+  const [searchParams, setSearchParams] = useSearchParams();
   const [view, setView] = useState('day-pick');
   const [selectedDay, setSelectedDay] = useState(todayName);
   const [routineKey, setRoutineKey] = useState(null);
@@ -146,6 +148,7 @@ const Mobility = () => {
     mobilityService.getBlockWeek().then(setBlockWeek).catch(() => {});
 
     const saved = sessionStorage.getItem(ACTIVE_SESSION_KEY);
+    let restoredFromSession = false;
     if (saved) {
       try {
         const data = JSON.parse(saved);
@@ -154,6 +157,7 @@ const Mobility = () => {
           setRoutineKey(data.routineKey);
           dispatch({ type: 'HYDRATE', state: data.state });
           setView(data.state.status === 'finished' ? 'summary' : 'focus');
+          restoredFromSession = true;
         } else {
           sessionStorage.removeItem(ACTIVE_SESSION_KEY);
         }
@@ -161,7 +165,23 @@ const Mobility = () => {
         sessionStorage.removeItem(ACTIVE_SESSION_KEY);
       }
     }
+
+    // Deep-link from Dashboard agenda: ?day=wednesday&routine=full-session.
+    // An in-progress session always wins (don't drop unsaved progress).
+    if (!restoredFromSession) {
+      const qDay = searchParams.get('day');
+      const qRoutine = searchParams.get('routine');
+      if (qDay && qRoutine && MOBILITY_DATA[qDay]?.routines?.[qRoutine]) {
+        setSelectedDay(qDay);
+        setRoutineKey(qRoutine);
+        setView('overview');
+        prefetchLastWeights(MOBILITY_DATA[qDay].routines[qRoutine]);
+        setSearchParams({}, { replace: true });
+      }
+    }
+
     setHydratedOnce(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

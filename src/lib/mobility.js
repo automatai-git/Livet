@@ -76,3 +76,15 @@ export function countWeighted(routine) {
   if (!routine?.exercises) return 0;
   return routine.exercises.filter((ex) => ex.load && ex.load !== 'None' && !/bodyweight/i.test(ex.load)).length;
 }
+
+// Dashboard agenda rule: on days with both a pre- and post- routine
+// (Mon/Tue/Thu/Fri/Sun), show the pre- before noon and the post- after.
+// Single-routine days (Wed full-session, Sat pre-sport) ignore the hour.
+export function pickRoutineForTime(routines, hour) {
+  const keys = Object.keys(routines || {});
+  if (keys.length === 0) return null;
+  if (keys.length === 1) return { key: keys[0], routine: routines[keys[0]] };
+  const wantPrefix = hour < 12 ? 'pre-' : 'post-';
+  const chosen = keys.find((k) => k.startsWith(wantPrefix)) ?? keys[0];
+  return { key: chosen, routine: routines[chosen] };
+}

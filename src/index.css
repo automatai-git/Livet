@@ -49,6 +49,24 @@ body {
     to { opacity: 1; }
 }
 
+/* Global a11y baseline: keyboard focus ring + reduced-motion respect.
+   Per-component overrides may refine the ring shape, but every interactive
+   element gets at least this. */
+:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+    body { animation: none; }
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
 .heading-serif {
     font-family: 'DM Serif Display', serif;
     font-weight: 400;
@@ -777,6 +795,92 @@ button {
     background: var(--card);
     border-radius: 14px;
     border: 1px dashed var(--border);
+}
+.empty-state-icon {
+    font-size: 1.6rem;
+    margin-bottom: 8px;
+    color: var(--text-muted);
+}
+.empty-state-action {
+    margin-top: 14px;
+}
+
+/* ---------- Feedback primitives: loading + error boundary ---------- */
+.loading-state {
+    margin-top: 24px;
+    padding: 20px;
+    background: var(--card);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+}
+.loading-state-inline {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+.loading-skeleton-rows {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+}
+.loading-skeleton-row {
+    display: block;
+    height: 10px;
+    width: 100%;
+    border-radius: 5px;
+    background: linear-gradient(90deg, var(--border) 0%, var(--bg) 50%, var(--border) 100%);
+    background-size: 200% 100%;
+    animation: loading-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes loading-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .loading-skeleton-row { animation: none; }
+}
+
+.error-boundary-shell {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+.error-boundary-card {
+    max-width: 480px;
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent-decision);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+.error-boundary-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.error-boundary-btn {
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--primary);
+    background: var(--primary);
+    color: #fff;
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+}
+.error-boundary-btn.secondary {
+    background: transparent;
+    color: var(--primary);
 }
 
 /* ---------- Mobility: routine overview (H1) ---------- */

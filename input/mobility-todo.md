@@ -32,11 +32,70 @@ Living document for the mobility refresh. Status legend: `[ ]` not started · `[
 
 ---
 
+## Status snapshot (2026-05-15) — pick up here next session
+
+The MacroFactor-style remodel is **live and verified in production**. The flow `day-pick → overview → focus → summary` works end-to-end. Direction is solid — next session should build on this rather than revisit it.
+
+### What's shipped
+
+| Area | Files | Notes |
+| --- | --- | --- |
+| Data model | [src/data/mobilityData.js](../src/data/mobilityData.js), [src/lib/mobility.js](../src/lib/mobility.js) | All 7 days, `tags` / `asymmetric` / `weakSide` / `shoulderManaged` flags. `parseSets`, `formatTarget`, `estimateRoutineSeconds`, `uniqueTags`, `countWeighted`. |
+| Overview screen (H1) | [src/components/mobility/RoutineOverview.jsx](../src/components/mobility/RoutineOverview.jsx) | Hero + numbered list + tag union, `Start routine` / `Skip today`. |
+| Focus mode (H2) | [src/components/mobility/FocusMode.jsx](../src/components/mobility/FocusMode.jsx) | One exercise per card, swipe l/r, sticky `‹ Prev / N–M / Next ›`, asymmetric + shoulder chips. |
+| Per-set ticker (H3) | [src/components/mobility/SetRow.jsx](../src/components/mobility/SetRow.jsx) | Checkbox, weight input with ±2.5 kg steppers, last-weight autofill, reps actual. |
+| Rest timer (H6) | [src/components/mobility/RestTimer.jsx](../src/components/mobility/RestTimer.jsx) | Preset from `parseSets`, vibrates at 0:00, honours `prefers-reduced-motion`. |
+| Summary (H5) | [src/components/mobility/SessionSummary.jsx](../src/components/mobility/SessionSummary.jsx) | Duration / sets / volume, per-exercise list, PR chip on weighted exercises that beat last logged weight. |
+| Schema (H4) | [input/mobility-schema.sql](mobility-schema.sql) | `mobility_sessions` + `mobility_exercise_logs` with RLS. **Applied in Supabase.** |
+| Service | [src/services/mobilityService.js](../src/services/mobilityService.js) | `saveSession`, offline queue + flush, `getLastWeightFor(s)`, `getWeeklyCount`, `getBlockWeek`. |
+| Orchestrator | [src/pages/Mobility.jsx](../src/pages/Mobility.jsx) | `useReducer` session state, `sessionStorage` resume mid-routine, view state machine. |
+| Misc | [src/lib/swipe.js](../src/lib/swipe.js) | Generic swipe helper. |
+
+### Sidequest also fixed
+
+The service worker [public/service-worker.js](../public/service-worker.js) used to be cache-first for `index.html`, which pinned clients to a stale shell after every deploy. It's now **network-first for HTML / cache-first for hashed assets**, with `CACHE_NAME` bumped to `v7`. Future deploys are picked up on the next reload. **When precaching new files** in `SHELL`, still bump the version.
+
+### Known caveats / things to watch
+
+1. **Schema applied with a destructive reset.** [mobility-schema.sql](mobility-schema.sql) currently does `drop table if exists … cascade`. Don't re-run it once real sessions are in there — switch to additive `ALTER TABLE` migrations.
+2. **Offline queue is fire-and-forget.** `flushOfflineQueue` runs on mount; failures stay queued. No UI indicator for queued items yet — could add a tiny "syncing…" pill if it becomes relevant.
+3. **History view doesn't exist yet** (A3). Finished sessions land in Supabase but there's no in-app way to view them. Next obvious step.
+4. **Dashboard agenda still doesn't mention mobility** (D2). Easy win.
+5. **PR detection in the summary is weight-only.** Doesn't yet consider volume (weight × reps) or rep-PRs at the same weight. Fine for v1.
+6. **Multi-routine days** (Mon/Tue/Thu/Fri/Sun have pre + post): the user has to come back and start the post-* routine separately. There's no "you completed the pre-, want to log the post- when you're done?" continuation.
+
+### Next-session priorities (in order)
+
+1. **A3 — history view at `/mobility/history`.** 4-week calendar strip + drill-down. Without this, logged sessions are invisible inside the app. Probably the next thing to ship.
+2. **D2 — mobility card in Dashboard's "Today's Agenda".** Cheap, makes mobility visible from the home screen.
+3. **G3 — consistency streak.** "X of last 7 days" widget at the top of `/mobility`. One service call, one line of JSX.
+4. **E2 / E3 — shoulder intensity dial + niggle note.** Both need small UI affordances inside the focus card; E3 needs a new `mobility_niggles` table.
+5. **B2 sticky bottom timer.** Right now RestTimer lives inside the focus card. A persistent bottom-sheet would be slicker on long routines.
+6. **F — a11y polish pass.** Run axe-core, fix the focus-trap when modals appear, double-check keyboard-only flow.
+7. **Multi-routine continuation** (item 6 above) — small UX improvement, could fit anywhere.
+
+### How to verify a future change
+
+1. `npx vite build` from the repo root — green build is the bar.
+2. `npx vite` + open `http://localhost:5173/Livet/` — auth screen should render.
+3. Smoke test: pick a day → start routine → tick a set → finish → save. Confirm a row appears in Supabase `mobility_sessions` and N rows in `mobility_exercise_logs`.
+4. On every deploy where the precache shell changes, bump `CACHE_NAME` in the service worker.
+
+---
+
 ## Done
 
 - [x] Read docs, codebase, and connections (see above).
 - [x] Capture current architecture + gaps in this file.
 - [x] Write `input/design-overview.md`.
+- [x] A0 — data extracted, parser written, page renders from the data file.
+- [x] H1 — routine overview screen.
+- [x] H2 — focus mode (one exercise per card, swipe, sticky nav).
+- [x] H3 — per-set ticker with weight + reps inputs, last-weight autofill.
+- [x] H4 — Supabase schema + `mobilityService` with offline queue. SQL applied.
+- [x] H5 — session summary with stats + PR chips.
+- [x] H6 — `RestTimer`, `SetRow`, `swipe.js` design-system primitives.
+- [x] Service-worker caching strategy fixed (network-first for HTML).
 
 ## To do — agreed scope
 
@@ -54,7 +113,7 @@ Tasks are grouped by theme. The MacroFactor-style remodel (section **H**) supers
 
 - [ ] ~~A1. Mark-done state on each exercise.~~ _Superseded by H1–H5 (MacroFactor-style guided flow). Per-exercise done state is now implicit in the per-set ticker._
 
-- [ ] **A2. Cloud-synced session log.**
+- [x] **A2. Cloud-synced session log.** _Folded into H4 — `saveSession` writes to `mobility_sessions` + `mobility_exercise_logs`; offline queue at `localStorage["mobilitySessionQueue"]` replays on next mount._
   - New Supabase table `mobility_sessions` (`id`, `user_id`, `date`, `block`, `week`, `day_name`, `routine_key`, `routine_name`, `completed_names[]`, `skipped_names[]`, `duration_seconds`, `notes`).
   - Finish writes a row, then routes to `/mobility/history`.
   - Local fallback: if write fails, queue to `localStorage["mobilitySessionQueue"]` and retry on next page load.
@@ -68,7 +127,7 @@ Tasks are grouped by theme. The MacroFactor-style remodel (section **H**) supers
 
 ### B. Smarter timer
 
-- [ ] **B1. Auto-parse durations from `sets` strings.**
+- [x] **B1. Auto-parse durations from `sets` strings.** _Shipped as `parseSets` in [src/lib/mobility.js](../src/lib/mobility.js); `RestTimer` consumes `parsed.holdSeconds` directly._
   - Helper `parseHoldDuration(sets)` extracts the first `\d+s` token (e.g. `"3x45s each"` → 45).
   - If no seconds found, default to 60. If `sets` contains reps only, hide the timer block on that card.
   - _Done when:_ all 12 Wednesday exercises pick the right preset (the ones with seconds) or hide the timer (rep-based ones).
@@ -87,7 +146,7 @@ Tasks are grouped by theme. The MacroFactor-style remodel (section **H**) supers
 
 ### D. Block / week awareness
 
-- [ ] **D1. Use `trainingService.calculateProgramPosition()`.**
+- [x] **D1. Use `trainingService.calculateProgramPosition()`.** _Block / week eyebrow renders on the day-picker and overview; `mobilityService.getBlockWeek()` stamps saved sessions._
   - Page reads `getStartDate()` + `calculateProgramPosition()` once on mount; displays a small eyebrow `BLOCK 3 · WEEK 7` above the routine list.
   - `mobility_sessions.block` and `.week` get stamped from this when finishing a session.
   - Fallback: if no program position, hide the eyebrow and stamp `null`.
@@ -100,7 +159,7 @@ Tasks are grouped by theme. The MacroFactor-style remodel (section **H**) supers
 
 ### E. Personalisation hooks
 
-- [ ] **E1. Weak-side reminder.**
+- [x] **E1. Weak-side reminder.** _Data flagged in `mobilityData.js` (`asymmetric` / `weakSide`); the focus card renders a sage `↗ extra on left` chip. Open follow-up: surface this on the overview screen too._
   - Add `asymmetric: true` + optional `weakSide: 'left' | 'right'` fields on exercises that target one side more (90/90 Flow, ATG Split Squat — already encoded in cues as "extra left").
   - UI: small chip `⬅ Extra on left` (or right) on the exercise card.
   - _Done when:_ Wednesday's 90/90 + Sunday's ATG show the chip without manual tagging in the JSX — the data file owns it.

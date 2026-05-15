@@ -26,9 +26,13 @@ const MenuPlanner = () => {
 
   const tabBtn = (id, label) => (
     <button
+      role="tab"
+      aria-selected={activeTab === id}
+      aria-controls={`menu-panel-${id}`}
+      id={`menu-tab-${id}`}
       onClick={() => setActiveTab(id)}
       style={{
-        flex: 1, padding: '10px', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold',
+        flex: 1, padding: '10px', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold', minHeight: 44,
         background: activeTab === id ? 'var(--app-accent)' : 'var(--card)',
         color: activeTab === id ? '#fff' : 'var(--text)', border: 'none',
       }}
@@ -39,12 +43,16 @@ const MenuPlanner = () => {
 
   return (
     <AppShell title="Meal Planner" accent="var(--accent-menu)">
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+      <div role="tablist" aria-label="Menu sections" style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
         {tabBtn('weekly', 'Weekly Menu')}
         {tabBtn('database', 'Meal Database')}
       </div>
-      {activeTab === 'weekly' && <WeeklyMenu databaseMeals={databaseMeals} />}
-      {activeTab === 'database' && <MealDatabase />}
+      <div role="tabpanel" id="menu-panel-weekly" aria-labelledby="menu-tab-weekly" hidden={activeTab !== 'weekly'}>
+        {activeTab === 'weekly' && <WeeklyMenu databaseMeals={databaseMeals} />}
+      </div>
+      <div role="tabpanel" id="menu-panel-database" aria-labelledby="menu-tab-database" hidden={activeTab !== 'database'}>
+        {activeTab === 'database' && <MealDatabase />}
+      </div>
     </AppShell>
   );
 };

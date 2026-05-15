@@ -4,6 +4,28 @@ A reference for the visual language and interaction patterns of the mobility tra
 
 ---
 
+## As-built (2026-05-15)
+
+The MacroFactor-style remodel from §7 below is **live**. Sections 1–4 (palette, type, components in use, interaction model) still apply with these adjustments:
+
+- **Interaction model is now `day-pick → overview → focus → summary`**, not "day → routine → flat exercise list". See [src/pages/Mobility.jsx](../src/pages/Mobility.jsx) for the state machine, [src/components/mobility/](../src/components/mobility/) for the per-view components.
+- **The focus card is the new hero surface.** Big serif name, region/asymmetric/shoulder chips, set ticker, embedded `RestTimer`. Sticky bottom nav (`‹ Prev · N/M · Next ›`) with safe-area padding.
+- **Sage left-border + `--success-bg` = set completed.** Same accent doubles as the rest-timer ring while running.
+- **Body-region tags are first-class.** Lifted from `(HIPS)` / `(ANKLES)` etc. in `purpose` strings into a `tags: string[]` field on each exercise. Rendered as chips in the overview and focus views.
+- **Day pills are a proper tablist** (`role="tablist"` / `aria-selected` / `aria-current`), 44 px tap targets, focus-visible outlines, `prefers-reduced-motion` block at the bottom of [index.css](../src/index.css).
+- **Per-exercise per-set state survives a refresh** via `sessionStorage["mobilitySession:active"]` (one active session at a time, auto-cleared after save).
+
+Section 6 ("Where it feels stale or under-baked") is now historical — most of those points are addressed. Section 7's open design questions about table shape and tag enum are settled in code:
+
+- Sessions live in `mobility_sessions`; per-set logs in `mobility_exercise_logs` ([schema](mobility-schema.sql)).
+- Body-region tags are free-text in the data file but in practice an enum is in use: `HIPS · ANKLES · GROIN · BUTT WINK · SHOULDER · T-SPINE · CORE`. Add new tags here as needed.
+- Timer does **not** auto-advance to the next exercise on 0:00 (off by default, B3 task pending).
+- Mobility data still lives in the JSX-adjacent module ([src/data/mobilityData.js](../src/data/mobilityData.js)); not yet in Supabase. Move it the day a routine-editor lands (parked task G1).
+
+Outstanding follow-ups are tracked in [mobility-todo.md](mobility-todo.md) — A3 (history), D2 (dashboard agenda), G3 (streak), E2/E3 (personalisation), B2 (sticky bottom timer), F (a11y sweep). Pick from there.
+
+---
+
 ## 1. Where mobility sits in the hub
 
 The hub follows a "one accent per app" system. Mobility's identity is **sage green** — calm, restorative, sits next to (but doesn't compete with) the deep-green `--primary`.
