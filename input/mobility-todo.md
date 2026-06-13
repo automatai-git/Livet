@@ -60,16 +60,14 @@ The service worker [public/service-worker.js](../public/service-worker.js) used 
 1. **Schema applied with a destructive reset.** [mobility-schema.sql](mobility-schema.sql) currently does `drop table if exists … cascade`. Don't re-run it once real sessions are in there — switch to additive `ALTER TABLE` migrations.
 2. **Offline queue is fire-and-forget.** `flushOfflineQueue` runs on mount; failures stay queued. No UI indicator for queued items yet — could add a tiny "syncing…" pill if it becomes relevant.
 3. **History view doesn't exist yet** (A3). Finished sessions land in Supabase but there's no in-app way to view them. Next obvious step.
-4. **Dashboard agenda still doesn't mention mobility** (D2). Easy win.
-5. **PR detection in the summary is weight-only.** Doesn't yet consider volume (weight × reps) or rep-PRs at the same weight. Fine for v1.
-6. **Multi-routine days** (Mon/Tue/Thu/Fri/Sun have pre + post): the user has to come back and start the post-* routine separately. There's no "you completed the pre-, want to log the post- when you're done?" continuation.
+4. **PR detection in the summary is weight-only.** Doesn't yet consider volume (weight × reps) or rep-PRs at the same weight. Fine for v1.
+5. **Multi-routine days** (Mon/Tue/Thu/Fri/Sun have pre + post): the user has to come back and start the post-* routine separately. There's no "you completed the pre-, want to log the post- when you're done?" continuation.
 
 ### Next-session priorities (in order)
 
 1. **A3 — history view at `/mobility/history`.** 4-week calendar strip + drill-down. Without this, logged sessions are invisible inside the app. Probably the next thing to ship.
-2. **D2 — mobility card in Dashboard's "Today's Agenda".** Cheap, makes mobility visible from the home screen.
-3. **G3 — consistency streak.** "X of last 7 days" widget at the top of `/mobility`. One service call, one line of JSX.
-4. **E2 / E3 — shoulder intensity dial + niggle note.** Both need small UI affordances inside the focus card; E3 needs a new `mobility_niggles` table.
+2. **G3 (on `/mobility`).** The streak chip ships on the Dashboard agenda already (see Done below). The original spec also asked for the same widget at the top of `/mobility` — still open. One service call (`mobilityService.getWeeklyCount`), one line of JSX.
+3. **E2 / E3 — shoulder intensity dial + niggle note.** Both need small UI affordances inside the focus card; E3 needs a new `mobility_niggles` table.
 5. **B2 sticky bottom timer.** Right now RestTimer lives inside the focus card. A persistent bottom-sheet would be slicker on long routines.
 6. **F — a11y polish pass.** Run axe-core, fix the focus-trap when modals appear, double-check keyboard-only flow.
 7. **Multi-routine continuation** (item 6 above) — small UX improvement, could fit anywhere.
@@ -96,6 +94,8 @@ The service worker [public/service-worker.js](../public/service-worker.js) used 
 - [x] H5 — session summary with stats + PR chips.
 - [x] H6 — `RestTimer`, `SetRow`, `swipe.js` design-system primitives.
 - [x] Service-worker caching strategy fixed (network-first for HTML).
+- [x] **D2 — mobility card in Dashboard's "Today's Agenda".** [src/pages/Dashboard.jsx](../src/pages/Dashboard.jsx) shows a third agenda row: icon + routine name + exercise count. Click-through deep-links to `/mobility?day=<day>&routine=<key>`; [src/pages/Mobility.jsx](../src/pages/Mobility.jsx) reads those params and jumps straight to the overview (an in-progress saved session still wins). Pre/post routine selection follows the hour-of-day rule in `pickRoutineForTime` ([src/lib/mobility.js](../src/lib/mobility.js)) — before 12:00 → `pre-*`, after → `post-*`. Single-routine days ignore hour.
+- [x] **G3 — consistency streak (Dashboard variant).** "X of last 7 days" chip in the Dashboard agenda header, sage accent on the count. Pulls `mobilityService.getWeeklyCount()`. Same widget on `/mobility` is still open.
 
 ## To do — agreed scope
 
@@ -152,10 +152,7 @@ Tasks are grouped by theme. The MacroFactor-style remodel (section **H**) supers
   - Fallback: if no program position, hide the eyebrow and stamp `null`.
   - _Done when:_ a logged session in Block 3 Week 7 has those values in the Supabase row; the eyebrow appears on the page.
 
-- [ ] **D2. Mobility card in Dashboard's "Today's Agenda".**
-  - Add a third agenda row alongside dinner + workout: icon, label "Mobility", value = today's routine name + exercise count.
-  - Click-through goes to `/mobility` and auto-opens the routine.
-  - _Done when:_ on a day with one routine, the agenda shows it; on a Wednesday (two-routine day Mon/Tue/Thu/Fri have pre+post) — design decision: show the routine matching the time of day (before 12:00 → pre, after → post). Document the rule in code.
+- [x] **D2. Mobility card in Dashboard's "Today's Agenda".** _Shipped 2026-05-15. Helper `pickRoutineForTime(routines, hour)` lives in [src/lib/mobility.js](../src/lib/mobility.js) (rule documented inline). Dashboard agenda row deep-links `/mobility?day=<day>&routine=<key>`; Mobility page consumes the params if no in-progress session is hydrating._
 
 ### E. Personalisation hooks
 
@@ -301,10 +298,9 @@ SUMMARY                    ← H5
 
 ### G3. Consistency streak
 
-- [ ] **Small widget at the top of `/mobility`.**
-  - "Last 7 days · 5 sessions" — pulls a count of `mobility_sessions` rows where `date >= today - 7`.
-  - No badges, no streak fire, no shame for misses. Just the number, muted text, sage accent on the count.
-  - _Done when:_ logging a session bumps the number on next render; refresh persists.
+- [~] **Small widget at the top of `/mobility`.** Partially shipped 2026-05-15.
+  - The Dashboard agenda header carries a "X of last 7 days" chip (sage accent on the count, muted body). Same `mobilityService.getWeeklyCount()` call. See [src/pages/Dashboard.jsx](../src/pages/Dashboard.jsx).
+  - **Still open:** mirror the same chip at the top of `/mobility` itself so it's visible from inside the page, not only from the Dashboard.
 
 ---
 

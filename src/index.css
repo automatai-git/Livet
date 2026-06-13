@@ -16,6 +16,8 @@
     --border: #E2DFD8;
     --success: #6b9e72;
     --success-bg: #eaf4eb;
+    --danger: #A8453C;   /* muted warm red — escalation / blocked states */
+    --danger-bg: #F6E7E4;
     --radius: 20px;
 
     /* Per-app accent colors. Picked to live alongside --primary (deep green)
@@ -636,6 +638,226 @@ button {
     margin-left: auto;
     flex-wrap: wrap;
 }
+
+/* ---------- Rehab module (workout-finder Day/Week/Block layers) ---------- */
+
+.rehab-card { border-left: 3px solid var(--accent-workout); }
+.rehab-card.escalated,
+.tight-card.escalated { border-color: var(--danger); border-left-width: 3px; }
+
+.rehab-banner {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid var(--danger);
+    border-radius: 10px;
+    font-size: 0.84rem;
+    line-height: 1.5;
+}
+.rehab-banner a { color: var(--danger); font-weight: 600; }
+
+.rehab-rule {
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+    padding: 8px 10px;
+    background: var(--bg);
+    border-radius: 8px;
+}
+.rehab-rule strong { color: var(--text); }
+
+.rehab-test-chip {
+    margin-top: 10px;
+    padding: 8px 10px;
+    background: #f7efe2;
+    color: #8a5a20;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.status-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+.status-chip.active { background: var(--success-bg); color: var(--primary); }
+.status-chip.passed { background: rgba(27, 59, 47, 0.08); color: var(--primary-light); }
+.status-chip.locked { background: #efeeea; color: var(--text-muted); }
+.status-chip.held   { background: var(--danger-bg); color: var(--danger); }
+
+/* Signal logging rows */
+.signal-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    flex-wrap: wrap;
+}
+.signal-num {
+    width: 58px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-family: inherit;
+    font-size: 0.88rem;
+}
+.signal-select,
+.signal-text {
+    padding: 5px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-family: inherit;
+    font-size: 0.78rem;
+    background: var(--card);
+    color: var(--text);
+}
+.signal-extra {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.76rem;
+    color: var(--text-muted);
+}
+.signal-extra input[type=checkbox] { accent-color: var(--primary); }
+
+.streak-dots { display: inline-flex; gap: 5px; }
+.streak-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--card);
+}
+.streak-dot.on { background: var(--success); border-color: var(--success); }
+
+.blocked-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 6px 0;
+}
+.blocked-badge {
+    display: inline-flex;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--danger-bg);
+    color: var(--danger);
+    font-size: 0.64rem;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+/* Week-view compliance strip */
+.rehab-week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+}
+.rehab-week-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 2px;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    min-height: 44px;
+}
+.rehab-week-cell:hover { border-color: var(--border); }
+.rehab-week-cell.today { border-color: var(--primary); }
+.compliance-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--card);
+}
+.compliance-dot.partial {
+    background: linear-gradient(90deg, var(--success) 50%, var(--card) 50%);
+    border-color: var(--success);
+}
+.compliance-dot.full { background: var(--success); border-color: var(--success); }
+.compliance-dot.future { opacity: 0.35; }
+
+/* Block-view phase ladder */
+.ladder {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+}
+.ladder-node {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+}
+.ladder-rail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 14px;
+    flex-shrink: 0;
+    padding-top: 16px;
+}
+.ladder-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--card);
+    flex-shrink: 0;
+}
+.ladder-dot.active { background: var(--success); border-color: var(--success); }
+.ladder-dot.passed { background: var(--primary-light); border-color: var(--primary-light); }
+.ladder-dot.held   { background: var(--danger); border-color: var(--danger); }
+.ladder-line {
+    flex: 1;
+    width: 2px;
+    background: var(--border);
+    margin-top: 4px;
+}
+.ladder-body {
+    flex: 1;
+    min-width: 0;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 2px;
+}
+.ladder-node.active .ladder-body { border-color: var(--success); }
+.ladder-node.held .ladder-body { border-color: var(--danger); background: var(--danger-bg); }
+.ladder-node.locked .ladder-body { opacity: 0.75; }
+
+.escalation-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 0.84rem;
+    line-height: 1.45;
+    padding: 4px 0;
+}
+.escalation-row input[type=checkbox] {
+    margin-top: 2px;
+    width: 16px; height: 16px;
+    accent-color: var(--danger);
+    flex-shrink: 0;
+}
+.escalation-row.computed { color: var(--text); }
 
 /* ---------- Meal-planner weekly day rows (single-line, predictable) ---------- */
 .meal-day-row {

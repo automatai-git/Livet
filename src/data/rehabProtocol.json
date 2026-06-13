@@ -1,0 +1,132 @@
+{
+  "protocolId": "shoulder-anterior-2026-block4",
+  "version": "2026-06-13",
+  "region": "right shoulder, anterior (coracoid region)",
+  "context": {
+    "block": 4,
+    "blockMode": "salvage",
+    "physioBookingOpens": "~late July 2026",
+    "notes": "Chest emphasis removed from Block 4. Pressing deleted from strength program. Run base co-primary; post-sickness reset week at 60-70% volume, zero intensity."
+  },
+  "painRules": {
+    "duringSession": "<=3/10, must not climb during the movement",
+    "afterSession": "settles within ~2h, no next-morning stiffness increase",
+    "regressionRule": "isometric >=2/10 three consecutive sessions OR any session >=4/10 -> flag, hold progression, report",
+    "globalRule": "progress on data, not calendar; one step per session; regress one step if symptoms return"
+  },
+  "signals": [
+    { "id": "shoulder_resting", "label": "Resting pain (0-10)", "cadence": "daily", "lastKnown": { "date": "2026-06-13", "value": "0-1", "trend": "improving" } },
+    { "id": "shoulder_crossbody", "label": "Cross-body pain (0-10)", "cadence": "weekly + scheduled retests", "lastKnown": { "date": "2026-06-13", "value": "2-4", "trend": "flat" } },
+    { "id": "isometric_response", "label": "Pain during/after biceps isometric (0-10)", "cadence": "every isometric session", "lastKnown": { "date": "2026-06-13", "value": 2, "trend": "regressed from 0" } },
+    { "id": "neck_right", "label": "Right-side neck strain (0-10) + provoking movement", "cadence": "every session, log provoking exercise", "lastKnown": { "date": "2026-06-13", "value": 2, "trend": "chronic, predates shoulder" } }
+  ],
+  "phases": [
+    {
+      "id": "1",
+      "name": "Calm + isolate",
+      "window": "2026-05-late -> 2026-06-10",
+      "status": "passed",
+      "exitGate": "Isometrics tolerated, resting pain falling, no red flags",
+      "result": "PASSED 2026-06-13 with caveat: cross-body still 2-4"
+    },
+    {
+      "id": "2A",
+      "name": "Eccentric entry (staggered)",
+      "window": "2026-06-13 -> 2026-06-19 (projected)",
+      "status": "active",
+      "entryGate": "Phase 1 passed",
+      "exitGate": {
+        "criterion": "isometric_response <= 1 for 3 consecutive days",
+        "onFail": "hold 2A, no floor press; if regressionRule fires, drop to Phase 1 loading and report"
+      },
+      "dailyWork": [
+        { "exercise": "Biceps isometric", "dose": "5 x 30s", "intensity": "~50% effort (reduced from 50-70%)", "notes": "Run FRESH or on rest days this week — clean signal needed. Log pain 0-10 every session.", "logSignal": "isometric_response" },
+        { "exercise": "Doorway pec stretch", "dose": "3 x 20s", "intensity": "low", "notes": "Maintain length, don't force range." },
+        { "exercise": "Prone scapular Y/T/W", "dose": "10 reps each", "intensity": "light/none", "notes": "STRICT retraction without shrug (neck rule)." }
+      ],
+      "sessionWork": [
+        { "exercise": "Eccentric biceps curl", "dose": "3 x 8", "frequency": "2x/week", "intensity": "light, 4-5s lowering", "notes": "Neutral shoulder position. Only new addition this week." },
+        { "exercise": "Banded external rotation, elbow at side", "dose": "3 x 15", "frequency": "most days", "intensity": "light" }
+      ]
+    },
+    {
+      "id": "2B",
+      "name": "Re-load pressing pattern",
+      "window": "2026-06-20 -> gate (projected; expect Phase 2 total 3-4 wks, not 2)",
+      "status": "locked",
+      "entryGate": "2A exit gate met",
+      "exitGate": {
+        "criterion": "shoulder_crossbody <= 1/10 at scheduled retest",
+        "scheduledRetest": "2026-06-26",
+        "onFail": "hold 2B two more weeks, retest"
+      },
+      "sessionWork": [
+        { "exercise": "Floor press, neutral-grip DB", "dose": "3 x 8", "intensity": "RPE 6 start", "progression": "+5% only after 2 clean sessions" },
+        { "exercise": "Eccentric biceps curl", "dose": "3 x 8", "frequency": "2x/week", "intensity": "progress load conservatively" },
+        { "exercise": "Push-up retest", "dose": "wall height ONLY (chest-high)", "progression": "no depth progression until wall = 0-1/10; floor push-ups currently provoke 3-4/10" },
+        { "exercise": "Banded external rotation", "dose": "3 x 15", "frequency": "most days" }
+      ]
+    },
+    {
+      "id": "3",
+      "name": "Incline + pull-up bridge",
+      "window": "projected 2026-07",
+      "status": "locked",
+      "entryGate": "2B exit gate met (cross-body <= 1)",
+      "midPhaseTest": { "name": "Dead hang", "dose": "10s from pull-up bar", "pass": "assisted pull-ups next session", "fail": "hold 2 weeks" },
+      "sessionWork": [
+        { "exercise": "Floor press, normal grip DB", "dose": "3 x 8", "intensity": "moderate" },
+        { "exercise": "Incline DB press, neutral grip", "dose": "3 x 8", "notes": "conservative ROM, no full bottom sink" },
+        { "exercise": "Inverted row", "dose": "progressively lower angles" },
+        { "exercise": "Cable cross-over, mid-height", "dose": "mid-range only" }
+      ]
+    },
+    {
+      "id": "4",
+      "name": "Return to barbell",
+      "window": "projected late 2026-07",
+      "status": "locked",
+      "entryGate": "Phase 3 clean",
+      "sessionWork": [
+        { "exercise": "Flat barbell bench, paused", "dose": "3 x 5", "intensity": "light, RPE 6", "notes": "test session" },
+        { "exercise": "Incline DB press, normal grip" },
+        { "exercise": "Landmine press", "notes": "OHP re-entry path" },
+        { "exercise": "Assisted pull-ups", "notes": "only if dead-hang test cleared in Phase 3" }
+      ],
+      "exitAction": "Book physio the moment the window opens, regardless of symptom state. Shoulder + right-side neck both on assessment list."
+    }
+  ],
+  "blockedMovements": {
+    "current": ["bench press (all variations)", "overhead press", "front raise", "bodyweight pull-up", "dip", "deep DB flye / end-range anterior stretch", "incline curl", "floor push-up", "heavy carries / loaded shrug patterns (neck rule)"],
+    "substitutions": {
+      "bench press": "floor press neutral-grip DB (Phase 2B+)",
+      "overhead press": "landmine press (Phase 4)",
+      "bodyweight pull-up": "underhand lat pulldown, RPE 7 cap"
+    }
+  },
+  "allowedMovements": ["all legs", "running (tolerate 2-3/10 arm swing)", "rows (cable/DB/machine, full intent)", "underhand lat pulldown (RPE 7 cap)", "curls at neutral angle", "side raises", "triceps pushdown", "skullcrusher (if pain-free)", "face pulls / band pull-aparts (high volume)", "core, calves"],
+  "neckProtocol": {
+    "signal": "neck_right",
+    "status": "mapping",
+    "rules": [
+      "Log provoking movement every session for 3 sessions (rows, carries, pulldowns, run arm-swing, overhead-adjacent)",
+      "<=3/10 during + settles after = continue training (Tier 1); no progression of provoking pattern while present",
+      "Strict no-shrug cue on all scapular work; no heavy carries or loaded upper-trap work until mapped",
+      "Separate physio assessment item — do not merge with shoulder thread"
+    ],
+    "escalation": ["radiating arm pain", "tingling", "neck-driven headaches", "pain at rest"]
+  },
+  "escalationTriggers": [
+    "new numbness / tingling / weakness in arm or hand",
+    "sharp sudden pain escalation",
+    "resting pain > 3/10",
+    "visible swelling, bruising, asymmetry",
+    "ROM regression below current",
+    "plateau or regression at end of any phase",
+    "isometric regressionRule fired"
+  ],
+  "checkpoints": [
+    { "date": "2026-06-19", "report": ["isometric 3-day streak status", "neck provocation map", "floor press entry decision"] },
+    { "date": "2026-06-26", "report": ["cross-body retest (Phase 2B exit gate)"] }
+  ]
+}

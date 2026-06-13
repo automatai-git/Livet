@@ -14,6 +14,9 @@ import {
   dateForWeekday,
   openExternal,
 } from '../lib/blocks';
+import RehabDayCard from '../components/rehab/RehabDayCard';
+import RehabWeekRow from '../components/rehab/RehabWeekRow';
+import RehabBlockLadder from '../components/rehab/RehabBlockLadder';
 
 // ---------- helpers ---------------------------------------------------------
 
@@ -351,6 +354,8 @@ function DayView() {
           </div>
         </div>
 
+        <RehabDayCard date={date} day={day} block={state.block} />
+
         <DaySessionCard day={day} onPickFlex={setFlexPick} />
 
         {day?.kind === 'mobility' && day.route_to === 'internal' && (
@@ -417,6 +422,8 @@ function WeekView() {
             <button onClick={() => setWeek(Math.min(12, week + 1))} className="btn-ghost" disabled={week >= 12}>›</button>
           </div>
         </div>
+
+        <RehabWeekRow block={block} week={week} />
 
         <div className="day-grid" style={{ marginTop: 14 }}>
           {order.map((wd) => {
@@ -535,6 +542,8 @@ function BlockView() {
             </div>
           );
         })()}
+
+        <RehabBlockLadder block={block} />
 
         {(block.test_dates || []).length > 0 && (
           <>
