@@ -1,0 +1,9 @@
+# Generated artifacts — keep the tool, not its output.
+*.epub
+*.epub.build/
+epub-out/
+tests/sample.pdf
+tests/*.epub
+tests/*.txt
+__pycache__/
+*.pyc

@@ -1,0 +1,14 @@
+# pdf2epub-tts runtime dependencies.
+#
+# The EPUB writer uses only the Python standard library. You need ONE text extractor:
+#
+#   * Best quality: poppler's `pdftotext` (a system package, NOT pip):
+#         Debian/Ubuntu:  sudo apt-get install poppler-utils
+#         macOS (brew):   brew install poppler
+#     If pdftotext is on your PATH, no pip install is required at all.
+#
+#   * Pure-Python fallback (and REQUIRED for --drop-footnotes, which needs font sizes):
+pdfplumber>=0.11
+
+# Only needed to (re)generate the synthetic test PDF in tests/:
+#   reportlab>=4.0
