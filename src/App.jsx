@@ -1,5 +1,5 @@
 // ... existing imports
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import MenuPlanner from './pages/MenuPlanner';
@@ -13,6 +13,11 @@ import DecisionMatrix from './pages/DecisionMatrix';
 import { supabase } from './services/supabase';
 import Auth from './components/meal-planner/Auth';
 import ErrorBoundary from './components/feedback/ErrorBoundary';
+import LoadingState from './components/feedback/LoadingState';
+
+// Code-split the Audiobook Prep tool: it pulls in pdf.js + JSZip (~1 MB), which
+// no other page needs, so we only load that chunk when the user opens /book.
+const BookConverter = lazy(() => import('./pages/BookConverter'));
 
 function App() {
   const [session, setSession] = useState(null);
@@ -45,6 +50,7 @@ function App() {
             <Route path="/bucket" element={<ErrorBoundary key="bucket"><BucketList /></ErrorBoundary>} />
             <Route path="/travel/*" element={<ErrorBoundary key="travel"><TravelPlanner /></ErrorBoundary>} />
             <Route path="/decision" element={<ErrorBoundary key="decision"><DecisionMatrix /></ErrorBoundary>} />
+            <Route path="/book" element={<ErrorBoundary key="book"><Suspense fallback={<LoadingState label="Loading converter…" />}><BookConverter /></Suspense></ErrorBoundary>} />
           </Routes>
         )}
       </div>

@@ -55,7 +55,8 @@ Global tokens live in `src/index.css` `:root` and apply across every page.
   `--accent-menu` (primary green), `--accent-timeline` (terracotta `#C57B57`),
   `--accent-mobility` (sage `#6B9E72`), `--accent-workout` (slate teal `#2D5A6C`),
   `--accent-palette` (dusty rose `#B5838D`), `--accent-bucket` (lavender `#8E7CC3`),
-  `--accent-travel` (ocean `#2F7DA0`), `--accent-decision` (amber `#C8804A`).
+  `--accent-travel` (ocean `#2F7DA0`), `--accent-decision` (amber `#C8804A`),
+  `--accent-book` (muted plum `#6C5B7A`).
 - Fonts: DM Serif Display (display) + Inter (body).
 
 ### Shared components
@@ -70,6 +71,25 @@ Global tokens live in `src/index.css` `:root` and apply across every page.
   satellite tiles. Click in edit mode to add a labelled pin; drag to move;
   right-click / long-press to delete. Custom pins persist to
   `localStorage` under `travel_custom_pins_v1`.
+
+### Audiobook Prep (PDF → EPUB converter)
+`src/pages/BookConverter.jsx` (route `/book`, lazy-loaded so pdf.js + JSZip
+only ship on that route) turns a book PDF into a clean EPUB for ElevenReader.
+Built for dense academic texts: it strips footnotes, citation markers, running
+heads and page numbers. Everything runs client-side. The engine lives in
+`src/lib/book/` and is split so all heuristics stay pure/unit-tested:
+- `extract.js` — the only pdf.js-touching module (loads the worker via a Vite
+  `?url` import); pulls positioned text items per page.
+- `layout.js` — `itemsToLines`: cluster items into ordered lines, insert spaces
+  across gaps, drop glyph-level superscript markers. Pure.
+- `clean.js` — normalisation + noise heuristics: running head/foot detection,
+  page numbers, footnote blocks, citation stripping ([12], glued superscripts,
+  author–year), de-hyphenation, paragraph reconstruction. Pure.
+- `chapters.js` — segmentation via PDF outline → heading detection → single
+  fallback. Pure.
+- `epub.js` — spec-valid EPUB 3 writer (JSZip; `mimetype` stored first).
+- `pipeline.js` — orchestrates File → book model → EPUB Blob with progress.
+Each module has a `*.test.js` beside it (`npm test`).
 
 ### Dashboard card anatomy
 All cards are "featured" style: solid `--app-accent` background, white text,

@@ -32,6 +32,7 @@
     --accent-bucket:   #8E7CC3; /* muted lavender */
     --accent-travel:   #2F7DA0; /* ocean blue */
     --accent-decision: #C8804A; /* burnt amber */
+    --accent-book:     #6C5B7A; /* muted plum — audiobook prep */
 
     /* Default fallback for components that read --app-accent. */
     --app-accent: var(--primary);

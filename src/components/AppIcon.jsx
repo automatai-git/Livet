@@ -48,6 +48,12 @@ export const IconSprite = () => (
         <path d="M16 7l2 2 3-3M16 14l2 2 3-3" />
         <circle cx="18" cy="19" r="2" />
       </symbol>
+      <symbol id="icon-book" viewBox="0 0 24 24">
+        <path d="M12 6.5v13" />
+        <path d="M12 6.5C10 5 7.2 4.6 4.5 5.1v12.5c2.7-.5 5.5-.1 7.5 1.4" />
+        <path d="M12 6.5c2-1.5 4.8-1.9 7.5-1.4v12.5c-2.7-.5-5.5-.1-7.5 1.4" />
+        <path d="M16 10.5c1.6 0 1.6 4 0 4" />
+      </symbol>
     </defs>
   </svg>
 );
