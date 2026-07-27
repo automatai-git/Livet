@@ -10,6 +10,7 @@ import ColourPalette from './pages/ColourPalette';
 import BucketList from './pages/BucketList';
 import TravelPlanner from './pages/TravelPlanner';
 import DecisionMatrix from './pages/DecisionMatrix';
+import Books from './pages/Books';
 import { supabase } from './services/supabase';
 import Auth from './components/meal-planner/Auth';
 import ErrorBoundary from './components/feedback/ErrorBoundary';
@@ -45,6 +46,7 @@ function App() {
             <Route path="/bucket" element={<ErrorBoundary key="bucket"><BucketList /></ErrorBoundary>} />
             <Route path="/travel/*" element={<ErrorBoundary key="travel"><TravelPlanner /></ErrorBoundary>} />
             <Route path="/decision" element={<ErrorBoundary key="decision"><DecisionMatrix /></ErrorBoundary>} />
+            <Route path="/books" element={<ErrorBoundary key="books"><Books /></ErrorBoundary>} />
           </Routes>
         )}
       </div>

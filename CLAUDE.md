@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Life & Training Hub** (repo "Livet") — a React 19 + Vite single-page app with Supabase auth and persistence, deployed to GitHub Pages. Hash routing serves eight sub-apps behind one login. The original five-single-file static PWA lives in `legacy_static/` for reference only (it fails lint — pre-existing, don't fix).
+**Life & Training Hub** (repo "Livet") — a React 19 + Vite single-page app with Supabase auth and persistence, deployed to GitHub Pages. Hash routing serves nine sub-apps behind one login. The original five-single-file static PWA lives in `legacy_static/` for reference only (it fails lint — pre-existing, don't fix).
 
 ## Running Locally
 
@@ -24,7 +24,7 @@ Push to `main` → `.github/workflows/static.yml` builds with Vite (Supabase URL
 ## Architecture
 
 ### Layering conventions
-- `src/pages/` — one page component per route (routes live in `src/App.jsx`: `/menu`, `/timeline`, `/mobility`, `/workout`, `/colour`, `/bucket`, `/travel`, `/decision`).
+- `src/pages/` — one page component per route (routes live in `src/App.jsx`: `/menu`, `/timeline`, `/mobility`, `/workout`, `/colour`, `/bucket`, `/travel`, `/decision`, `/books`).
 - `src/components/<feature>/` — feature-scoped components (e.g. `mobility/`, `rehab/`, `colour/`).
 - `src/services/` — the **only** files that touch their Supabase tables.
 - `src/lib/` — pure helpers, unit-tested with vitest in sibling `*.test.js` files.
@@ -48,6 +48,13 @@ The matcher crosses the personal Soft Summer palette with Sanzo Wada's *A Dictio
 - `src/data/wadaData.js` — 159 book colours + their membership in the 348 combinations, vendored from [mattdesl/dictionary-of-colour-combinations](https://github.com/mattdesl/dictionary-of-colour-combinations) (MIT), trimmed to name/hex/combinations.
 - `src/lib/colourMatch.js` — the pure engine. Each Wada colour snaps to its nearest wearable palette colour via CIEDE2000; a combination survives into the outfit library when every member snaps within `SNAP_CAP` (18) and ≥2 distinct palette colours remain. Members drifting past `FAITHFUL_T` (12) flag the combo `adapted`. Colours are assigned to garment slots (jacket/top/trousers/accent) by role/lightness scoring — neutrals and darks ground the outfit, core colours go near the face. Contrast bands (low ≤ 15 / medium ≤ 30 / high) split the library roughly in thirds by lightness spread.
 - These constants were calibrated against the real datasets (library of 177 combos: 86 pairs, 58 trios, 33 quads). If the palette in `colourData.js` changes, re-check them — `colourMatch.test.js` asserts minimum library sizes and will catch a collapse.
+
+### Book cloud (/books)
+The Audible library drawn as connected theme clouds: read books are solid dots, wishlist books sit dashed in the same clouds, and "Read next" ranks the wishlist by connection strength to finished reads.
+- `src/data/bookThemes.js` — theme taxonomy (10 themes + unsorted); a book's **first** theme decides its cloud, later themes create cross-cloud links. Keywords drive import-time auto-tagging (hints only).
+- `src/lib/bookCloud.js` — pure engine, unit-tested: `parseImport` (handles both "Title by Author" lines and multi-line Audible copy blocks with `By:`/`Narrated by:` rows), relatedness (`same author` = 3, each shared theme = 1), edge rules (single shared theme only counts across clouds), deterministic sunflower-spiral + row-packed layout, and wishlist ranking with human-readable reasons.
+- `src/components/books/` — `BookCloud.jsx` (SVG: blurred cloud blobs, curved edges, tap-to-highlight), `BookImport.jsx` (paste box with live parse count, read/wishlist toggle), `BookDetailCard.jsx` (status, theme chips, related list, delete).
+- `src/services/bookService.js` → `book_cloud_books` table (`input/book-cloud-schema.sql`), one row per (user, book), `themes` jsonb; `book-cloud-library-v1` localStorage fallback, cache-first on save. An empty table with a non-empty cache seeds the server from the cache (first-run migration).
 
 ### Design system
 Global tokens live in `src/index.css` `:root` and apply across every page.

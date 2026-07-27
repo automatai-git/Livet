@@ -20,6 +20,7 @@ const APPS = [
   { to: '/travel',   icon: 'travel',   title: 'Trip Planner',                        desc: 'Itineraries, experiences, and a satellite map of your trips.',     cta: 'Open trips',    accent: 'var(--accent-travel)' },
   { to: '/bucket',   icon: 'bucket',   title: 'Bucket List',                         desc: '425 lifetime experiences to track and unlock.',                    cta: 'Open list',     accent: 'var(--accent-bucket)' },
   { to: '/decision', icon: 'decision', title: ['Decision ', { em: 'Matrix' }],       desc: 'Solve complex choices with weighted criteria and scoring.',        cta: 'Open matrix',   accent: 'var(--accent-decision)' },
+  { to: '/books',    icon: 'books',    title: ['Book ', { em: 'Cloud' }],            desc: 'Your Audible library as connected theme clouds — and which wishlist book to read next.', cta: 'Open cloud',    accent: 'var(--accent-books)' },
 ];
 
 const renderTitle = (t) => Array.isArray(t)
