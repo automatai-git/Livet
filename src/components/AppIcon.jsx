@@ -18,6 +18,13 @@ export const IconSprite = () => (
         <circle cx="10" cy="16" r="1.2" />
         <circle cx="18" cy="16" r="1.2" />
       </symbol>
+      <symbol id="icon-tree" viewBox="0 0 24 24">
+        <circle cx="12" cy="5.5" r="2.2" />
+        <path d="M12 7.7v3.3M12 11l-7 5.4M12 11v5.4M12 11l7 5.4" />
+        <circle cx="5" cy="18.5" r="2" />
+        <circle cx="12" cy="18.5" r="2" />
+        <circle cx="19" cy="18.5" r="2" />
+      </symbol>
       <symbol id="icon-mobility" viewBox="0 0 24 24">
         <circle cx="12" cy="4.5" r="1.6" />
         <path d="M6 9h12M9 9v3l-2 7M15 9v3l2 7M9 12h6" />

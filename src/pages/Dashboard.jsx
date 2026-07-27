@@ -13,7 +13,7 @@ import LoadingState from '../components/feedback/LoadingState';
 // new app: append here, define a CSS var, and add an icon to the sprite.
 const APPS = [
   { to: '/menu',     icon: 'menu',     title: ['Menu ', { em: 'Planner' }],          desc: "Plan dinners, build shopping lists, track what you've cooked.",   cta: 'Open planner',  accent: 'var(--accent-menu)' },
-  { to: '/timeline', icon: 'timeline', title: 'Milestone Timeline',                  desc: "Track and visualize life's significant moments.",                 cta: 'Open timeline', accent: 'var(--accent-timeline)' },
+  { to: '/timeline', icon: 'tree',     title: ['Life ', { em: 'Tree' }],             desc: 'Tick the weekly fundamentals — health, wealth, happiness — and the milestones they compound into.', cta: 'Open tree',     accent: 'var(--accent-timeline)' },
   { to: '/mobility', icon: 'mobility', title: 'Mobility Tracker',                    desc: 'Structured weekly mobility workouts with progress tracking.',      cta: 'Open mobility', accent: 'var(--accent-mobility)' },
   { to: '/workout',  icon: 'workout',  title: 'Workout Finder',                      desc: 'Your structured training block and daily sessions.',               cta: 'Open workouts', accent: 'var(--accent-workout)' },
   { to: '/colour',   icon: 'palette',  title: 'Soft Summer Palette',                 desc: 'Personal colour analysis guide and outfit combinations.',          cta: 'Open palette',  accent: 'var(--accent-palette)' },

@@ -15,7 +15,7 @@ npm run lint     # eslint
 npm run build    # production build to dist/
 ```
 
-There is no `.env` locally, so the Supabase client boots with a placeholder URL. Every data layer falls back to its localStorage cache when fetches fail, so pages can be previewed offline by seeding localStorage in the browser console: a forged `sb-placeholder-auth-token` session (any JSON with a future `expires_at` and a `user` object) gets past the auth gate, and per-feature caches (e.g. `block-cache::block-4`, `user-config-cache`, `rehab-log-cache::<protocolId>`) supply data.
+Without env vars the Supabase client boots with a placeholder URL; real credentials live in `.env.local` (gitignored, present as of 2026-07). Every data layer falls back to its localStorage cache when fetches fail, so pages can be previewed offline by seeding localStorage in the browser console: a forged session under `sb-<project-ref>-auth-token` (`sb-placeholder-auth-token` when no `.env`) gets past the auth gate — it needs a future `expires_at`, a `user` object, and a JWT-shaped `access_token` (three base64url segments with an `exp` claim; supabase-js validates the shape). Per-feature caches (e.g. `block-cache::block-4`, `user-config-cache`, `rehab-log-cache::<protocolId>`, `life-tree-cache-v1`) supply data.
 
 ## Deployment
 
@@ -33,6 +33,13 @@ Push to `main` → `.github/workflows/static.yml` builds with Vite (Supabase URL
 
 ### Data flow pattern
 Supabase-backed features write through a service module and mirror state into a localStorage cache; on load they try the network and fall back to the cache. Purely local features (e.g. saved outfits, custom travel pins) use localStorage directly with a versioned key (`outfit-matcher-saved-v1`, `travel_custom_pins_v1`).
+
+### Life tree (Timeline page)
+`/timeline` is the **Life** page: a weekly life tree from Naval Ravikant's *Almanack* (primary view) above the original milestone feed. The conceptual frame: the other sub-apps are supporting tools; weekly tree inputs compound into the milestones below.
+- `src/data/lifeTreeData.js` — the n-ary tree: health / wealth / happiness pillars → 10 leaf practices, each with a written pass criterion (tick against the sentence, not the feeling).
+- `src/lib/lifeTree.js` — ISO-week (Monday-start) helpers + strict-AND roll-up: a node is `complete` only when every leaf below is ticked; partial nodes carry `done/total`. Unit-tested in `lifeTree.test.js`.
+- `src/services/lifeTreeService.js` → `life_tree_weeks` table (`input/life-tree-schema.sql`), one row per (user, ISO week), `ticks` jsonb; `life-tree-cache-v1` localStorage fallback, cache-first on save.
+- `src/components/life/` — `LifeTree.jsx` (CSS-elbow tree, tappable leaves) and `WeekHeatmap.jsx` (trailing 12 weeks; tapping a cell selects that week for backfilling). Pillar accents reuse existing tokens (sage/slate-teal/terracotta).
 
 ### Colour palette app & Outfit Matcher
 `src/pages/ColourPalette.jsx` renders tabbed sections driven by `SECTIONS` in `src/data/colourData.js`; the default tab is the **Outfit Matcher** (`src/components/colour/OutfitMatcher.jsx`).
