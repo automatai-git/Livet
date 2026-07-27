@@ -1953,6 +1953,69 @@ button {
 .book-suggestion-list button:hover { border-color: var(--accent-books); }
 .book-suggestion-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 
+/* Star rating */
+.star-rating { display: inline-flex; gap: 2px; }
+.star-rating .star {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--border);
+    padding: 2px;
+    line-height: 1;
+    transition: color 0.12s, transform 0.12s;
+}
+.star-rating .star.on { color: var(--accent-decision); }
+.star-rating .star:active { transform: scale(1.15); }
+.star-rating.md .star { font-size: 1.5rem; min-width: 34px; min-height: 34px; }
+.star-rating.sm .star { font-size: 1.1rem; min-width: 26px; min-height: 26px; }
+
+/* Bulk-rate view */
+.book-rate-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 6px;
+}
+.book-rate-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px 12px;
+    min-height: 52px;
+}
+.book-rate-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.book-rate-main .book-related-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Read-next extras */
+.book-score-pill {
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent-books);
+    background: rgba(138, 107, 77, 0.1);
+    border-radius: 999px;
+    padding: 4px 9px;
+}
+.book-see-all {
+    background: none;
+    border: none;
+    color: var(--accent-books);
+    font-weight: 600;
+    font-size: 0.82rem;
+    cursor: pointer;
+    padding: 4px;
+}
+
 /* Library list */
 .book-library-list {
     list-style: none;

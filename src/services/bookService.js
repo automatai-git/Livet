@@ -26,6 +26,7 @@ const toBook = (row) => ({
   author: row.author || '',
   status: row.status === 'wishlist' ? 'wishlist' : 'read',
   themes: Array.isArray(row.themes) ? row.themes : [],
+  rating: Number.isInteger(row.rating) && row.rating >= 1 && row.rating <= 5 ? row.rating : null,
 });
 
 export const bookService = {
@@ -39,7 +40,7 @@ export const bookService = {
     try {
       const { data, error } = await supabase
         .from('book_cloud_books')
-        .select('id, title, author, status, themes')
+        .select('id, title, author, status, themes, rating')
         .order('title', { ascending: true });
       if (error) throw error;
       const books = (data || []).map(toBook);
@@ -74,6 +75,7 @@ export const bookService = {
         author: b.author,
         status: b.status,
         themes: b.themes,
+        rating: b.rating ?? null,
         updated_at: now,
       }));
       const { error } = await supabase

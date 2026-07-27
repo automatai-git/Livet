@@ -5,26 +5,38 @@ import AppIcon from '../components/AppIcon';
 import BookCloud from '../components/books/BookCloud';
 import BookImport from '../components/books/BookImport';
 import BookDetailCard from '../components/books/BookDetailCard';
+import StarRating from '../components/books/StarRating';
 import { bookKey, suggestThemes, suggestNextReads } from '../lib/bookCloud.js';
-import { themeById } from '../data/bookThemes.js';
+import { BOOK_THEMES, themeById } from '../data/bookThemes.js';
+import { BOOK_SEEDS } from '../data/bookSeeds.js';
 import { bookService } from '../services/bookService.js';
 
 // Book Cloud: the Audible library drawn as connected theme clouds.
-// Read books are solid dots, wishlist books sit dashed in the same clouds,
-// and the "Read next" panel ranks the wishlist by how strongly each book
-// links to what's already been read. Persistence goes through bookService
-// (Supabase `book_cloud_books` table, localStorage cache as fallback).
+// Read books are solid dots, wishlist books sit dashed in the same clouds.
+// Four views: Cloud (the map), Read next (full wishlist ranked by
+// rating-weighted pull, filterable by theme — the two selection criteria),
+// Rate (bulk-rate finished books), Library (import, tag, manage).
+// Persistence goes through bookService (Supabase `book_cloud_books` table,
+// localStorage cache as fallback).
 
 const newId = () =>
   (typeof crypto !== 'undefined' && crypto.randomUUID)
     ? crypto.randomUUID()
     : `bk-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
+const VIEWS = [
+  { id: 'cloud', label: 'Cloud' },
+  { id: 'next', label: 'Read next' },
+  { id: 'rate', label: 'Rate' },
+  { id: 'library', label: 'Library' },
+];
+
 const Books = () => {
   const [books, setBooks] = useState(bookService.getCachedBooks);
   const [view, setView] = useState('cloud');
   const [selectedId, setSelectedId] = useState(null);
   const [filter, setFilter] = useState('');
+  const [themeFilter, setThemeFilter] = useState(null);
   const [offline, setOffline] = useState(false);
 
   useEffect(() => {
@@ -38,12 +50,31 @@ const Books = () => {
   }, []);
 
   const selected = books.find((b) => b.id === selectedId) || null;
-  const readCount = books.filter((b) => b.status === 'read').length;
-  const wishCount = books.length - readCount;
+  const readBooks = books.filter((b) => b.status === 'read');
+  const wishCount = books.length - readBooks.length;
+  const ratedCount = readBooks.filter((b) => b.rating).length;
+  const untagged = books.filter((b) => !b.themes.length).length;
 
-  const suggestions = useMemo(
-    () => suggestNextReads(books).filter((s) => s.score > 0).slice(0, 3),
-    [books]
+  const ranked = useMemo(() => suggestNextReads(books), [books]);
+  const topPicks = useMemo(() => ranked.filter((s) => s.score > 0).slice(0, 3), [ranked]);
+
+  // Themes present in the wishlist, taxonomy order — the filter chips.
+  const wishThemes = useMemo(() => {
+    const present = new Set(books.filter((b) => b.status === 'wishlist').flatMap((b) => b.themes));
+    return BOOK_THEMES.filter((t) => present.has(t.id));
+  }, [books]);
+
+  const rankedShown = themeFilter
+    ? ranked.filter((s) => s.book.themes.includes(themeFilter))
+    : ranked;
+
+  // Rate view: unrated first, then alphabetical.
+  const rateRows = useMemo(
+    () =>
+      [...readBooks].sort((a, b) =>
+        (a.rating ? 1 : 0) - (b.rating ? 1 : 0) || a.title.localeCompare(b.title)
+      ),
+    [readBooks]
   );
 
   const syncSave = (changed, all) =>
@@ -62,13 +93,19 @@ const Books = () => {
         }
         continue;
       }
-      const book = { id: newId(), title, author, status, themes: suggestThemes(title) };
+      const book = { id: newId(), title, author, status, themes: suggestThemes(title), rating: null };
       byKey.set(bookKey(title, author), book);
       added.push(book);
     }
     const next = [...books.map((b) => upgraded.get(b.id) || b), ...added];
     setBooks(next);
     syncSave([...upgraded.values(), ...added], next);
+  };
+
+  const handleLoadSeeds = () => {
+    const seeded = BOOK_SEEDS.map((s) => ({ id: newId(), rating: null, ...s }));
+    setBooks(seeded);
+    syncSave(seeded, seeded);
   };
 
   const handleUpdate = (id, patch) => {
@@ -94,7 +131,15 @@ const Books = () => {
     );
   }, [books, filter]);
 
-  const untagged = books.filter((b) => !b.themes.length).length;
+  const detailCard = selected && (
+    <BookDetailCard
+      book={selected}
+      books={books}
+      onUpdate={handleUpdate}
+      onDelete={handleDelete}
+      onSelect={setSelectedId}
+    />
+  );
 
   return (
     <AppShell title="Book Cloud" accent="var(--accent-books)" maxWidth={780}>
@@ -103,7 +148,12 @@ const Books = () => {
           <EmptyState
             icon={<AppIcon name="books" size={26} />}
             title="No books yet"
-            hint="Paste your Audible library below and watch it group itself into clouds."
+            hint="Load the Audible starter library, or paste a list below."
+            action={BOOK_SEEDS.length > 0 && (
+              <button type="button" className="btn-primary" onClick={handleLoadSeeds}>
+                Load my Audible library ({BOOK_SEEDS.length} books)
+              </button>
+            )}
           />
           <div style={{ marginTop: 14 }}>
             <BookImport onImport={handleImport} />
@@ -113,23 +163,19 @@ const Books = () => {
         <>
           <div className="book-toolbar">
             <div className="book-view-pills" role="tablist">
-              <button
-                type="button"
-                className={`day-pill${view === 'cloud' ? ' selected' : ''}`}
-                onClick={() => setView('cloud')}
-              >
-                Cloud
-              </button>
-              <button
-                type="button"
-                className={`day-pill${view === 'library' ? ' selected' : ''}`}
-                onClick={() => setView('library')}
-              >
-                Library
-              </button>
+              {VIEWS.map((v) => (
+                <button
+                  key={v.id}
+                  type="button"
+                  className={`day-pill${view === v.id ? ' selected' : ''}`}
+                  onClick={() => setView(v.id)}
+                >
+                  {v.label}
+                </button>
+              ))}
             </div>
             <p className="muted-row">
-              {readCount} read · {wishCount} wishlist{untagged ? ` · ${untagged} untagged` : ''}
+              {readBooks.length} read · {wishCount} wishlist{untagged ? ` · ${untagged} untagged` : ''}
             </p>
           </div>
 
@@ -150,24 +196,18 @@ const Books = () => {
                 <BookCloud books={books} selectedId={selectedId} onSelect={setSelectedId} />
               </div>
 
-              {selected && (
-                <BookDetailCard
-                  book={selected}
-                  books={books}
-                  onUpdate={handleUpdate}
-                  onDelete={handleDelete}
-                  onSelect={setSelectedId}
-                />
-              )}
+              {detailCard}
 
-              {suggestions.length > 0 && (
+              {topPicks.length > 0 && (
                 <div className="tight-card book-suggestions">
                   <div className="section-title" style={{ margin: '0 0 8px' }}>
                     <h3>Read next</h3>
-                    <span className="muted-row">wishlist, ranked by pull</span>
+                    <button type="button" className="book-see-all" onClick={() => setView('next')}>
+                      See all {wishCount} →
+                    </button>
                   </div>
                   <ol className="book-suggestion-list">
-                    {suggestions.map(({ book, reasons }) => (
+                    {topPicks.map(({ book, reasons }) => (
                       <li key={book.id}>
                         <button type="button" onClick={() => setSelectedId(book.id)}>
                           <span
@@ -187,18 +227,90 @@ const Books = () => {
             </>
           )}
 
+          {view === 'next' && (
+            <>
+              <p className="muted-row" style={{ marginBottom: 8 }}>
+                Wishlist ranked by pull toward what you've read — links through highly rated
+                books pull hardest. Narrow by theme:
+              </p>
+              <div className="book-theme-chips" style={{ marginBottom: 12 }}>
+                <button
+                  type="button"
+                  className={`book-theme-chip${themeFilter === null ? ' on' : ''}`}
+                  style={themeFilter === null ? { '--chip-color': 'var(--accent-books)' } : undefined}
+                  onClick={() => setThemeFilter(null)}
+                >
+                  All themes
+                </button>
+                {wishThemes.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    className={`book-theme-chip${themeFilter === t.id ? ' on' : ''}`}
+                    style={themeFilter === t.id ? { '--chip-color': t.color } : undefined}
+                    onClick={() => setThemeFilter(themeFilter === t.id ? null : t.id)}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              {detailCard}
+
+              <ol className="book-suggestion-list">
+                {rankedShown.map(({ book, score, reasons }) => (
+                  <li key={book.id}>
+                    <button type="button" onClick={() => setSelectedId(book.id === selectedId ? null : book.id)}>
+                      <span
+                        className="legend-dot wish"
+                        style={{ '--book-accent': themeById(book.themes[0] || 'unsorted').color }}
+                      />
+                      <span className="book-suggestion-body">
+                        <span className="book-related-title">{book.title}</span>
+                        <span className="muted-row">
+                          {reasons.length ? reasons.join(' · ') : 'No links yet — tag it to place it'}
+                        </span>
+                      </span>
+                      <span className="book-score-pill">{score}</span>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+              {rankedShown.length === 0 && (
+                <EmptyState title="Nothing here" hint="No wishlist books carry this theme yet." />
+              )}
+            </>
+          )}
+
+          {view === 'rate' && (
+            <>
+              <p className="muted-row" style={{ marginBottom: 12 }}>
+                {ratedCount} of {readBooks.length} rated — ratings sharpen the Read next
+                ranking. Unrated first.
+              </p>
+              <ul className="book-rate-list">
+                {rateRows.map((b) => (
+                  <li key={b.id} className="book-rate-row">
+                    <span className="book-rate-main">
+                      <span className="book-related-title">{b.title}</span>
+                      <span className="muted-row">{b.author || '—'}</span>
+                    </span>
+                    <StarRating
+                      size="sm"
+                      value={b.rating || null}
+                      onChange={(rating) => handleUpdate(b.id, { rating })}
+                      label={`Rate ${b.title}`}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
           {view === 'library' && (
             <>
               <BookImport onImport={handleImport} />
-              {selected && (
-                <BookDetailCard
-                  book={selected}
-                  books={books}
-                  onUpdate={handleUpdate}
-                  onDelete={handleDelete}
-                  onSelect={setSelectedId}
-                />
-              )}
+              {detailCard}
               <input
                 className="search-input"
                 style={{ margin: '12px 0' }}
@@ -220,7 +332,9 @@ const Books = () => {
                       />
                       <span className="book-library-main">
                         <span className="book-related-title">{b.title}</span>
-                        <span className="muted-row">{b.author || '—'}</span>
+                        <span className="muted-row">
+                          {b.author || '—'}{b.rating ? ` · ★${b.rating}` : ''}
+                        </span>
                       </span>
                       <span className="book-library-tags">
                         {b.themes.length

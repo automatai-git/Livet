@@ -16,6 +16,11 @@ create table if not exists public.book_cloud_books (
 create index if not exists book_cloud_books_user_idx
   on public.book_cloud_books (user_id);
 
+-- Added after the initial rollout; safe on both fresh and existing tables.
+alter table public.book_cloud_books
+  add column if not exists rating smallint
+  check (rating is null or rating between 1 and 5);
+
 alter table public.book_cloud_books enable row level security;
 
 drop policy if exists "users own book cloud books" on public.book_cloud_books;

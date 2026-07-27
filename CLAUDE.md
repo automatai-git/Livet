@@ -15,6 +15,8 @@ npm run lint     # eslint
 npm run build    # production build to dist/
 ```
 
+On localhost, `index.html` never registers the PWA service worker (and unregisters + clears leftovers): its cache-first asset strategy pins Vite's unhashed `/src` modules to stale copies, silently hiding code edits during development.
+
 Without env vars the Supabase client boots with a placeholder URL; real credentials live in `.env.local` (gitignored, present as of 2026-07). Every data layer falls back to its localStorage cache when fetches fail, so pages can be previewed offline by seeding localStorage in the browser console: a forged session under `sb-<project-ref>-auth-token` (`sb-placeholder-auth-token` when no `.env`) gets past the auth gate — it needs a future `expires_at`, a `user` object, and a JWT-shaped `access_token` (three base64url segments with an `exp` claim; supabase-js validates the shape). Per-feature caches (e.g. `block-cache::block-4`, `user-config-cache`, `rehab-log-cache::<protocolId>`, `life-tree-cache-v1`) supply data.
 
 ## Deployment
@@ -50,11 +52,12 @@ The matcher crosses the personal Soft Summer palette with Sanzo Wada's *A Dictio
 - These constants were calibrated against the real datasets (library of 177 combos: 86 pairs, 58 trios, 33 quads). If the palette in `colourData.js` changes, re-check them — `colourMatch.test.js` asserts minimum library sizes and will catch a collapse.
 
 ### Book cloud (/books)
-The Audible library drawn as connected theme clouds: read books are solid dots, wishlist books sit dashed in the same clouds, and "Read next" ranks the wishlist by connection strength to finished reads.
+The Audible library drawn as connected theme clouds: read books are solid dots, wishlist books sit dashed in the same clouds. Four views: Cloud, Read next (full wishlist ranked by rating-weighted pull, theme filter chips — the two selection criteria), Rate (bulk 1–5★ for finished books, unrated first), Library (import/tag/manage).
 - `src/data/bookThemes.js` — theme taxonomy (10 themes + unsorted); a book's **first** theme decides its cloud, later themes create cross-cloud links. Keywords drive import-time auto-tagging (hints only).
-- `src/lib/bookCloud.js` — pure engine, unit-tested: `parseImport` (handles both "Title by Author" lines and multi-line Audible copy blocks with `By:`/`Narrated by:` rows), relatedness (`same author` = 3, each shared theme = 1), edge rules (single shared theme only counts across clouds), deterministic sunflower-spiral + row-packed layout, and wishlist ranking with human-readable reasons.
-- `src/components/books/` — `BookCloud.jsx` (SVG: blurred cloud blobs, curved edges, tap-to-highlight), `BookImport.jsx` (paste box with live parse count, read/wishlist toggle), `BookDetailCard.jsx` (status, theme chips, related list, delete).
-- `src/services/bookService.js` → `book_cloud_books` table (`input/book-cloud-schema.sql`), one row per (user, book), `themes` jsonb; `book-cloud-library-v1` localStorage fallback, cache-first on save. An empty table with a non-empty cache seeds the server from the cache (first-run migration).
+- `src/data/bookSeeds.js` — the owner's curated Audible library + wishlist (themes hand-assigned, authors simplified to the primary name so author-links fire); offered as a one-tap load in the empty state.
+- `src/lib/bookCloud.js` — pure engine, unit-tested: `parseImport` (handles both "Title by Author" lines and multi-line Audible copy blocks with `By:`/`Narrated by:` rows), relatedness (`same author` = 3, each shared theme = 1), edge rules (single shared theme only counts across clouds), deterministic sunflower-spiral + row-packed layout, and wishlist ranking: each link is scaled by `ratingFactor` (rating/3, unrated = 1), so 5★ reads pull ~1.7× and 1★ demotes; reasons are human-readable and clouds carry `avgRating`.
+- `src/components/books/` — `BookCloud.jsx` (SVG: blurred cloud blobs, curved edges, tap-to-highlight), `BookImport.jsx` (paste box with live parse count, read/wishlist toggle), `BookDetailCard.jsx` (status, rating stars, theme chips, related list, delete), `StarRating.jsx`.
+- `src/services/bookService.js` → `book_cloud_books` table (`input/book-cloud-schema.sql`, incl. idempotent `rating` alter), one row per (user, book), `themes` jsonb; `book-cloud-library-v1` localStorage fallback, cache-first on save. An empty table with a non-empty cache seeds the server from the cache (first-run migration).
 
 ### Design system
 Global tokens live in `src/index.css` `:root` and apply across every page.

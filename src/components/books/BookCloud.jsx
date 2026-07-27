@@ -67,7 +67,7 @@ const BookCloud = ({ books, selectedId, onSelect }) => {
             {c.label}
           </text>
           <text className="book-cloud-count" x={c.cx} y={c.cy + c.r - 6} textAnchor="middle">
-            {c.readCount} read{c.wishCount ? ` · ${c.wishCount} wish` : ''}
+            {c.readCount} read{c.avgRating ? ` · ★${c.avgRating}` : ''}{c.wishCount ? ` · ${c.wishCount} wish` : ''}
           </text>
         </g>
       ))}

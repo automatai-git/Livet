@@ -7,6 +7,7 @@ import {
   buildClouds,
   layoutClouds,
   suggestNextReads,
+  ratingFactor,
   primaryTheme,
   NODE_R,
 } from './bookCloud.js';
@@ -190,5 +191,58 @@ describe('suggestNextReads', () => {
     const dune = ranked.find((r) => r.book.id === 'w3');
     expect(dune.score).toBe(0);
     expect(dune.reasons).toEqual([]);
+  });
+});
+
+describe('ratings', () => {
+  it('scales pull by rating with unrated as neutral', () => {
+    expect(ratingFactor({ rating: 5 })).toBeCloseTo(5 / 3);
+    expect(ratingFactor({ rating: 3 })).toBe(1);
+    expect(ratingFactor({ rating: null })).toBe(1);
+    expect(ratingFactor({})).toBe(1);
+  });
+
+  it('ranks a link through a 5★ book above the same link through an unrated one', () => {
+    const books = [
+      book('r1', 'Loved It', 'Ada Author', 'read', ['wealth']),
+      book('r2', 'Meh Book', 'Bob Writer', 'read', ['history']),
+      { ...book('w1', 'A Next', 'Ada Author', 'wishlist', []) },
+      { ...book('w2', 'B Next', 'Bob Writer', 'wishlist', []) },
+    ];
+    books[0].rating = 5;
+    // Identical author-only links; only the rating differs (5★ vs unrated).
+    const ranked = suggestNextReads(books);
+    expect(ranked[0].book.id).toBe('w1');
+    expect(ranked[0].score).toBe(5);        // 3 × 5/3
+    expect(ranked[1].score).toBe(3);        // 3 × 1
+    expect(ranked[0].reasons[0]).toContain('(★5)');
+  });
+
+  it('demotes links through 1★ books below broader unrated theme links', () => {
+    const oneStar = { ...book('r1', 'Regret', 'Cy Author', 'read', ['fiction']), rating: 1 };
+    const books = [
+      oneStar,
+      book('r2', 'Fine A', 'x', 'read', ['wealth', 'psychology']),
+      book('w1', 'Via One Star', 'Cy Author', 'wishlist', []),
+      book('w2', 'Via Themes', 'y', 'wishlist', ['wealth', 'psychology']),
+    ];
+    const ranked = suggestNextReads(books);
+    expect(ranked[0].book.id).toBe('w2');   // 2 shared themes × 1 = 2
+    expect(ranked[1].book.id).toBe('w1');   // author 3 × 1/3 = 1
+  });
+
+  it('averages read ratings per cloud and reports them in reasons', () => {
+    const books = [
+      { ...book('r1', 'A', 'a', 'read', ['wealth']), rating: 4 },
+      { ...book('r2', 'B', 'b', 'read', ['wealth']), rating: 5 },
+      book('r3', 'C', 'c', 'read', ['wealth']),
+      book('w1', 'W', 'd', 'wishlist', ['wealth']),
+    ];
+    const clouds = buildClouds(books);
+    expect(clouds[0].avgRating).toBe(4.5);  // unrated books excluded from avg
+    const ranked = suggestNextReads(books);
+    expect(ranked[0].reasons[0]).toContain('avg ★4.5');
+    const unrated = buildClouds([book('r9', 'Z', 'z', 'read', ['fiction'])]);
+    expect(unrated[0].avgRating).toBe(null);
   });
 });

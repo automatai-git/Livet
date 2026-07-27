@@ -28,8 +28,21 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
+          // Never register the SW against the Vite dev server: its
+          // cache-first asset strategy pins the unhashed /src modules to
+          // stale copies, so code edits silently stop reaching the browser.
+          // Also self-heal dev browsers that picked one up earlier.
+          if (['localhost', '127.0.0.1'].includes(location.hostname)) {
+            navigator.serviceWorker.getRegistrations()
+              .then((regs) => regs.forEach((r) => r.unregister()))
+              .catch(() => {});
+            if (window.caches) {
+              caches.keys().then((keys) => keys.forEach((k) => caches.delete(k))).catch(() => {});
+            }
+            return;
+          }
           navigator.serviceWorker.register('service-worker.js')
-            .then(registration => console.log('SW registered'))
+            .then(() => console.log('SW registered'))
             .catch(err => console.log('SW registration failed:', err));
         });
       }

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { BOOK_THEMES, themeById } from '../../data/bookThemes.js';
 import { relation } from '../../lib/bookCloud.js';
+import StarRating from './StarRating.jsx';
 
 // Detail + edit card for one book: status toggle, theme tagging (the first
 // active theme is the book's cloud), related-book list, delete.
@@ -54,6 +55,17 @@ const BookDetailCard = ({ book, books, onUpdate, onDelete, onSelect }) => {
           </button>
         </div>
       </div>
+
+      {book.status === 'read' && (
+        <>
+          <p className="eyebrow" style={{ marginTop: 12 }}>Rating</p>
+          <StarRating
+            value={book.rating || null}
+            onChange={(rating) => onUpdate(book.id, { rating })}
+            label={`Rate ${book.title}`}
+          />
+        </>
+      )}
 
       <p className="eyebrow" style={{ marginTop: 12 }}>Themes — first one is its cloud</p>
       <div className="book-theme-chips">

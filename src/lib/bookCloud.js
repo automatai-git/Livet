@@ -4,7 +4,8 @@
 // and rank wishlist books by how strongly they connect to finished reads.
 //
 // Book shape used throughout:
-//   { id, title, author, status: 'read' | 'wishlist', themes: [themeId] }
+//   { id, title, author, status: 'read' | 'wishlist', themes: [themeId],
+//     rating: 1..5 | null }   (rating only meaningful for read books)
 // themes[0] is the primary theme — it decides which cloud the book joins.
 
 import { BOOK_THEMES, UNSORTED_THEME, themeById } from '../data/bookThemes.js';
@@ -147,6 +148,7 @@ export const buildClouds = (books) => {
   return order
     .map((theme) => {
       const members = books.filter((b) => primaryTheme(b) === theme.id);
+      const rated = members.filter((b) => b.status === 'read' && b.rating);
       return {
         id: theme.id,
         label: theme.label,
@@ -154,6 +156,9 @@ export const buildClouds = (books) => {
         books: members,
         readCount: members.filter((b) => b.status === 'read').length,
         wishCount: members.filter((b) => b.status === 'wishlist').length,
+        avgRating: rated.length
+          ? Math.round((rated.reduce((s, b) => s + b.rating, 0) / rated.length) * 10) / 10
+          : null,
       };
     })
     .filter((c) => c.books.length > 0);
@@ -230,8 +235,13 @@ export const layoutClouds = (clouds, width = 720) => {
 
 // ---------- wishlist ranking ----------
 
+// A read book pulls harder the better it was: 3★ (or unrated) is neutral
+// weight 1.0, 5★ pulls ~1.7×, 1★ pushes down to a third.
+export const ratingFactor = (book) => (book.rating ? book.rating / 3 : 1);
+
 // Scores every wishlist book by its pull toward the read shelf: shared
-// authors weigh heaviest, then shared themes. Returns all wishlist books,
+// authors weigh heaviest, then shared themes, each link scaled by the
+// rating of the read book behind it. Returns all wishlist books,
 // strongest first, each with human-readable reasons.
 export const suggestNextReads = (books) => {
   const read = books.filter((b) => b.status === 'read');
@@ -240,21 +250,32 @@ export const suggestNextReads = (books) => {
     .map((wish) => {
       let score = 0;
       const authorMatches = [];
-      const themeCounts = {};
+      const themeStats = {}; // themeId -> { n, ratingSum, ratedN }
       for (const r of read) {
         const rel = relation(wish, r);
-        score += rel.weight;
-        if (rel.sameAuthor) authorMatches.push(r.title);
-        for (const t of rel.sharedThemes) themeCounts[t] = (themeCounts[t] || 0) + 1;
+        if (!rel.weight) continue;
+        score += rel.weight * ratingFactor(r);
+        if (rel.sameAuthor) authorMatches.push(r);
+        for (const t of rel.sharedThemes) {
+          const s = (themeStats[t] ||= { n: 0, ratingSum: 0, ratedN: 0 });
+          s.n += 1;
+          if (r.rating) { s.ratingSum += r.rating; s.ratedN += 1; }
+        }
       }
       const reasons = [];
-      if (authorMatches.length) reasons.push(`Same author as “${authorMatches[0]}”`);
-      const topTheme = Object.entries(themeCounts).sort((a, b) => b[1] - a[1])[0];
-      if (topTheme) {
-        const [id, n] = topTheme;
-        reasons.push(`Shares ${themeById(id).label} with ${n} read book${n === 1 ? '' : 's'}`);
+      if (authorMatches.length) {
+        const best = authorMatches.sort((a, b) => (b.rating || 0) - (a.rating || 0))[0];
+        reasons.push(`Same author as “${best.title}”${best.rating ? ` (★${best.rating})` : ''}`);
       }
-      return { book: wish, score, reasons };
+      const topTheme = Object.entries(themeStats).sort((a, b) => b[1].n - a[1].n)[0];
+      if (topTheme) {
+        const [id, s] = topTheme;
+        const avg = s.ratedN ? Math.round((s.ratingSum / s.ratedN) * 10) / 10 : null;
+        reasons.push(
+          `Shares ${themeById(id).label} with ${s.n} read book${s.n === 1 ? '' : 's'}${avg ? ` (avg ★${avg})` : ''}`
+        );
+      }
+      return { book: wish, score: Math.round(score * 10) / 10, reasons };
     })
     .sort((a, b) => b.score - a.score || a.book.title.localeCompare(b.book.title));
 };
