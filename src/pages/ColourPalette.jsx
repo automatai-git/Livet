@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SECTIONS, coreColours, sisterColours, neutralColours, cautionColours, metalColours, outfitCombos } from '../data/colourData.js';
+import OutfitMatcher from '../components/colour/OutfitMatcher.jsx';
 
 const ColourCard = ({ c }) => {
   return (
@@ -21,7 +22,7 @@ const ColourCard = ({ c }) => {
 };
 
 const ColourPalette = () => {
-  const [section, setSection] = useState('core');
+  const [section, setSection] = useState('matcher');
 
   return (
     <div>
@@ -52,6 +53,7 @@ const ColourPalette = () => {
       </div>
 
       <div style={{padding: '20px'}}>
+         {section === 'matcher' && <OutfitMatcher />}
          {section === 'core' && (
            <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '14px'}}>
              {coreColours.map((c, i) => <ColourCard key={i} c={c} />)}

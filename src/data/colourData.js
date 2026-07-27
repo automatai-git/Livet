@@ -1,4 +1,5 @@
 export const SECTIONS = {
+    matcher:  "Outfit Matcher",
     core:     "Core Palette",
     sister:   "Soft Autumn Crossover",
     neutrals: "Your Neutrals",
@@ -117,3 +118,12 @@ export const outfitCombos = [
 ];
 
 // ── Helpers ──────────────────────────────────────────────
+
+// Every colour that can actually be worn, tagged with its section role.
+// The Outfit Matcher uses roles to slot colours: neutrals ground trousers
+// and jackets, core/sister colours go near the face.
+export const wearableColours = [
+    ...coreColours.map((c) => ({ ...c, role: 'core' })),
+    ...sisterColours.map((c) => ({ ...c, role: 'sister' })),
+    ...neutralColours.map((c) => ({ ...c, role: 'neutral' })),
+];
