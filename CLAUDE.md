@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Life & Training Hub** (repo "Livet") — a React 19 + Vite single-page app with Supabase auth and persistence, deployed to GitHub Pages. Hash routing serves nine sub-apps behind one login. The original five-single-file static PWA lives in `legacy_static/` for reference only (it fails lint — pre-existing, don't fix).
+**Life & Training Hub** (repo "Livet") — a React 19 + Vite single-page app with Supabase auth and persistence, deployed to GitHub Pages. Hash routing serves nine sub-apps behind one login, inside the **v3 four-tab shell** (Today / Apps / Life / You — see Architecture). The original five-single-file static PWA lives in `legacy_static/` for reference only (it fails lint — pre-existing, don't fix). `Life support app redesign/` holds the v3 design handoff bundle (reference only, lint-ignored).
 
 ## Running Locally
 
@@ -25,8 +25,19 @@ Push to `main` → `.github/workflows/static.yml` builds with Vite (Supabase URL
 
 ## Architecture
 
+### v3 shell (four tabs)
+Routes live in `src/App.jsx`. The hub-and-spoke dashboard is gone; navigation is a fixed bottom tab bar (`src/components/shell/TabBar.jsx`, ink active pill, dark variant on `/life`):
+- `/` — **Today** (`src/pages/Today.jsx`): day track (05:00–21:00, configurable), single agenda card (mobility/workout/dinner rows, "Up next" + Start pill), Life Tree summary ink card, "Most used" rows.
+- `/apps` — **Apps** (`src/pages/Apps.jsx`): search + all nine apps in one usage-sorted list (3px usage bars) + dashed Finance ghost slot. A future app = a registry row, an accent, a Today card — no layout changes.
+- `/life` — **Life** (`src/pages/Life.jsx`): the app's ONLY dark screen; SVG tree (`src/components/life/TreeFigure.jsx`) with tappable leaves, pillar chips, weakest-branch card, 12-week heatmap, link to `/timeline` (legacy milestone feed, now milestones-only).
+- `/you` — **You** (`src/pages/You.jsx`): profile/sign-out, sync state, install-on-home-screen (`src/lib/installPrompt.js`), day-window setting, reset usage sorting.
+
+Shell state (localStorage, never cache data): `app-usage-v1` (`src/lib/appUsage.js` — open timestamps per route, capped at 90; sort score = trailing-30-day opens, ties fall back to `src/data/appRegistry.js` canonical order; recorded by `UsageTracker` in App.jsx) and `day-window-v1` (`src/lib/dayWindow.js` — drives the Today day track and "up next").
+
+Sub-pages wrap in `AppShell` (circular back button + 8px accent dot + left serif title; tab bar visible except in focus flows via `hideTabBar`).
+
 ### Layering conventions
-- `src/pages/` — one page component per route (routes live in `src/App.jsx`: `/menu`, `/timeline`, `/mobility`, `/workout`, `/colour`, `/bucket`, `/travel`, `/decision`, `/books`).
+- `src/pages/` — one page component per route (routes live in `src/App.jsx`: the four tabs above plus `/menu`, `/timeline`, `/mobility`, `/workout`, `/colour`, `/bucket`, `/travel`, `/decision`, `/books`).
 - `src/components/<feature>/` — feature-scoped components (e.g. `mobility/`, `rehab/`, `colour/`).
 - `src/services/` — the **only** files that touch their Supabase tables.
 - `src/lib/` — pure helpers, unit-tested with vitest in sibling `*.test.js` files.
@@ -36,12 +47,12 @@ Push to `main` → `.github/workflows/static.yml` builds with Vite (Supabase URL
 ### Data flow pattern
 Supabase-backed features write through a service module and mirror state into a localStorage cache; on load they try the network and fall back to the cache. Purely local features (e.g. saved outfits, custom travel pins) use localStorage directly with a versioned key (`outfit-matcher-saved-v1`, `travel_custom_pins_v1`).
 
-### Life tree (Timeline page)
-`/timeline` is the **Life** page: a weekly life tree from Naval Ravikant's *Almanack* (primary view) above the original milestone feed. The conceptual frame: the other sub-apps are supporting tools; weekly tree inputs compound into the milestones below.
+### Life tree (Life tab)
+`/life` is the **Life** tab: a weekly life tree from Naval Ravikant's *Almanack*, drawn as a dark full-screen SVG tree. `/timeline` keeps the original milestone feed (linked from the Life screen). The conceptual frame: the other sub-apps are supporting tools; weekly tree inputs compound into the milestones.
 - `src/data/lifeTreeData.js` — the n-ary tree: health / wealth / happiness pillars → 10 leaf practices, each with a written pass criterion (tick against the sentence, not the feeling).
 - `src/lib/lifeTree.js` — ISO-week (Monday-start) helpers + strict-AND roll-up: a node is `complete` only when every leaf below is ticked; partial nodes carry `done/total`. Unit-tested in `lifeTree.test.js`.
 - `src/services/lifeTreeService.js` → `life_tree_weeks` table (`input/life-tree-schema.sql`), one row per (user, ISO week), `ticks` jsonb; `life-tree-cache-v1` localStorage fallback, cache-first on save.
-- `src/components/life/` — `LifeTree.jsx` (CSS-elbow tree, tappable leaves) and `WeekHeatmap.jsx` (trailing 12 weeks; tapping a cell selects that week for backfilling). Pillar accents reuse existing tokens (sage/slate-teal/terracotta).
+- `src/components/life/` — `TreeFigure.jsx` (SVG tree; leaves distributed over fixed twig endpoints per pillar: left = health, top = wealth, right = happiness; ≥44px hit areas; tick pop animation) and `WeekHeatmap.jsx` (trailing 12 weeks; tapping a cell selects that week for backfilling). On-dark pillar tints: health `#8FBF96`, wealth `#7FB2C4`, happiness `#DBA283`.
 
 ### Colour palette app & Outfit Matcher
 `src/pages/ColourPalette.jsx` renders tabbed sections driven by `SECTIONS` in `src/data/colourData.js`; the default tab is the **Outfit Matcher** (`src/components/colour/OutfitMatcher.jsx`).
@@ -59,22 +70,31 @@ The Audible library drawn as connected theme clouds: read books are solid dots, 
 - `src/components/books/` — `BookCloud.jsx` (SVG: blurred cloud blobs, curved edges, tap-to-highlight), `BookImport.jsx` (paste box with live parse count, read/wishlist toggle), `BookDetailCard.jsx` (status, rating stars, theme chips, related list, delete), `StarRating.jsx`.
 - `src/services/bookService.js` → `book_cloud_books` table (`input/book-cloud-schema.sql`, incl. idempotent `rating` alter), one row per (user, book), `themes` jsonb; `book-cloud-library-v1` localStorage fallback, cache-first on save. An empty table with a non-empty cache seeds the server from the cache (first-run migration).
 
-### Design system
+### Design system (v3)
 Global tokens live in `src/index.css` `:root` and apply across every page.
-- `--primary: #1B3B2F` (dark green) · `--bg: #F2F0EB` (warm off-white)
-- Per-app accents (used by dashboard cards and sub-page header underline):
+- Surfaces: `--bg: #F5F3ED` (warm ground) · `--card: #FDFCF9` (ivory) · `--border: #E6E2D6` (hairline) · `--divider: #EFEBE0` (inside-card) · `--ink: #1B3B2F` (the single dark surface colour — cards, active tab, buttons).
+- Text: `--text: #1B3B2F` · `--text-muted: #8B8578` · `--text-faint: #B0A99A`.
+- Accents are **demoted to small marks** — accent-tint icon chips (accent at 9–13% opacity behind a darker accent glyph), 8px dots, 3px usage bars. Never full-bleed card fills. Per-app accents unchanged:
   `--accent-menu` (primary green), `--accent-timeline` (terracotta `#C57B57`),
   `--accent-mobility` (sage `#6B9E72`), `--accent-workout` (slate teal `#2D5A6C`),
   `--accent-palette` (dusty rose `#B5838D`), `--accent-bucket` (lavender `#8E7CC3`),
   `--accent-travel` (ocean `#2F7DA0`), `--accent-decision` (amber `#C8804A`).
-- Fonts: DM Serif Display (display) + Inter (body).
+  Chip tint pairs live per app in `src/data/appRegistry.js`.
+- Dark screen (Life only): `--dark-bg` radial gradient, on-dark ivory text, `--tint-health/wealth/happiness`.
+- Radii: cards 20 · rows 14–16 · icon chips 10–12 · pills 999. Card shadow nearly flat (`--card-shadow`).
+- Type: DM Serif Display (display) + Inter (body). Serif tab titles 2.4rem with terracotta full stop; eyebrow labels 0.68rem/600/1.6px uppercase; tabular-nums on times/counters.
+- Emoji policy: meal emoji from Menu Planner data only — everything else is a line glyph from the sprite.
 
 ### Shared components
 - `src/components/AppShell.jsx` — every sub-page wraps in this. Pass `title`,
-  optional `accent` (defaults to `--primary`), optional `actions` and `back`.
-  The shell paints the header underline in the app's accent.
+  optional `accent` (defaults to `--primary`), optional `actions`, `back`
+  (defaults to `/apps`) and `hideTabBar` (focus flows). Header = circular
+  back button + accent dot + left serif title; no underline.
+- `src/components/shell/TabBar.jsx` — the fixed four-tab bar. Rendered by
+  AppShell and by pages with local headers; pass `dark` on dark screens.
 - `src/components/AppIcon.jsx` — line-icon sprite (24×24, 1.6 stroke,
-  currentColor, round caps). Add a new icon by appending a `<symbol>` to
+  currentColor, round caps), incl. shell glyphs `grid`/`person`/`coin`/
+  `search`/`chev`/`back`. Add a new icon by appending a `<symbol>` to
   `IconSprite` then `<AppIcon name="…" />`. The sprite is mounted once in
   `main.jsx` so all `<use href="#icon-…">` references resolve globally.
 - `src/components/TravelMap.jsx` — Leaflet map with Esri World Imagery
@@ -82,14 +102,15 @@ Global tokens live in `src/index.css` `:root` and apply across every page.
   right-click / long-press to delete. Custom pins persist to
   `localStorage` under `travel_custom_pins_v1`.
 
-### Dashboard card anatomy
-All cards are "featured" style: solid `--app-accent` background, white text,
-`AppIcon` glyph in a translucent rounded square, serif title (em accent
-allowed), short description, CTA row with arrow chip. Each card sets its
-own accent inline: `style={{ '--app-accent': 'var(--accent-foo)' }}`.
-The list of cards lives in the `APPS` array at the top of `Dashboard.jsx` —
-add a new card by appending an entry and (if needed) a new `--accent-*` var
-plus a sprite icon.
+### Adding a new app
+Append an entry to `APP_REGISTRY` in `src/data/appRegistry.js` (route, icon,
+name, accent + tint pair), add the route in `App.jsx`, a sprite icon if new,
+and optionally a Today card. The Apps list, usage sorting, and tab shell pick
+it up automatically — that's the whole point of the v3 shell (the dashed
+"Finance" ghost slot on /apps marks the pattern for the next app).
+
+PWA icons: one tree mark (ivory glyph on deep-green radial, `public/favicon.svg`)
+generates `public/icons/*.png` (192/512/maskable/apple-touch).
 
 ## Future Work
 

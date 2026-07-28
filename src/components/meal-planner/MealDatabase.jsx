@@ -155,7 +155,7 @@ const MealDatabase = () => {
       ) : (
         <div className="meal-grid">
           {meals.map(meal => (
-            <div key={meal.id} className="meal-card app-card">
+            <div key={meal.id} className="meal-card tight-card">
               <div className="card-top">
                 <span style={{ fontSize: '2.2rem' }}>{meal.emoji}</span>
                 <span className="cat-badge">{meal.category}</span>

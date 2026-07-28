@@ -1,52 +1,70 @@
 {
-  "name": "Life & Training Hub",
-  "short_name": "Life Hub",
+  "name": "Livet — Life & Training Hub",
+  "short_name": "Livet",
   "description": "Personal productivity, wellness, and life planning applications",
   "start_url": "/Livet/",
-  "scope":"/Livet/",
+  "scope": "/Livet/",
   "display": "standalone",
-  "background_color": "#f5f3f0",
-  "theme_color": "#8b9d83",
+  "background_color": "#F5F3ED",
+  "theme_color": "#1B3B2F",
   "orientation": "portrait-primary",
   "categories": ["productivity", "health", "lifestyle"],
   "icons": [
     {
-      "src": "/Livet/favicon.svg?v=2",
+      "src": "/Livet/favicon.svg?v=3",
       "type": "image/svg+xml",
       "sizes": "any",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/Livet/icons/icon-192.png?v=3",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/Livet/icons/icon-512.png?v=3",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/Livet/icons/icon-maskable-512.png?v=3",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
     }
   ],
   "shortcuts": [
     {
-      "name": "Milestone Timeline",
-      "short_name": "Timeline",
-      "description": "View your life milestones",
-      "url": "/timeline.html"
+      "name": "Today",
+      "short_name": "Today",
+      "description": "Your day at a glance",
+      "url": "/Livet/#/"
     },
     {
-      "name": "Mobility Tracker",
+      "name": "Life Tree",
+      "short_name": "Life",
+      "description": "Tick the weekly fundamentals",
+      "url": "/Livet/#/life"
+    },
+    {
+      "name": "Mobility",
       "short_name": "Mobility",
       "description": "Track mobility workouts",
-      "url": "/mobility.html"
+      "url": "/Livet/#/mobility"
     },
     {
       "name": "Workout Finder",
       "short_name": "Workouts",
       "description": "Find your training plan",
-      "url": "/workout-finder.html"
-    },
-    {
-      "name": "Bucket List",
-      "short_name": "Bucket List",
-      "description": "Track life experiences",
-      "url": "/bucketlist.html"
+      "url": "/Livet/#/workout"
     },
     {
       "name": "Menu Planner",
       "short_name": "Menu",
       "description": "Plan meals and track cooking",
-      "url": "/menu.html"
+      "url": "/Livet/#/menu"
     }
   ]
 }

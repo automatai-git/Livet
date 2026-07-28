@@ -5,6 +5,7 @@ import { getDestination } from '../../data/destinations';
 import LoadingState from '../../components/feedback/LoadingState';
 import EmptyState from '../../components/feedback/EmptyState';
 import TravelMap from '../../components/TravelMap';
+import AppIcon from '../../components/AppIcon';
 
 // Tabs available per trip status. Mirrors the original page's behaviour.
 const VALID_TABS = {
@@ -172,21 +173,24 @@ const TripDetail = () => {
   const validTabs = VALID_TABS[trip.status] ?? VALID_TABS.planning;
 
   return (
-    <div style={{ minHeight: '100vh', paddingBottom: 40, background: '#f8f9fa' }}>
+    <div style={{ minHeight: '100vh', paddingBottom: 40, background: 'var(--bg)', '--app-accent': 'var(--accent-travel)' }}>
       {/* Header */}
       <div style={{
         position: 'sticky', top: 0, zIndex: 100,
-        background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(0,0,0,0.05)'
+        background: 'rgba(245,243,237,0.92)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+        borderBottom: '1px solid var(--border)'
       }}>
-        <div className="header-row" style={{ padding: '15px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Link to="/travel" style={{ textDecoration: 'none', color: 'var(--primary)', fontWeight: 600, fontSize: '0.9rem' }}>← Trips</Link>
-          <span className="heading-serif" style={{ fontSize: '1.2rem' }}>{trip.name}</span>
+        <div className="header-row" style={{ padding: '15px 20px', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Link to="/travel" className="back-circle" aria-label="Back to trips">
+            <AppIcon name="back" size={16} strokeWidth="2" />
+          </Link>
+          <span className="app-dot" aria-hidden="true" />
+          <span className="heading-serif page-title">{trip.name}</span>
           <button
             type="button"
             onClick={handleArchive}
             aria-label="Archive trip"
-            style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.85rem', cursor: 'pointer', padding: 8 }}
+            style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.85rem', cursor: 'pointer', padding: 8, flexShrink: 0 }}
           >
             Archive
           </button>
@@ -269,7 +273,7 @@ const TripDetail = () => {
                     aria-expanded={isMapExpanded}
                     style={{
                       width: '100%', padding: 16, minHeight: 44, borderRadius: 16, border: '1px solid rgba(0,0,0,0.05)',
-                      background: 'white', fontWeight: 700, color: 'var(--primary)', display: 'flex',
+                      background: 'var(--card)', fontWeight: 700, color: 'var(--primary)', display: 'flex',
                       justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer',
                       marginBottom: isMapExpanded ? 15 : 0, WebkitTapHighlightColor: 'transparent'
                     }}
@@ -297,7 +301,7 @@ const TripDetail = () => {
                     <h2 className="heading-serif" style={{ fontSize: '1.4rem', marginBottom: 15, padding: '0 10px' }}>The Plan</h2>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginBottom: 30 }}>
                       {meta.recommendedSplit.days.map((day, i) => (
-                        <div key={i} style={{ background: 'white', borderRadius: 20, padding: 20, border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
+                        <div key={i} style={{ background: 'var(--card)', borderRadius: 20, padding: 20, border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, alignItems: 'center' }}>
                             <div style={{ color: 'var(--primary)', fontWeight: 800, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: 1 }}>DAY {day.range}</div>
                             <div style={{ fontWeight: 800, fontSize: '1rem' }}>{day.islandName}</div>
@@ -344,7 +348,7 @@ const TripDetail = () => {
                 {plannedExperiences.length === 0 ? (
                   <EmptyState title="Nothing booked yet" hint="Switch to Planning to build your trip." />
                 ) : plannedExperiences.map((plan) => (
-                  <div key={plan.id} style={{ background: 'white', padding: 16, borderRadius: 16, display: 'flex', gap: 15, border: '1px solid rgba(0,0,0,0.05)', alignItems: 'center' }}>
+                  <div key={plan.id} style={{ background: 'var(--card)', padding: 16, borderRadius: 16, display: 'flex', gap: 15, border: '1px solid rgba(0,0,0,0.05)', alignItems: 'center' }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 700, fontSize: '1.05rem' }}>{plan.xp.name}</div>
                       <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: 2 }}>{plan.xp.cost} • ⭐ {plan.xp.rating}</div>
@@ -388,7 +392,7 @@ const TripDetail = () => {
                             onClick={() => togglePlanStatus(plan)}
                             aria-pressed={plan.status === 'completed'}
                             style={{
-                              textAlign: 'left', background: 'white', padding: 16, borderRadius: 16,
+                              textAlign: 'left', background: 'var(--card)', padding: 16, borderRadius: 16,
                               display: 'flex', alignItems: 'center', gap: 12,
                               border: '1px solid rgba(0,0,0,0.05)', cursor: 'pointer',
                               opacity: plan.status === 'completed' ? 0.6 : 1, width: '100%'
@@ -416,7 +420,7 @@ const TripDetail = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 <h3 style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--primary)', letterSpacing: 1, paddingLeft: 5 }}>TRIP HABITS & DISCIPLINE</h3>
                 {checklist.filter((c) => c.priority === 'ON-TRIP').map((chk) => (
-                  <div key={chk.id} style={{ background: 'white', padding: 20, borderRadius: 20, border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
+                  <div key={chk.id} style={{ background: 'var(--card)', padding: 20, borderRadius: 20, border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
                     <div style={{ fontWeight: 800, color: 'var(--primary)', marginBottom: 8, fontSize: '1.1rem' }}>{chk.task}</div>
                     <p style={{ fontSize: '0.95rem', margin: 0, color: 'var(--text-muted)', lineHeight: 1.5 }}>{chk.action}</p>
                   </div>
@@ -461,7 +465,7 @@ const ChecklistSection = ({ priorities, checklist, plans, onToggle }) => (
                   onClick={() => onToggle(chk)}
                   aria-pressed={isCompleted}
                   style={{
-                    textAlign: 'left', background: 'white', padding: 16, borderRadius: 16, display: 'flex',
+                    textAlign: 'left', background: 'var(--card)', padding: 16, borderRadius: 16, display: 'flex',
                     gap: 12, border: '1px solid rgba(0,0,0,0.05)',
                     opacity: isCompleted ? 0.5 : 1, cursor: 'pointer', width: '100%'
                   }}
@@ -506,7 +510,7 @@ const ExperiencesSection = ({ islands, experiences, activeIsland, setActiveIslan
       const isl = islands.find((i) => i.id === exp.islandId) || { name: '', color: 'var(--text-muted)' };
       const isInPlan = plans.some((p) => p.experience_id === exp.id);
       return (
-        <div key={exp.id} style={{ background: 'white', padding: 16, borderRadius: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid rgba(0,0,0,0.05)' }}>
+        <div key={exp.id} style={{ background: 'var(--card)', padding: 16, borderRadius: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid rgba(0,0,0,0.05)' }}>
           <div style={{ flex: 1, paddingRight: 15 }}>
             <div style={{ fontSize: '0.7rem', fontWeight: 800, color: isl.color, textTransform: 'uppercase', marginBottom: 4 }}>{isl.name}</div>
             <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{exp.name}</div>

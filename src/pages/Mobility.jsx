@@ -362,7 +362,7 @@ const Mobility = () => {
   };
 
   return (
-    <AppShell title="Mobility" accent="var(--accent-mobility)" maxWidth={760}>
+    <AppShell title="Mobility" accent="var(--accent-mobility)" maxWidth={760} hideTabBar={view === 'focus'}>
       {view === 'day-pick' && renderDayPicker()}
 
       {view === 'overview' && routine && (

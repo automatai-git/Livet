@@ -51,7 +51,7 @@ const NewTripForm = () => {
   };
 
   return (
-    <AppShell title="New trip" accent="var(--accent-travel)" back="/travel" backLabel="← Trips">
+    <AppShell title="New trip" accent="var(--accent-travel)" back="/travel">
       <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 18, maxWidth: 480 }}>
         <div>
           <label htmlFor={destId} style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 6 }}>Destination</label>

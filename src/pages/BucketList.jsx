@@ -2,6 +2,8 @@ import React, { useState, useEffect, useId } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { ANDREAS_CATEGORIES, JULIE_CATEGORIES } from '../data/bucketData.js';
+import AppIcon from '../components/AppIcon.jsx';
+import TabBar from '../components/shell/TabBar.jsx';
 
 const BucketList = () => {
   const [activeUser, setActiveUser] = useState('andreas');
@@ -111,12 +113,15 @@ const BucketList = () => {
   const difficulties = ['All', 'Easy', 'Medium', 'Hard', 'Very Hard', 'Extreme', 'Expert'];
 
   return (
-    <div>
-      <div className="sticky-header" style={{margin: 0, paddingBottom: 0}}>
-        <div className="header-row" style={{paddingBottom: '20px'}}>
-          <Link to="/" className="back-home">← Dashboard</Link>
-          <h1 className="heading-serif">Bucket List</h1>
-          <div style={{width: '80px'}}></div>
+    <div style={{ '--app-accent': 'var(--accent-bucket)' }}>
+      <div className="sticky-header" style={{margin: 0}}>
+        <div className="header-row">
+          <Link to="/apps" className="back-circle" aria-label="Back">
+            <AppIcon name="back" size={16} strokeWidth="2" />
+          </Link>
+          <span className="app-dot" aria-hidden="true" />
+          <h1 className="heading-serif page-title">Bucket List</h1>
+          <div className="header-actions" />
         </div>
       </div>
 
@@ -354,6 +359,7 @@ const BucketList = () => {
         </div>
       )}
 
+      <TabBar />
     </div>
   );
 };

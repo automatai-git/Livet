@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../services/supabase';
+import AppIcon from '../components/AppIcon.jsx';
+import TabBar from '../components/shell/TabBar.jsx';
 
 // Autosave debounce window. Edits flush 1.5 s after the last keystroke
 // (or immediately on Cmd/Ctrl+S, or before navigating away).
@@ -261,23 +263,30 @@ const DecisionMatrix = () => {
     if (loading) return <div style={{padding: '50px', textAlign: 'center'}}>Loading decisions...</div>;
 
     return (
-        <div className="app-container" style={{maxWidth: '1100px'}}>
+        <div className="app-container" style={{maxWidth: '1100px', '--app-accent': 'var(--accent-decision)'}}>
             <div className="sticky-header">
                 <div className="header-row">
-                    <Link to="/" className="back-home">← Dashboard</Link>
-                    <h1 className="heading-serif" style={{fontSize: '1.5rem'}}>Weighted Decision Matrix</h1>
-                    <button 
-                        onClick={() => setShowNewModal(true)}
-                        style={{background: 'var(--primary)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '12px', fontWeight: 600, cursor: 'pointer'}}
-                    >
-                        + New
-                    </button>
+                    <Link to="/apps" className="back-circle" aria-label="Back">
+                        <AppIcon name="back" size={16} strokeWidth="2" />
+                    </Link>
+                    <span className="app-dot" aria-hidden="true" />
+                    <h1 className="heading-serif page-title">Decision Matrix</h1>
+                    <div className="header-actions">
+                        <button
+                            onClick={() => setShowNewModal(true)}
+                            style={{background: 'var(--ink)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '999px', fontWeight: 600, cursor: 'pointer'}}
+                        >
+                            + New
+                        </button>
+                    </div>
                 </div>
             </div>
 
             {!activeMatrix ? (
-                <div style={{textAlign: 'center', padding: '100px 20px', background: 'var(--card)', borderRadius: '20px', marginTop: '40px'}}>
-                    <div style={{fontSize: '3rem', marginBottom: '20px'}}>⚖️</div>
+                <div style={{textAlign: 'center', padding: '100px 20px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '20px', marginTop: '40px'}}>
+                    <div style={{width: 52, height: 52, borderRadius: 14, background: 'rgba(200,128,74,.12)', color: '#C8804A', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px'}}>
+                        <AppIcon name="decision" size={24} />
+                    </div>
                     <h2 className="heading-serif">No matrices yet</h2>
                     <p style={{color: 'var(--text-muted)', marginBottom: '30px'}}>Start by creating a new decision matrix to weigh your options.</p>
                     <button 
@@ -524,6 +533,7 @@ const DecisionMatrix = () => {
                     ))}
                 </div>
             </div>
+            <TabBar />
         </div>
     );
 };

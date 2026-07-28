@@ -60,6 +60,31 @@ export const IconSprite = () => (
         <path d="M12 7v12.2" />
         <path d="M7.5 9.5c1-.2 2-.1 3 .3M7.5 12.5c1-.2 2-.1 3 .3M16.5 9.5c-1-.2-2-.1-3 .3M16.5 12.5c-1-.2-2-.1-3 .3" />
       </symbol>
+      {/* Shell glyphs (v3 redesign): tabs, search, chevrons, future apps. */}
+      <symbol id="icon-grid" viewBox="0 0 24 24">
+        <rect x="4" y="4" width="7" height="7" rx="2" />
+        <rect x="13" y="4" width="7" height="7" rx="2" />
+        <rect x="4" y="13" width="7" height="7" rx="2" />
+        <rect x="13" y="13" width="7" height="7" rx="2" />
+      </symbol>
+      <symbol id="icon-person" viewBox="0 0 24 24">
+        <circle cx="12" cy="8" r="3.4" />
+        <path d="M5 20c1-4 3.5-5.5 7-5.5s6 1.5 7 5.5" />
+      </symbol>
+      <symbol id="icon-coin" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="8" />
+        <path d="M12 8v8M9.5 10c0-1 1-1.7 2.5-1.7s2.5.7 2.5 1.7-1 1.4-2.5 1.7-2.5.7-2.5 1.7 1 1.7 2.5 1.7 2.5-.7 2.5-1.7" />
+      </symbol>
+      <symbol id="icon-search" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="6" />
+        <path d="M15.5 15.5L20 20" />
+      </symbol>
+      <symbol id="icon-chev" viewBox="0 0 24 24">
+        <path d="M9 5l7 7-7 7" />
+      </symbol>
+      <symbol id="icon-back" viewBox="0 0 24 24">
+        <path d="M15 5l-7 7 7 7" />
+      </symbol>
     </defs>
   </svg>
 );

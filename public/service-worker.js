@@ -1,4 +1,4 @@
-const CACHE_NAME = 'life-training-hub-v7';
+const CACHE_NAME = 'life-training-hub-v8'; // v8: v3 redesign shell + new tree-mark icons
 const SHELL = [
   '/Livet/',
   '/Livet/index.html',

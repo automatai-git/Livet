@@ -1,8 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
-  <rect width="180" height="180" rx="40" fill="#1B3B2F"/>
-  <g fill="none" stroke="#F2F0EB" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="90" cy="90" r="14"/>
-    <path d="M90 36v22M90 122v22M36 90h22M122 90h22"/>
-    <path d="M52 52l16 16M112 112l16 16M128 52l-16 16M68 112l-16 16"/>
+  <defs>
+    <radialGradient id="g" cx="30%" cy="20%" r="120%">
+      <stop offset="0%" stop-color="#25493A"/>
+      <stop offset="100%" stop-color="#1B3B2F"/>
+    </radialGradient>
+  </defs>
+  <rect width="180" height="180" rx="40" fill="url(#g)"/>
+  <g fill="none" stroke="#F5F3ED" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" transform="translate(42.5 42.5) scale(3.958)">
+    <circle cx="12" cy="5.5" r="2.2"/>
+    <path d="M12 7.7v3.3M12 11l-7 5.4M12 11v5.4M12 11l7 5.4"/>
+    <circle cx="5" cy="18.5" r="2"/>
+    <circle cx="12" cy="18.5" r="2"/>
+    <circle cx="19" cy="18.5" r="2"/>
   </g>
 </svg>

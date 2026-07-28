@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SECTIONS, coreColours, sisterColours, neutralColours, cautionColours, metalColours, outfitCombos } from '../data/colourData.js';
 import OutfitMatcher from '../components/colour/OutfitMatcher.jsx';
+import AppIcon from '../components/AppIcon.jsx';
+import TabBar from '../components/shell/TabBar.jsx';
 
 const ColourCard = ({ c }) => {
   return (
@@ -25,12 +27,15 @@ const ColourPalette = () => {
   const [section, setSection] = useState('matcher');
 
   return (
-    <div>
+    <div style={{ '--app-accent': 'var(--accent-palette)' }}>
       <div className="sticky-header">
         <div className="header-row">
-          <Link to="/" className="back-home">← Dashboard</Link>
-          <h1 className="heading-serif">Palette</h1>
-          <div style={{width: '80px'}}></div>
+          <Link to="/apps" className="back-circle" aria-label="Back">
+            <AppIcon name="back" size={16} strokeWidth="2" />
+          </Link>
+          <span className="app-dot" aria-hidden="true" />
+          <h1 className="heading-serif page-title">Palette</h1>
+          <div className="header-actions" />
         </div>
         <div role="tablist" aria-label="Palette sections" style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '0 20px 10px', scrollbarWidth: 'none' }}>
            {Object.entries(SECTIONS).map(([key, title]) => (
@@ -114,6 +119,7 @@ const ColourPalette = () => {
            </div>
          )}
       </div>
+      <TabBar />
     </div>
   );
 };

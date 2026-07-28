@@ -17,6 +17,8 @@ import {
 import RehabDayCard from '../components/rehab/RehabDayCard';
 import RehabWeekRow from '../components/rehab/RehabWeekRow';
 import RehabBlockLadder from '../components/rehab/RehabBlockLadder';
+import AppIcon from '../components/AppIcon';
+import TabBar from '../components/shell/TabBar';
 
 // ---------- helpers ---------------------------------------------------------
 
@@ -41,15 +43,17 @@ function kindLabel(day) {
 
 // Lightweight in-page header that mirrors AppShell's look. Local because
 // WorkoutFinder uses nested routes and doesn't wrap each route with AppShell.
-function StickyHeader({ title, back = '/' }) {
+function StickyHeader({ title, back = '/apps' }) {
   return (
     <div className="sticky-header" style={{ '--app-accent': 'var(--accent-workout)' }}>
       <div className="header-row">
-        <Link to={back} className="back-home">{back === '/' ? '← Dashboard' : '← Back'}</Link>
-        <h1 className="heading-serif page-title" style={{ fontSize: '1.25rem' }}>{title}</h1>
-        <div style={{ width: 80 }} />
+        <Link to={back} className="back-circle" aria-label="Back">
+          <AppIcon name="back" size={16} strokeWidth="2" />
+        </Link>
+        <span className="app-dot" aria-hidden="true" />
+        <h1 className="heading-serif page-title">{title}</h1>
+        <div className="header-actions" />
       </div>
-      <div style={{ height: 2, margin: '0 16px', background: 'var(--accent-workout)', opacity: 0.85, borderRadius: 2 }} />
     </div>
   );
 }
@@ -581,10 +585,13 @@ function BlockView() {
 
 export default function WorkoutFinder() {
   return (
-    <Routes>
-      <Route index element={<DayView />} />
-      <Route path="week" element={<WeekView />} />
-      <Route path="block" element={<BlockView />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route index element={<DayView />} />
+        <Route path="week" element={<WeekView />} />
+        <Route path="block" element={<BlockView />} />
+      </Routes>
+      <TabBar />
+    </>
   );
 }
