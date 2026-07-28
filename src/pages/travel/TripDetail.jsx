@@ -5,7 +5,7 @@ import { getDestination } from '../../data/destinations';
 import LoadingState from '../../components/feedback/LoadingState';
 import EmptyState from '../../components/feedback/EmptyState';
 import TravelMap from '../../components/TravelMap';
-import AppIcon from '../../components/AppIcon';
+import AppShellV3, { ScopePill } from '../../components/AppShellV3';
 
 // Tabs available per trip status. Mirrors the original page's behaviour.
 const VALID_TABS = {
@@ -169,84 +169,64 @@ const TripDetail = () => {
   const currentTab = validTabs.includes(activeTab) ? activeTab : validTabs[0];
 
   return (
-    <div style={{ minHeight: '100vh', paddingBottom: 40, background: 'var(--bg)', '--app-accent': 'var(--accent-travel)' }}>
-      {/* Header */}
-      <div style={{
-        position: 'sticky', top: 0, zIndex: 100,
-        background: 'rgba(245,243,237,0.92)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-        borderBottom: '1px solid var(--border)'
-      }}>
-        <div className="header-row" style={{ padding: '15px 20px', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Link to="/travel" className="back-circle" aria-label="Back to trips">
-            <AppIcon name="back" size={16} strokeWidth="2" />
-          </Link>
-          <span className="app-dot" aria-hidden="true" />
-          <span className="heading-serif page-title">{trip.name}</span>
-          <button
-            type="button"
-            onClick={handleArchive}
-            aria-label="Archive trip"
-            style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.85rem', cursor: 'pointer', padding: 8, flexShrink: 0 }}
-          >
-            Archive
-          </button>
-        </div>
-
-        {/* Phase selector */}
-        <div role="tablist" aria-label="Trip phase" style={{
-          display: 'flex', background: 'rgba(0,0,0,0.05)', padding: 4, borderRadius: 12, margin: '0 20px 20px', gap: 4
-        }}>
-          {['planning', 'booked', 'ontrip'].map((s) => {
-            const active = trip.status === s;
-            return (
-              <button
-                key={s}
-                role="tab"
-                aria-selected={active}
-                onClick={() => setStatus(s)}
-                style={{
-                  flex: 1, padding: '10px 0', minHeight: 44, borderRadius: 8, border: 'none',
-                  background: active ? 'white' : 'transparent',
-                  color: active ? 'var(--primary)' : 'var(--text-muted)',
-                  boxShadow: active ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
-                  fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer', transition: 'all 0.2s',
-                  WebkitTapHighlightColor: 'transparent'
-                }}
-              >
-                {STATUS_TO_LABEL[s]}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Tabs */}
-        <div role="tablist" aria-label="Trip sections" style={{
-          display: 'flex', justifyContent: 'center', padding: '0 20px 20px', gap: 10, overflowX: 'auto', scrollbarWidth: 'none'
-        }}>
+    <AppShellV3
+      app="travel"
+      title={trip.name}
+      back="/travel"
+      maxWidth={600}
+      actions={
+        <button type="button" className="ghost-pill sm" onClick={handleArchive} aria-label="Archive trip">
+          Archive
+        </button>
+      }
+      scope={
+        <div className="scope-row" role="tablist" aria-label="Trip sections">
           {validTabs.map((tab) => (
-            <button
+            <ScopePill
               key={tab}
+              on={currentTab === tab}
               role="tab"
               aria-selected={currentTab === tab}
               onClick={() => setActiveTab(tab)}
-              style={{
-                padding: '8px 16px', minHeight: 44, borderRadius: 20, border: 'none',
-                background: currentTab === tab ? 'var(--primary)' : 'var(--card)',
-                color: currentTab === tab ? 'white' : 'var(--text-muted)',
-                fontWeight: 600, fontSize: '0.85rem', whiteSpace: 'nowrap', cursor: 'pointer', transition: 'all 0.2s'
-              }}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
               {tab === 'mytrip' && plannedExperiences.length > 0 && (
-                <span style={{ marginLeft: 6, opacity: 0.8 }}>{plannedExperiences.length}</span>
+                <span style={{ opacity: 0.8 }}>{plannedExperiences.length}</span>
               )}
-            </button>
+            </ScopePill>
           ))}
         </div>
+      }
+    >
+      {/* Phase selector (changes trip status — not a scope, so it lives in content) */}
+      <div role="tablist" aria-label="Trip phase" style={{
+        display: 'flex', background: 'var(--divider)', padding: 4, borderRadius: 12, marginBottom: 16, gap: 4
+      }}>
+        {['planning', 'booked', 'ontrip'].map((s) => {
+          const active = trip.status === s;
+          return (
+            <button
+              key={s}
+              role="tab"
+              aria-selected={active}
+              onClick={() => setStatus(s)}
+              style={{
+                flex: 1, padding: '10px 0', minHeight: 44, borderRadius: 8, border: 'none',
+                background: active ? 'var(--card)' : 'transparent',
+                color: active ? 'var(--ink)' : 'var(--text-muted)',
+                boxShadow: active ? 'var(--card-shadow)' : 'none',
+                fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer', transition: 'all 0.2s',
+                WebkitTapHighlightColor: 'transparent'
+              }}
+            >
+              {STATUS_TO_LABEL[s]}
+            </button>
+          );
+        })}
       </div>
 
       {/* Body */}
-      <div style={{ padding: 20, maxWidth: 600, margin: '0 auto' }}>
+      <div>
         {trip.status === 'planning' && (
           <div className="fade-in">
             {currentTab === 'overview' && (
@@ -426,7 +406,7 @@ const TripDetail = () => {
           </div>
         )}
       </div>
-    </div>
+    </AppShellV3>
   );
 };
 

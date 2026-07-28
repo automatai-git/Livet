@@ -34,7 +34,9 @@ Routes live in `src/App.jsx`. The hub-and-spoke dashboard is gone; navigation is
 
 Shell state (localStorage, never cache data): `app-usage-v1` (`src/lib/appUsage.js` — open timestamps per route, capped at 90; sort score = trailing-30-day opens, ties fall back to `src/data/appRegistry.js` canonical order; recorded by `UsageTracker` in App.jsx) and `day-window-v1` (`src/lib/dayWindow.js` — drives the Today day track and "up next").
 
-Sub-pages wrap in `AppShell` (circular back button + 8px accent dot + left serif title; tab bar visible except in focus flows via `hideTabBar`).
+Sub-pages wrap in `AppShellV3` (see Shared components) — one slotted framework for all nine apps: header (back circle + 8px accent dot + left serif app name) · scope selector · hero card · content · sticky primary action. Tab bar visible except in focus flows via `hideTabBar`.
+
+Every screen carries the v3.1 safe-area top offset: `.tab-page` and `.sticky-header` pad top by `calc(env(safe-area-inset-top, 0px) + 24px)` so content clears the iPhone status clock / Dynamic Island (24px minimum on desktop). Don't place anything above the serif title with negative margins.
 
 ### Layering conventions
 - `src/pages/` — one page component per route (routes live in `src/App.jsx`: the four tabs above plus `/menu`, `/timeline`, `/mobility`, `/workout`, `/colour`, `/bucket`, `/travel`, `/decision`, `/books`).
@@ -53,9 +55,10 @@ Supabase-backed features write through a service module and mirror state into a 
 - `src/lib/lifeTree.js` — ISO-week (Monday-start) helpers + strict-AND roll-up: a node is `complete` only when every leaf below is ticked; partial nodes carry `done/total`. Unit-tested in `lifeTree.test.js`.
 - `src/services/lifeTreeService.js` → `life_tree_weeks` table (`input/life-tree-schema.sql`), one row per (user, ISO week), `ticks` jsonb; `life-tree-cache-v1` localStorage fallback, cache-first on save.
 - `src/components/life/` — `TreeFigure.jsx` (SVG tree; leaves distributed over fixed twig endpoints per pillar: left = health, top = wealth, right = happiness; ≥44px hit areas; tick pop animation) and `WeekHeatmap.jsx` (trailing 12 weeks; tapping a cell selects that week for backfilling). On-dark pillar tints: health `#8FBF96`, wealth `#7FB2C4`, happiness `#DBA283`.
+- Ticking is never blind (v3.1): every leaf draws a persistent short text label (`short` field in `lifeTreeData.js`; keep `label` as the full name), and tapping is select-then-confirm — tap 1 puts an ivory ring on the leaf and points the bottom card at its full name + written pass criterion (Tick/Untick pill), tap 2 (or the pill) toggles. The weakest-branch leaf is simply the default selection.
 
-### Colour palette app & Outfit Matcher
-`src/pages/ColourPalette.jsx` renders tabbed sections driven by `SECTIONS` in `src/data/colourData.js`; the default tab is the **Outfit Matcher** (`src/components/colour/OutfitMatcher.jsx`).
+### Clothing app (colour palette & Outfit Matcher)
+The app is named **Clothing** (v3.1 rename from "Soft Summer Palette"; route stays `/colour`, dusty-rose accent unchanged). `src/pages/ColourPalette.jsx` renders tabbed sections driven by `SECTIONS` in `src/data/colourData.js`; the default tab is the **Outfit Matcher** (`src/components/colour/OutfitMatcher.jsx`).
 
 The matcher crosses the personal Soft Summer palette with Sanzo Wada's *A Dictionary of Color Combinations*:
 - `src/data/wadaData.js` — 159 book colours + their membership in the 348 combinations, vendored from [mattdesl/dictionary-of-colour-combinations](https://github.com/mattdesl/dictionary-of-colour-combinations) (MIT), trimmed to name/hex/combinations.
@@ -86,10 +89,18 @@ Global tokens live in `src/index.css` `:root` and apply across every page.
 - Emoji policy: meal emoji from Menu Planner data only — everything else is a line glyph from the sprite.
 
 ### Shared components
-- `src/components/AppShell.jsx` — every sub-page wraps in this. Pass `title`,
-  optional `accent` (defaults to `--primary`), optional `actions`, `back`
-  (defaults to `/apps`) and `hideTabBar` (focus flows). Header = circular
-  back button + accent dot + left serif title; no underline.
+- `src/components/AppShellV3.jsx` — the one slotted sub-page framework
+  (v3.1). Every sub-page wraps in this; apps fill the same slots in the
+  same order, may omit a slot, never rearrange one:
+  `app` (registry id — supplies accent, tint pair, serif name) ·
+  optional `title` (nested screens only, e.g. a trip name) · `back`
+  (defaults to `/apps`) · `scope` (exactly one selector row: day pills /
+  segmented view pills / filter chips, built from the exported `ScopePill`)
+  · `hero` (exactly one summary card — exported `HeroCard`: eyebrow, serif
+  1.6rem title, meta, accent-tint chips) · children (content) · `action`
+  (exactly one sticky ink button `{ label, onClick | to }`, floats over a
+  bg fade, sits above the tab bar unless `hideTabBar`). Per-app nuance
+  lives only in the content slot and the scope flavour.
 - `src/components/shell/TabBar.jsx` — the fixed four-tab bar. Rendered by
   AppShell and by pages with local headers; pass `dark` on dark screens.
 - `src/components/AppIcon.jsx` — line-icon sprite (24×24, 1.6 stroke,

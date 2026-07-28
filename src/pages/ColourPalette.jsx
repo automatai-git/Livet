@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { SECTIONS, coreColours, sisterColours, neutralColours, cautionColours, metalColours, outfitCombos } from '../data/colourData.js';
 import OutfitMatcher from '../components/colour/OutfitMatcher.jsx';
-import AppIcon from '../components/AppIcon.jsx';
-import TabBar from '../components/shell/TabBar.jsx';
+import AppShellV3, { HeroCard, ScopePill } from '../components/AppShellV3.jsx';
 
 const ColourCard = ({ c }) => {
   return (
@@ -23,104 +21,101 @@ const ColourCard = ({ c }) => {
   );
 };
 
+// The Clothing app (formerly "Soft Summer Palette" — v3.1 fix 4; the route
+// stays /colour). The personal palette, its rules, and the outfit matcher.
 const ColourPalette = () => {
   const [section, setSection] = useState('matcher');
 
-  return (
-    <div style={{ '--app-accent': 'var(--accent-palette)' }}>
-      <div className="sticky-header">
-        <div className="header-row">
-          <Link to="/apps" className="back-circle" aria-label="Back">
-            <AppIcon name="back" size={16} strokeWidth="2" />
-          </Link>
-          <span className="app-dot" aria-hidden="true" />
-          <h1 className="heading-serif page-title">Palette</h1>
-          <div className="header-actions" />
-        </div>
-        <div role="tablist" aria-label="Palette sections" style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '0 20px 10px', scrollbarWidth: 'none' }}>
-           {Object.entries(SECTIONS).map(([key, title]) => (
-             <button
-               key={key}
-               role="tab"
-               aria-selected={section === key}
-               onClick={() => setSection(key)}
-               style={{
-                 background: section === key ? 'var(--text)' : 'transparent',
-                 color: section === key ? 'white' : 'var(--text-muted)',
-                 padding: '8px 16px', minHeight: 44, borderRadius: '20px', border: section === key ? '1.5px solid var(--text)' : '1.5px solid var(--border)',
-                 whiteSpace: 'nowrap', cursor: 'pointer', fontWeight: 600
-               }}
-             >
-               {title}
-             </button>
-           ))}
-        </div>
-      </div>
+  const wearable = coreColours.length + sisterColours.length + neutralColours.length;
 
-      <div style={{padding: '20px'}}>
-         {section === 'matcher' && <OutfitMatcher />}
-         {section === 'core' && (
-           <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '14px'}}>
-             {coreColours.map((c, i) => <ColourCard key={i} c={c} />)}
-           </div>
-         )}
-         {section === 'sister' && (
-           <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '14px'}}>
-             {sisterColours.map((c, i) => <ColourCard key={i} c={c} />)}
-           </div>
-         )}
-         {section === 'neutrals' && (
-           <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '14px'}}>
-             {neutralColours.map((c, i) => <ColourCard key={i} c={c} />)}
-           </div>
-         )}
-         {section === 'caution' && (
-           <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
-             {cautionColours.map((c, i) => (
-                <div key={i} style={{display: 'flex', alignItems: 'center', gap: '14px', background: 'var(--card)', padding: '14px', borderRadius: '12px'}}>
-                  <div style={{width: '40px', height: '40px', borderRadius: '8px', background: c.hex, border: c.hex === '#FFFFFF' ? '1px solid #ccc' : 'none'}}></div>
-                  <div>
-                    <div style={{fontWeight: 600, fontSize: '14px'}}>{c.name}</div>
-                    <div style={{fontSize: '12px', color: 'var(--text-muted)'}}>{c.desc}</div>
-                  </div>
-                </div>
-             ))}
-           </div>
-         )}
-         {section === 'metals' && (
-           <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
-             {metalColours.map((m, i) => (
-               <div key={i} style={{background: 'var(--card)', padding: '20px', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '16px', opacity: m.name.includes("Avoid") ? 0.5 : 1}}>
-                 <div style={{width: '50px', height: '50px', borderRadius: '50%', background: m.ring, flexShrink: 0}}></div>
-                 <div>
-                   <div style={{fontWeight: 600}}>{m.name}</div>
-                   <div style={{fontSize: '12px', color: 'var(--text-muted)'}}>{m.desc}</div>
-                 </div>
+  return (
+    <AppShellV3
+      app="clothing"
+      scope={
+        <div className="scope-row" role="tablist" aria-label="Clothing sections">
+          {Object.entries(SECTIONS).map(([key, title]) => (
+            <ScopePill
+              key={key}
+              on={section === key}
+              role="tab"
+              aria-selected={section === key}
+              onClick={() => setSection(key)}
+            >
+              {title}
+            </ScopePill>
+          ))}
+        </div>
+      }
+      hero={section === 'matcher' ? (
+        <HeroCard
+          eyebrow="The palette"
+          title="Soft Summer"
+          meta={`${wearable} wearable colours · ${outfitCombos.length} anchor combinations · silver over gold`}
+          chips={['Core', 'Soft Autumn crossover', 'Neutrals']}
+        />
+      ) : undefined}
+    >
+      {section === 'matcher' && <OutfitMatcher />}
+      {section === 'core' && (
+        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '14px'}}>
+          {coreColours.map((c, i) => <ColourCard key={i} c={c} />)}
+        </div>
+      )}
+      {section === 'sister' && (
+        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '14px'}}>
+          {sisterColours.map((c, i) => <ColourCard key={i} c={c} />)}
+        </div>
+      )}
+      {section === 'neutrals' && (
+        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '14px'}}>
+          {neutralColours.map((c, i) => <ColourCard key={i} c={c} />)}
+        </div>
+      )}
+      {section === 'caution' && (
+        <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
+          {cautionColours.map((c, i) => (
+             <div key={i} style={{display: 'flex', alignItems: 'center', gap: '14px', background: 'var(--card)', border: '1px solid var(--border)', padding: '14px', borderRadius: '12px'}}>
+               <div style={{width: '40px', height: '40px', borderRadius: '8px', background: c.hex, border: c.hex === '#FFFFFF' ? '1px solid #ccc' : 'none'}}></div>
+               <div>
+                 <div style={{fontWeight: 600, fontSize: '14px'}}>{c.name}</div>
+                 <div style={{fontSize: '12px', color: 'var(--text-muted)'}}>{c.desc}</div>
                </div>
-             ))}
-           </div>
-         )}
-         {section === 'combos' && (
-           <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px'}}>
-             {outfitCombos.map((combo, i) => (
-               <div key={i} style={{background: 'var(--card)', padding: '20px', borderRadius: '14px'}}>
-                 <div style={{fontWeight: 600, marginBottom: '4px'}}>{combo.name}</div>
-                 <div style={{fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px'}}>{combo.desc}</div>
-                 <div style={{display: 'flex', gap: '8px'}}>
-                    {combo.colours.map((c, j) => (
-                      <div key={j} style={{flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px'}}>
-                        <div style={{width: '100%', aspectRatio: '1', background: c.hex, borderRadius: '8px', border: c.hex === '#EDE8E3' ? '1px solid #ccc' : 'none'}}></div>
-                        <div style={{fontSize: '10px', textAlign: 'center', color: 'var(--text-muted)'}}>{c.name}</div>
-                      </div>
-                    ))}
-                 </div>
-               </div>
-             ))}
-           </div>
-         )}
-      </div>
-      <TabBar />
-    </div>
+             </div>
+          ))}
+        </div>
+      )}
+      {section === 'metals' && (
+        <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
+          {metalColours.map((m, i) => (
+            <div key={i} style={{background: 'var(--card)', border: '1px solid var(--border)', padding: '20px', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '16px', opacity: m.name.includes("Avoid") ? 0.5 : 1}}>
+              <div style={{width: '50px', height: '50px', borderRadius: '50%', background: m.ring, flexShrink: 0}}></div>
+              <div>
+                <div style={{fontWeight: 600}}>{m.name}</div>
+                <div style={{fontSize: '12px', color: 'var(--text-muted)'}}>{m.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {section === 'combos' && (
+        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px'}}>
+          {outfitCombos.map((combo, i) => (
+            <div key={i} style={{background: 'var(--card)', border: '1px solid var(--border)', padding: '20px', borderRadius: '14px'}}>
+              <div style={{fontWeight: 600, marginBottom: '4px'}}>{combo.name}</div>
+              <div style={{fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px'}}>{combo.desc}</div>
+              <div style={{display: 'flex', gap: '8px'}}>
+                 {combo.colours.map((c, j) => (
+                   <div key={j} style={{flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px'}}>
+                     <div style={{width: '100%', aspectRatio: '1', background: c.hex, borderRadius: '8px', border: c.hex === '#EDE8E3' ? '1px solid #ccc' : 'none'}}></div>
+                     <div style={{fontSize: '10px', textAlign: 'center', color: 'var(--text-muted)'}}>{c.name}</div>
+                   </div>
+                 ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </AppShellV3>
   );
 };
 

@@ -1,7 +1,9 @@
 import React from 'react';
 import { parseSets, formatTarget, estimateRoutineSeconds, uniqueTags, countWeighted } from '../../lib/mobility';
 
-const RoutineOverview = ({ dayLabel, routine, blockWeek, onStart, onSkip, onBack }) => {
+// The sticky "Start session" action lives in AppShellV3's action slot —
+// this component only renders the hero + numbered rows + skip link.
+const RoutineOverview = ({ dayLabel, routine, blockWeek, onSkip, onBack }) => {
   const seconds = estimateRoutineSeconds(routine);
   const minutes = Math.max(1, Math.round(seconds / 60));
   const tags = uniqueTags(routine);
@@ -53,7 +55,6 @@ const RoutineOverview = ({ dayLabel, routine, blockWeek, onStart, onSkip, onBack
 
       <div className="overview-actions">
         <button type="button" className="btn-ghost" onClick={onSkip}>Skip today</button>
-        <button type="button" className="btn-primary overview-start" onClick={onStart}>Start routine</button>
       </div>
     </div>
   );

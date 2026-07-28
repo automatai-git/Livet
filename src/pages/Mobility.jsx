@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useReducer, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import AppShell from '../components/AppShell';
+import AppShellV3, { HeroCard, ScopePill } from '../components/AppShellV3';
 import { MOBILITY_DATA, DAYS } from '../data/mobilityData';
-import { parseSets } from '../lib/mobility';
+import { parseSets, uniqueTags } from '../lib/mobility';
 import { mobilityService } from '../services/mobilityService';
 import RoutineOverview from '../components/mobility/RoutineOverview';
 import FocusMode from '../components/mobility/FocusMode';
@@ -10,6 +10,10 @@ import SessionSummary from '../components/mobility/SessionSummary';
 
 const ACTIVE_SESSION_KEY = 'mobilitySession:active';
 const todayISO = () => new Date().toISOString().split('T')[0];
+
+// Scope selector shows the current week Monday-first (DAYS is Sunday-first
+// because it's indexed by Date#getDay()).
+const WEEK_DAYS = [...DAYS.slice(1), DAYS[0]];
 
 const buildInitialSession = (routine) => ({
   status: 'in-progress',
@@ -300,77 +304,98 @@ const Mobility = () => {
 
   const dayLabel = useMemo(() => MOBILITY_DATA[selectedDay]?.name ?? selectedDay, [selectedDay]);
 
-  const renderDayPicker = () => {
-    const routines = MOBILITY_DATA[selectedDay]?.routines ?? {};
-    const entries = Object.entries(routines);
-    return (
-      <>
-        <div className="day-pill-row" role="tablist" aria-label="Day of week">
-          {DAYS.map((day) => {
-            const isToday = day === todayName;
-            const isSelected = selectedDay === day;
-            return (
-              <button
-                key={day}
-                role="tab"
-                aria-selected={isSelected}
-                aria-current={isToday ? 'date' : undefined}
-                className={`day-pill ${isSelected ? 'selected' : ''} ${isToday && !isSelected ? 'today' : ''}`}
-                onClick={() => setSelectedDay(day)}
-              >
-                <span className="day-pill-label">{day}</span>
-                {isToday && <span className="day-pill-today">·TODAY</span>}
-              </button>
-            );
-          })}
-        </div>
+  // AppShellV3 slots (day-pick view). Scope = 7 equal day cells for the
+  // current week; hero = the day's routine; sticky action = Start session.
+  const weekDates = useMemo(() => {
+    const now = new Date();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    return WEEK_DAYS.map((day, i) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      return { day, date: d.getDate() };
+    });
+  }, []);
 
-        {blockWeek && (
-          <div className="muted-row" style={{ textAlign: 'center', margin: '4px 0 14px' }}>
-            Block {blockWeek.block} · Week {blockWeek.week}
-          </div>
-        )}
+  const dayEntries = Object.entries(MOBILITY_DATA[selectedDay]?.routines ?? {});
+  const firstRoutine = dayEntries[0]?.[1] ?? null;
 
-        {entries.length === 0 ? (
-          <div className="empty-state">
-            <p className="heading-serif" style={{ fontSize: '1.15rem' }}>Rest day</p>
-            <p className="muted-row">Nothing scheduled for {selectedDay}.</p>
-          </div>
-        ) : (
-          <div className="routine-list">
-            <div className="eyebrow" style={{ marginBottom: 8 }}>{dayLabel}</div>
-            {entries.map(([key, rot]) => (
-              <button
-                key={key}
-                type="button"
-                className="routine-list-card"
-                onClick={() => handleSelectRoutine(key)}
-              >
-                <div>
-                  <div className="heading-serif routine-list-name">{rot.name}</div>
-                  <div className="muted-row routine-list-meta">
-                    {rot.exercises.length} exercises
-                  </div>
-                </div>
-                <span className="routine-list-arrow" aria-hidden="true">›</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </>
-    );
-  };
+  const scope = view === 'day-pick' ? (
+    <div className="scope-row equal" role="tablist" aria-label="Day of week">
+      {weekDates.map(({ day, date }) => (
+        <ScopePill
+          key={day}
+          day
+          on={selectedDay === day}
+          today={day === todayName}
+          onClick={() => setSelectedDay(day)}
+          role="tab"
+          aria-selected={selectedDay === day}
+          aria-current={day === todayName ? 'date' : undefined}
+          aria-label={`${day}${day === todayName ? ' (today)' : ''}`}
+        >
+          <span className="scope-day-letter">{day[0].toUpperCase()}</span>
+          <span className="scope-day-date">{date}</span>
+        </ScopePill>
+      ))}
+    </div>
+  ) : undefined;
+
+  const hero = view === 'day-pick' ? (
+    firstRoutine ? (
+      <HeroCard
+        eyebrow={dayLabel}
+        title={firstRoutine.name}
+        meta={`${firstRoutine.exercises.length} exercises${blockWeek ? ` · Block ${blockWeek.block} · Week ${blockWeek.week}` : ''}`}
+        chips={uniqueTags(firstRoutine)}
+      />
+    ) : (
+      <HeroCard eyebrow={dayLabel} title="Rest day" meta={`Nothing scheduled for ${selectedDay}.`} />
+    )
+  ) : undefined;
+
+  const action =
+    view === 'day-pick' && dayEntries.length > 0
+      ? { label: 'Start session', onClick: () => handleSelectRoutine(dayEntries[0][0]) }
+      : view === 'overview' && routine
+        ? { label: 'Start session', onClick: handleStartRoutine }
+        : undefined;
 
   return (
-    <AppShell title="Mobility" accent="var(--accent-mobility)" maxWidth={760} hideTabBar={view === 'focus'}>
-      {view === 'day-pick' && renderDayPicker()}
+    <AppShellV3
+      app="mobility"
+      maxWidth={760}
+      hideTabBar={view === 'focus'}
+      scope={scope}
+      hero={hero}
+      action={action}
+    >
+      {view === 'day-pick' && dayEntries.length > 0 && (
+        <div className="routine-list">
+          {dayEntries.map(([key, rot]) => (
+            <button
+              key={key}
+              type="button"
+              className="routine-list-card"
+              onClick={() => handleSelectRoutine(key)}
+            >
+              <div>
+                <div className="heading-serif routine-list-name">{rot.name}</div>
+                <div className="muted-row routine-list-meta">
+                  {rot.exercises.length} exercises
+                </div>
+              </div>
+              <span className="routine-list-arrow" aria-hidden="true">›</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {view === 'overview' && routine && (
         <RoutineOverview
           dayLabel={dayLabel}
           routine={routine}
           blockWeek={blockWeek}
-          onStart={handleStartRoutine}
           onSkip={handleSkipToday}
           onBack={() => { setView('day-pick'); setRoutineKey(null); }}
         />
@@ -398,7 +423,7 @@ const Mobility = () => {
           onDiscard={handleDiscardSession}
         />
       )}
-    </AppShell>
+    </AppShellV3>
   );
 };
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import AppShell from '../../components/AppShell';
+import AppShellV3, { HeroCard } from '../../components/AppShellV3';
 import LoadingState from '../../components/feedback/LoadingState';
 import EmptyState from '../../components/feedback/EmptyState';
 import { travelService } from '../../services/travelService';
@@ -42,25 +42,39 @@ const TripList = () => {
 
   if (loading) {
     return (
-      <AppShell title="Trips" accent="var(--accent-travel)">
+      <AppShellV3 app="travel">
         <LoadingState label="Loading your trips…" />
-      </AppShell>
+      </AppShellV3>
     );
   }
 
+  // Hero = the next (or currently running) trip, with a countdown.
+  const active = trips.filter((t) => t.status !== 'archived');
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const upcoming = [...active]
+    .filter((t) => t.start_date && new Date(t.start_date) >= today)
+    .sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+  const nextTrip = upcoming[0] || active[0] || null;
+  const daysOut = nextTrip?.start_date
+    ? Math.round((new Date(nextTrip.start_date) - today) / 86400000)
+    : null;
+  const nextDest = nextTrip && destinations.find((d) => d.key === nextTrip.destination_key);
+
   return (
-    <AppShell
-      title="Trips"
-      accent="var(--accent-travel)"
-      actions={
-        <Link
-          to="/travel/new"
-          className="error-boundary-btn"
-          style={{ padding: '8px 14px', minHeight: 36, fontSize: '0.85rem', borderRadius: 999 }}
-        >
-          + New trip
-        </Link>
-      }
+    <AppShellV3
+      app="travel"
+      hero={nextTrip && (
+        <HeroCard
+          eyebrow="Next trip"
+          title={nextTrip.name}
+          meta={[
+            nextDest ? nextDest.name : nextTrip.destination_key,
+            fmtDateRange(nextTrip.start_date, nextTrip.end_date),
+            daysOut != null && daysOut >= 0 ? `${daysOut === 0 ? 'today' : `in ${daysOut} day${daysOut === 1 ? '' : 's'}`}` : null,
+          ].filter(Boolean).join(' · ')}
+        />
+      )}
+      action={{ label: 'New trip', to: '/travel/new' }}
     >
       {trips.length === 0 ? (
         <EmptyState
@@ -121,7 +135,7 @@ const TripList = () => {
           })}
         </div>
       )}
-    </AppShell>
+    </AppShellV3>
   );
 };
 

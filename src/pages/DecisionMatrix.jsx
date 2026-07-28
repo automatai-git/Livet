@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { Link } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import AppIcon from '../components/AppIcon.jsx';
-import TabBar from '../components/shell/TabBar.jsx';
+import AppShellV3, { ScopePill } from '../components/AppShellV3.jsx';
 
 // Autosave debounce window. Edits flush 1.5 s after the last keystroke
 // (or immediately on Cmd/Ctrl+S, or before navigating away).
@@ -262,28 +261,35 @@ const DecisionMatrix = () => {
         }).sort((a, b) => b.weightedScore - a.weightedScore);
     }, [activeMatrix]);
 
-    if (loading) return <div style={{padding: '50px', textAlign: 'center'}}>Loading decisions...</div>;
+    if (loading) {
+        return (
+            <AppShellV3 app="decision" maxWidth={1100}>
+                <div style={{padding: '50px', textAlign: 'center'}}>Loading decisions...</div>
+            </AppShellV3>
+        );
+    }
 
     return (
-        <div className="app-container" style={{maxWidth: '1100px', '--app-accent': 'var(--accent-decision)'}}>
-            <div className="sticky-header">
-                <div className="header-row">
-                    <Link to="/apps" className="back-circle" aria-label="Back">
-                        <AppIcon name="back" size={16} strokeWidth="2" />
-                    </Link>
-                    <span className="app-dot" aria-hidden="true" />
-                    <h1 className="heading-serif page-title">Decision Matrix</h1>
-                    <div className="header-actions">
-                        <button
-                            onClick={() => setShowNewModal(true)}
-                            style={{background: 'var(--ink)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '999px', fontWeight: 600, cursor: 'pointer'}}
+        <AppShellV3
+            app="decision"
+            maxWidth={1100}
+            scope={matrices.length > 0 ? (
+                <div className="scope-row" role="tablist" aria-label="Your decisions">
+                    {matrices.map(m => (
+                        <ScopePill
+                            key={m.id}
+                            on={activeMatrix?.id === m.id}
+                            role="tab"
+                            aria-selected={activeMatrix?.id === m.id}
+                            onClick={() => selectMatrix(m)}
                         >
-                            + New
-                        </button>
-                    </div>
+                            {m.title}
+                        </ScopePill>
+                    ))}
                 </div>
-            </div>
-
+            ) : undefined}
+            action={{ label: 'New matrix', onClick: () => setShowNewModal(true) }}
+        >
             {!activeMatrix ? (
                 <div style={{textAlign: 'center', padding: '100px 20px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '20px', marginTop: '40px'}}>
                     <div style={{width: 52, height: 52, borderRadius: 14, background: 'rgba(200,128,74,.12)', color: '#C8804A', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px'}}>
@@ -510,33 +516,7 @@ const DecisionMatrix = () => {
                 </div>
             )}
 
-            <div style={{padding: '20px', background: 'var(--card)', borderRadius: '20px', marginBottom: '50px', border: '1px solid var(--border)'}}>
-                <h4 style={{marginBottom: '10px', fontSize: '0.9rem', color: 'var(--text-muted)'}}>Your Decisions</h4>
-                <div style={{display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '5px'}}>
-                    {matrices.map(m => (
-                        <button
-                            key={m.id}
-                            type="button"
-                            aria-pressed={activeMatrix?.id === m.id}
-                            onClick={() => selectMatrix(m)}
-                            style={{
-                                whiteSpace: 'nowrap',
-                                padding: '8px 16px', minHeight: 36,
-                                borderRadius: '10px',
-                                background: activeMatrix?.id === m.id ? 'var(--primary)' : 'var(--bg)',
-                                color: activeMatrix?.id === m.id ? 'white' : 'var(--text)',
-                                border: 'none',
-                                fontWeight: 600,
-                                cursor: 'pointer'
-                            }}
-                        >
-                            {m.title}
-                        </button>
-                    ))}
-                </div>
-            </div>
-            <TabBar />
-        </div>
+        </AppShellV3>
     );
 };
 

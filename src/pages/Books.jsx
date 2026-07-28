@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import AppShell from '../components/AppShell';
+import AppShellV3, { ScopePill } from '../components/AppShellV3';
 import EmptyState from '../components/feedback/EmptyState';
 import AppIcon from '../components/AppIcon';
 import BookCloud from '../components/books/BookCloud';
@@ -142,7 +142,28 @@ const Books = () => {
   );
 
   return (
-    <AppShell title="Book Cloud" accent="var(--accent-books)" maxWidth={780}>
+    <AppShellV3
+      app="books"
+      maxWidth={780}
+      scope={books.length > 0 ? (
+        <div className="scope-row" role="tablist" aria-label="Book views">
+          {VIEWS.map((v) => (
+            <ScopePill
+              key={v.id}
+              on={view === v.id}
+              role="tab"
+              aria-selected={view === v.id}
+              onClick={() => setView(v.id)}
+            >
+              {v.label}
+            </ScopePill>
+          ))}
+        </div>
+      ) : undefined}
+      action={books.length > 0 && view !== 'library'
+        ? { label: 'Import books', onClick: () => setView('library') }
+        : undefined}
+    >
       {books.length === 0 ? (
         <>
           <EmptyState
@@ -161,23 +182,9 @@ const Books = () => {
         </>
       ) : (
         <>
-          <div className="book-toolbar">
-            <div className="book-view-pills" role="tablist">
-              {VIEWS.map((v) => (
-                <button
-                  key={v.id}
-                  type="button"
-                  className={`day-pill${view === v.id ? ' selected' : ''}`}
-                  onClick={() => setView(v.id)}
-                >
-                  {v.label}
-                </button>
-              ))}
-            </div>
-            <p className="muted-row">
-              {readBooks.length} read · {wishCount} wishlist{untagged ? ` · ${untagged} untagged` : ''}
-            </p>
-          </div>
+          <p className="muted-row" style={{ marginBottom: 10 }}>
+            {readBooks.length} read · {wishCount} wishlist{untagged ? ` · ${untagged} untagged` : ''}
+          </p>
 
           {offline && (
             <p className="book-offline-note">
@@ -351,7 +358,7 @@ const Books = () => {
           )}
         </>
       )}
-    </AppShell>
+    </AppShellV3>
   );
 };
 

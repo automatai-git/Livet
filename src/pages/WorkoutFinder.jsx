@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link, Routes, Route, useNavigate, useSearchParams } from 'react-router-dom';
+import { Routes, Route, useNavigate, useSearchParams } from 'react-router-dom';
+import AppShellV3, { HeroCard, ScopePill } from '../components/AppShellV3';
 import {
   getActiveBlock,
   getTodayDayType,
@@ -17,8 +18,6 @@ import {
 import RehabDayCard from '../components/rehab/RehabDayCard';
 import RehabWeekRow from '../components/rehab/RehabWeekRow';
 import RehabBlockLadder from '../components/rehab/RehabBlockLadder';
-import AppIcon from '../components/AppIcon';
-import TabBar from '../components/shell/TabBar';
 
 // ---------- helpers ---------------------------------------------------------
 
@@ -41,19 +40,27 @@ function kindLabel(day) {
   }
 }
 
-// Lightweight in-page header that mirrors AppShell's look. Local because
-// WorkoutFinder uses nested routes and doesn't wrap each route with AppShell.
-function StickyHeader({ title, back = '/apps' }) {
+// Slot 2 — segmented view pills navigating the app's three nested routes.
+function WorkoutScope({ active }) {
+  const navigate = useNavigate();
+  const tabs = [
+    { id: 'day', label: 'Day', to: '/workout' },
+    { id: 'week', label: 'Week', to: '/workout/week' },
+    { id: 'block', label: 'Block', to: '/workout/block' },
+  ];
   return (
-    <div className="sticky-header" style={{ '--app-accent': 'var(--accent-workout)' }}>
-      <div className="header-row">
-        <Link to={back} className="back-circle" aria-label="Back">
-          <AppIcon name="back" size={16} strokeWidth="2" />
-        </Link>
-        <span className="app-dot" aria-hidden="true" />
-        <h1 className="heading-serif page-title">{title}</h1>
-        <div className="header-actions" />
-      </div>
+    <div className="scope-row" role="tablist" aria-label="Workout views">
+      {tabs.map((t) => (
+        <ScopePill
+          key={t.id}
+          on={active === t.id}
+          role="tab"
+          aria-selected={active === t.id}
+          onClick={() => navigate(t.to)}
+        >
+          {t.label}
+        </ScopePill>
+      ))}
     </div>
   );
 }
@@ -335,10 +342,18 @@ function DayView() {
   }, [dateParam, date]);
 
   if (state.loading) {
-    return (<><StickyHeader title="Workout" /><div style={{ padding: 16 }} className="muted-row">Loading…</div></>);
+    return (
+      <AppShellV3 app="workout" scope={<WorkoutScope active="day" />}>
+        <div className="muted-row">Loading…</div>
+      </AppShellV3>
+    );
   }
   if (!state.block) {
-    return (<><StickyHeader title="Workout" /><div style={{ padding: 16 }}>No active block. Run the seed migration.</div></>);
+    return (
+      <AppShellV3 app="workout" scope={<WorkoutScope active="day" />}>
+        <div>No active block. Run the seed migration.</div>
+      </AppShellV3>
+    );
   }
 
   const day = flexPick || state.dayType;
@@ -348,38 +363,37 @@ function DayView() {
   const tomorrowDay = resolveDayForPhase(state.block.weekly_template[weekdayKey(tomorrow)], tomorrowPhase.name);
 
   return (
-    <>
-      <StickyHeader title="Workout" />
-      <div style={{ padding: '4px 16px 24px', maxWidth: 720, margin: '0 auto' }}>
-        <div style={{ marginBottom: 14 }}>
-          <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: '1.4rem', lineHeight: 1.15 }}>{fmtDate(date)}</div>
-          <div className="muted-row" style={{ marginTop: 2 }}>
-            {state.block.name.split('—')[0].trim()} · Week {state.week}/12 · <span style={{ textTransform: 'capitalize' }}>{state.phase.name}</span>
-          </div>
+    <AppShellV3
+      app="workout"
+      scope={<WorkoutScope active="day" />}
+      hero={
+        <HeroCard
+          eyebrow={state.block.name.split('—')[0].trim()}
+          title={fmtDate(date)}
+          meta={
+            <>
+              Week {state.week}/12 · <span style={{ textTransform: 'capitalize' }}>{state.phase.name}</span> phase
+            </>
+          }
+        />
+      }
+    >
+      <RehabDayCard date={date} day={day} block={state.block} />
+
+      <DaySessionCard day={day} onPickFlex={setFlexPick} />
+
+      {day?.kind === 'mobility' && day.route_to === 'internal' && (
+        <MobilityRenderer sessionId={day.session_id} />
+      )}
+
+      <ActiveModifiers block={state.block} weekNumber={state.week} />
+
+      {tomorrowDay && (
+        <div className="muted-row" style={{ marginTop: 14, fontSize: '0.82rem' }}>
+          Tomorrow · {kindLabel(tomorrowDay)}{tomorrowDay.rpe_target ? ` · ${tomorrowDay.rpe_target}` : ''}
         </div>
-
-        <RehabDayCard date={date} day={day} block={state.block} />
-
-        <DaySessionCard day={day} onPickFlex={setFlexPick} />
-
-        {day?.kind === 'mobility' && day.route_to === 'internal' && (
-          <MobilityRenderer sessionId={day.session_id} />
-        )}
-
-        <ActiveModifiers block={state.block} weekNumber={state.week} />
-
-        {tomorrowDay && (
-          <div className="muted-row" style={{ marginTop: 14, fontSize: '0.82rem' }}>
-            Tomorrow · {kindLabel(tomorrowDay)}{tomorrowDay.rpe_target ? ` · ${tomorrowDay.rpe_target}` : ''}
-          </div>
-        )}
-
-        <div style={{ marginTop: 18, display: 'flex', gap: 8 }}>
-          <Link to="/workout/week" className="btn-ghost" style={{ flex: 1, textAlign: 'center', textDecoration: 'none' }}>Week</Link>
-          <Link to="/workout/block" className="btn-ghost" style={{ flex: 1, textAlign: 'center', textDecoration: 'none' }}>Block</Link>
-        </div>
-      </div>
-    </>
+      )}
+    </AppShellV3>
   );
 }
 
@@ -392,7 +406,11 @@ function WeekView() {
   useEffect(() => { getActiveBlock().then(setBlock).catch(console.error); }, []);
 
   if (!block) {
-    return (<><StickyHeader title="Week" back="/workout" /><div style={{ padding: 16 }} className="muted-row">Loading…</div></>);
+    return (
+      <AppShellV3 app="workout" scope={<WorkoutScope active="week" />}>
+        <div className="muted-row">Loading…</div>
+      </AppShellV3>
+    );
   }
 
   const currentWeek = getWeekNumber(block, new Date());
@@ -413,45 +431,46 @@ function WeekView() {
   };
 
   return (
-    <>
-      <StickyHeader title="Week" back="/workout" />
-      <div style={{ padding: '4px 16px 24px', maxWidth: 720, margin: '0 auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-          <div>
-            <div className="heading-serif" style={{ fontSize: '1.3rem' }}>Week {week} <span style={{ color: 'var(--text-muted)', fontFamily: 'Inter', fontSize: '0.9rem' }}>of 12</span></div>
-            <div className="muted-row" style={{ textTransform: 'capitalize' }}>{phase.name} phase</div>
+    <AppShellV3
+      app="workout"
+      scope={<WorkoutScope active="week" />}
+      hero={
+        <HeroCard
+          eyebrow={block.name.split('—')[0].trim()}
+          title={<>Week {week} <span style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>of 12</span></>}
+          meta={<span style={{ textTransform: 'capitalize' }}>{phase.name} phase</span>}
+        >
+          <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+            <button onClick={() => setWeek(Math.max(1, week - 1))} className="btn-ghost" disabled={week <= 1}>‹ Previous</button>
+            <button onClick={() => setWeek(Math.min(12, week + 1))} className="btn-ghost" disabled={week >= 12}>Next ›</button>
           </div>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={() => setWeek(Math.max(1, week - 1))} className="btn-ghost" disabled={week <= 1}>‹</button>
-            <button onClick={() => setWeek(Math.min(12, week + 1))} className="btn-ghost" disabled={week >= 12}>›</button>
-          </div>
-        </div>
+        </HeroCard>
+      }
+    >
+      <RehabWeekRow block={block} week={week} />
 
-        <RehabWeekRow block={block} week={week} />
-
-        <div className="day-grid" style={{ marginTop: 14 }}>
-          {order.map((wd) => {
-            const day = days[wd];
-            const d = dateForWeekday(block, week, wd);
-            const isToday = isCurrentWeek && wd === todayKey;
-            return (
-              <div key={wd} className={`day-cell ${isToday ? 'today' : ''}`} onClick={() => goToDay(wd)}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                  <span className="day-letter">{wd[0].toUpperCase()}{wd.slice(1, 3)}</span>
-                  <span className="day-date">{fmtShort(d)}</span>
-                </div>
-                <span className={`kind-chip ${day?.kind || 'rest'}`}>{day?.kind || 'rest'}</span>
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.35, marginTop: 'auto' }}>
-                  {day?.kind === 'strength' && day.focus ? day.focus.split('—').slice(1).join('—').trim() || day.focus : ''}
-                  {day?.kind === 'run' && day.quality}
-                  {day?.kind === 'mobility' && 'Wed corrective'}
-                </div>
+      <div className="day-grid" style={{ marginTop: 14 }}>
+        {order.map((wd) => {
+          const day = days[wd];
+          const d = dateForWeekday(block, week, wd);
+          const isToday = isCurrentWeek && wd === todayKey;
+          return (
+            <div key={wd} className={`day-cell ${isToday ? 'today' : ''}`} onClick={() => goToDay(wd)}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span className="day-letter">{wd[0].toUpperCase()}{wd.slice(1, 3)}</span>
+                <span className="day-date">{fmtShort(d)}</span>
               </div>
-            );
-          })}
-        </div>
+              <span className={`kind-chip ${day?.kind || 'rest'}`}>{day?.kind || 'rest'}</span>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.35, marginTop: 'auto' }}>
+                {day?.kind === 'strength' && day.focus ? day.focus.split('—').slice(1).join('—').trim() || day.focus : ''}
+                {day?.kind === 'run' && day.quality}
+                {day?.kind === 'mobility' && 'Wed corrective'}
+              </div>
+            </div>
+          );
+        })}
       </div>
-    </>
+    </AppShellV3>
   );
 }
 
@@ -461,7 +480,13 @@ function BlockView() {
   const [block, setBlock] = useState(null);
   const [expandedWeek, setExpandedWeek] = useState(null);
   useEffect(() => { getActiveBlock().then(setBlock).catch(console.error); }, []);
-  if (!block) return (<><StickyHeader title="Block" back="/workout" /><div style={{ padding: 16 }} className="muted-row">Loading…</div></>);
+  if (!block) {
+    return (
+      <AppShellV3 app="workout" scope={<WorkoutScope active="block" />}>
+        <div className="muted-row">Loading…</div>
+      </AppShellV3>
+    );
+  }
 
   const currentWeek = getWeekNumber(block, new Date());
   const totalWeeks = Math.max(...block.phases.flatMap((p) => p.weeks));
@@ -476,16 +501,22 @@ function BlockView() {
   const { goals, modifiers = [], deload_weeks = [] } = block;
 
   return (
-    <>
-      <StickyHeader title="Block" back="/workout" />
-      <div style={{ padding: '4px 16px 24px', maxWidth: 720, margin: '0 auto' }}>
-        <div style={{ marginBottom: 14 }}>
-          <div className="heading-serif" style={{ fontSize: '1.5rem', lineHeight: 1.15 }}>{block.name}</div>
-          <div className="muted-row" style={{ marginTop: 4 }}>
-            {block.start_date} → {block.end_date} · primary <strong style={{ color: 'var(--text)' }}>{block.primary_domain}</strong> · Week {currentWeek}/{totalWeeks}
-          </div>
-        </div>
-
+    <AppShellV3
+      app="workout"
+      scope={<WorkoutScope active="block" />}
+      hero={
+        <HeroCard
+          eyebrow="Current block"
+          title={block.name}
+          meta={
+            <>
+              {block.start_date} → {block.end_date} · primary <strong style={{ color: 'var(--text)' }}>{block.primary_domain}</strong> · Week {currentWeek}/{totalWeeks}
+            </>
+          }
+        />
+      }
+    >
+      <div>
         <div className="tight-card hero" style={{ marginBottom: 10 }}>
           <div className="eyebrow">A · Outcome</div>
           <div style={{ fontSize: '1.05rem', fontWeight: 600, marginTop: 4, lineHeight: 1.35 }}>{goals.a.statement}</div>
@@ -577,7 +608,7 @@ function BlockView() {
           </div>
         )}
       </div>
-    </>
+    </AppShellV3>
   );
 }
 
@@ -585,13 +616,10 @@ function BlockView() {
 
 export default function WorkoutFinder() {
   return (
-    <>
-      <Routes>
-        <Route index element={<DayView />} />
-        <Route path="week" element={<WeekView />} />
-        <Route path="block" element={<BlockView />} />
-      </Routes>
-      <TabBar />
-    </>
+    <Routes>
+      <Route index element={<DayView />} />
+      <Route path="week" element={<WeekView />} />
+      <Route path="block" element={<BlockView />} />
+    </Routes>
   );
 }

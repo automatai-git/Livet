@@ -1,6 +1,6 @@
 import React, { useId, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import AppShell from '../../components/AppShell';
+import AppShellV3 from '../../components/AppShellV3';
 import { travelService } from '../../services/travelService';
 import { listDestinations } from '../../data/destinations';
 
@@ -51,7 +51,7 @@ const NewTripForm = () => {
   };
 
   return (
-    <AppShell title="New trip" accent="var(--accent-travel)" back="/travel">
+    <AppShellV3 app="travel" title="New trip" back="/travel">
       <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 18, maxWidth: 480 }}>
         <div>
           <label htmlFor={destId} style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 6 }}>Destination</label>
@@ -110,7 +110,7 @@ const NewTripForm = () => {
           </button>
         </div>
       </form>
-    </AppShell>
+    </AppShellV3>
   );
 };
 

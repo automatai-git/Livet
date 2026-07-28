@@ -118,11 +118,13 @@ button {
 
 /* ==================== v3 shell ==================== */
 
-/* Tab pages (Today / Apps / Life / You): phone-first single column. */
+/* Tab pages (Today / Apps / Life / You): phone-first single column.
+   v3.1 fix 1: shared safe-area top offset — content never sits under the
+   status clock / Dynamic Island; 24px minimum when the env() is 0. */
 .tab-page {
     max-width: 520px;
     margin: 0 auto;
-    padding: 8px 0 calc(96px + env(safe-area-inset-bottom));
+    padding: calc(env(safe-area-inset-top, 0px) + 24px) 0 calc(96px + env(safe-area-inset-bottom));
 }
 
 .page-display {
@@ -584,6 +586,22 @@ body.screen-dark::before {
 .tree-figure { display: block; width: 100%; height: auto; }
 .tree-leaf { cursor: pointer; }
 .tree-leaf:focus-visible { outline: 2px solid var(--on-dark); outline-offset: 2px; border-radius: 50%; }
+/* v3.1 fix 2: persistent leaf labels — ticking is never blind. */
+.tree-leaf-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 10.5px;
+    font-weight: 500;
+    fill: rgba(245, 243, 237, 0.65);
+    pointer-events: none;
+    letter-spacing: 0.2px;
+}
+.tree-leaf.ticked .tree-leaf-label { fill: #F5F3ED; }
+/* Selection ring (tap 1 = select, tap 2 = tick) */
+.tree-leaf-ring { animation: ring-in 0.2s ease-out; }
+@keyframes ring-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
 .tree-leaf.pop > circle:nth-of-type(1) { animation: halo-in 0.25s ease-out; }
 .tree-leaf.pop > circle:nth-of-type(2) { animation: leaf-pop 0.25s ease-out; }
 @keyframes leaf-pop {
@@ -634,7 +652,14 @@ body.screen-dark::before {
     border-radius: 50%;
     border: 2px solid;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #12281E;
 }
+.weakest-ring.ticked::after { content: '✓'; color: #12281E; }
 .weakest-body { flex: 1; min-width: 0; }
 .weakest-eyebrow {
     font-size: 0.64rem;
@@ -761,7 +786,8 @@ body.screen-dark::before {
     flex-shrink: 0;
 }
 
-/* Menu Planner Styles */
+/* Sub-page sticky header. v3.1 fix 1: same safe-area top offset inside the
+   sticky surface, so the serif title clears the system clock everywhere. */
 .sticky-header {
     position: sticky;
     top: 0;
@@ -770,7 +796,7 @@ body.screen-dark::before {
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border);
-    padding-top: env(safe-area-inset-top);
+    padding-top: calc(env(safe-area-inset-top, 0px) + 24px);
     margin: -20px -20px 20px -20px;
 }
 
@@ -778,7 +804,7 @@ body.screen-dark::before {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 20px 10px;
+    padding: 0 20px 10px;
 }
 
 /* In-flow text back links (e.g. mobility "← Pick a different day"). */
@@ -1066,6 +1092,120 @@ body.screen-dark::before {
     color: var(--text);
     margin: 0;
 }
+
+/* ---------- AppShellV3 (v3.1 fix 3): the one slotted sub-page framework.
+   Slots in order: header · scope selector · hero card · content · sticky
+   primary action. Apps fill the same slots in the same order; a slot may be
+   omitted, never rearranged or duplicated. ---------- */
+
+/* Slot 2 — scope selector: one row, one shared pill anatomy. */
+.scope-row {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    margin-bottom: 16px;
+    scrollbar-width: none;
+}
+.scope-row::-webkit-scrollbar { display: none; }
+.scope-row.equal { overflow-x: visible; }
+.scope-row.equal > * { flex: 1; min-width: 0; }
+.scope-pill {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 8px 15px;
+    border-radius: 999px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.scope-pill.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+.scope-pill.today { box-shadow: inset 0 0 0 1.5px var(--app-accent, var(--ink)); }
+.scope-pill:focus-visible { outline: 2px solid var(--app-accent, var(--ink)); outline-offset: 2px; }
+/* Day-pill flavour: 7 equal cells, letter + date, radius 12. */
+.scope-pill.day {
+    flex-direction: column;
+    gap: 2px;
+    border-radius: 12px;
+    padding: 7px 2px;
+}
+.scope-day-letter { font-weight: 600; font-size: 0.82rem; line-height: 1; }
+.scope-day-date {
+    font-size: 0.64rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+.scope-pill.on .scope-day-date { color: rgba(255, 255, 255, 0.75); }
+
+/* Slot 3 — hero card: the page's single summary surface. */
+.hero-card {
+    padding: 22px 20px;
+    margin-bottom: 16px;
+    display: grid;
+    gap: 6px;
+}
+.hero-title { font-size: 1.6rem; line-height: 1.15; }
+.hero-meta { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; }
+.hero-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.hero-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 8px;
+    background: var(--app-tint-bg, rgba(27, 59, 47, 0.07));
+    color: var(--app-tint-fg, var(--primary-light));
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+
+/* Slot 5 — sticky primary action: one ink button floating over a bg fade. */
+.sticky-action {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 250;
+    display: flex;
+    justify-content: center;
+    padding: 26px 20px calc(14px + env(safe-area-inset-bottom));
+    background: linear-gradient(to top, var(--bg) 70%, transparent);
+    pointer-events: none;
+}
+.sticky-action.above-tabbar {
+    bottom: calc(64px + env(safe-area-inset-bottom));
+    padding-bottom: 12px;
+}
+.sticky-action-btn {
+    pointer-events: auto;
+    width: 100%;
+    max-width: 520px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    border-radius: 16px;
+    padding: 15px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--float-shadow);
+}
+.sticky-action-btn:disabled { opacity: 0.5; cursor: default; }
+.page-shell.has-action .page-body { padding-bottom: calc(180px + env(safe-area-inset-bottom)); }
 
 /* ---------- AppShell (generic sub-page wrapper) ---------- */
 .page-shell { min-height: 100vh; }
@@ -1441,53 +1581,8 @@ body.screen-dark::before {
     color: #fff;
 }
 
-/* ---------- Mobility: day pills + routine list (H1 entry) ---------- */
-.day-pill-row {
-    display: flex;
-    gap: 6px;
-    overflow-x: auto;
-    padding-bottom: 14px;
-    margin-bottom: 6px;
-    scrollbar-width: none;
-}
-.day-pill-row::-webkit-scrollbar { display: none; }
-
-.day-pill {
-    flex-shrink: 0;
-    min-height: 44px;
-    padding: 8px 16px;
-    border-radius: 999px;
-    background: var(--card);
-    color: var(--text);
-    border: 1px solid var(--border);
-    text-transform: capitalize;
-    font-weight: 500;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-.day-pill:hover { border-color: var(--primary-light); }
-.day-pill.today { box-shadow: inset 0 0 0 1.5px var(--app-accent, var(--primary)); }
-.day-pill.selected {
-    background: var(--primary);
-    color: #fff;
-    border-color: var(--primary);
-}
-.day-pill-today {
-    font-size: 0.62rem;
-    letter-spacing: 0.5px;
-    font-weight: 600;
-    color: var(--primary-light);
-}
-.day-pill.selected .day-pill-today { color: rgba(255,255,255,0.85); }
-.day-pill:focus-visible {
-    outline: 2px solid var(--app-accent, var(--primary));
-    outline-offset: 2px;
-}
-
+/* ---------- Mobility: routine list (H1 entry) ----------
+   (day pills replaced by the shared AppShellV3 scope-pill anatomy) */
 .routine-list { display: grid; gap: 10px; }
 .routine-list-card {
     text-align: left;
@@ -1697,7 +1792,6 @@ body.screen-dark::before {
     margin-top: 8px;
 }
 .overview-actions .btn-ghost { flex: 0 0 auto; }
-.overview-start { flex: 1; min-height: 48px; }
 
 /* ---------- Mobility: focus mode (H2 + H3) ---------- */
 .focus-mode { display: flex; flex-direction: column; gap: 12px; }
@@ -2001,7 +2095,7 @@ body.screen-dark::before {
 .summary-actions .btn-primary { flex: 1; min-height: 48px; }
 
 @media (prefers-reduced-motion: reduce) {
-    .day-pill, .routine-list-card, .set-row, .rest-timer { transition: none; }
+    .scope-pill, .routine-list-card, .set-row, .rest-timer { transition: none; }
     body { animation: none; }
 }
 
@@ -2060,16 +2154,6 @@ body.screen-dark::before {
 .life-heatlabel { font-size: 0.62rem; color: var(--text-muted); }
 
 /* ---------- Book cloud (/books) ---------- */
-.book-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-bottom: 10px;
-}
-.book-view-pills { display: flex; gap: 6px; }
-
 .book-offline-note {
     margin: 0 0 10px;
     font-size: 0.78rem;

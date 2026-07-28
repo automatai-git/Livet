@@ -19,6 +19,9 @@ const Life = () => {
   const [activeWeek, setActiveWeek] = useState(currentWeek);
   const [offline, setOffline] = useState(false);
   const [popId, setPopId] = useState(null);
+  // v3.1 fix 2: tap 1 selects a leaf (bottom card shows its criterion),
+  // tap 2 confirms. null = default selection (the weakest branch's leaf).
+  const [selectedLeafId, setSelectedLeafId] = useState(null);
 
   // The app's only dark screen: paint the body while mounted so the
   // radial gradient bleeds edge-to-edge behind the safe areas.
@@ -41,8 +44,14 @@ const Life = () => {
     if (next[leafId]) delete next[leafId];
     else next[leafId] = true;
     setPopId(next[leafId] ? leafId : null);
+    setSelectedLeafId(leafId);
     setWeeks((w) => ({ ...w, [activeWeek]: next }));
     lifeTreeService.saveWeek(activeWeek, next);
+  };
+
+  const selectWeek = (week) => {
+    setSelectedLeafId(null);
+    setActiveWeek(week);
   };
 
   const roll = useMemo(() => rollUp(LIFE_TREE, ticks), [ticks]);
@@ -59,6 +68,19 @@ const Life = () => {
     return leaf ? { pillar: open[0].pillar, leaf } : null;
   }, [roll, ticks]);
 
+  // The bottom card follows the selection; the weakest-branch leaf is
+  // simply the default selection when nothing is tapped.
+  // (Plain computation — React Compiler memoizes renders.)
+  const explicitSelection = selectedLeafId
+    ? LIFE_TREE.children
+        .map((pillar) => {
+          const leaf = pillar.children.find((l) => l.id === selectedLeafId);
+          return leaf ? { pillar, leaf, isWeakestDefault: false } : null;
+        })
+        .find(Boolean) ?? null
+    : null;
+  const selection = explicitSelection ?? (weakest ? { ...weakest, isWeakestDefault: true } : null);
+
   const weekNum = Number(activeWeek.split('-W')[1]);
 
   return (
@@ -66,7 +88,7 @@ const Life = () => {
       {activeWeek !== currentWeek && (
         <div className="life-backfill-note">
           Editing {weekLabel(activeWeek)}
-          <button type="button" onClick={() => setActiveWeek(currentWeek)}>
+          <button type="button" onClick={() => selectWeek(currentWeek)}>
             Back to this week
           </button>
         </div>
@@ -80,7 +102,14 @@ const Life = () => {
         <div className="life-subline">Every tick this week grows the tree.</div>
       </header>
 
-      <TreeFigure tree={LIFE_TREE} ticks={ticks} onToggle={toggleLeaf} popId={popId} />
+      <TreeFigure
+        tree={LIFE_TREE}
+        ticks={ticks}
+        selectedId={selection?.leaf.id ?? null}
+        onSelect={setSelectedLeafId}
+        onToggle={toggleLeaf}
+        popId={popId}
+      />
 
       <div className="pillar-chip-row">
         {LIFE_TREE.children.map((p) => {
@@ -94,21 +123,31 @@ const Life = () => {
         })}
       </div>
 
-      {weakest && (
-        <div className="weakest-card">
-          <div className="weakest-ring" style={{ borderColor: PILLAR_TINTS[weakest.pillar.id] }} aria-hidden="true" />
-          <div className="weakest-body">
-            <div className="weakest-eyebrow" style={{ color: PILLAR_TINTS[weakest.pillar.id] }}>
-              Weakest branch · {weakest.pillar.label}
+      {selection && (() => {
+        const tint = PILLAR_TINTS[selection.pillar.id];
+        const ticked = Boolean(ticks[selection.leaf.id]);
+        return (
+          <div className="weakest-card">
+            <div
+              className={`weakest-ring${ticked ? ' ticked' : ''}`}
+              style={{ borderColor: tint, background: ticked ? tint : 'transparent' }}
+              aria-hidden="true"
+            />
+            <div className="weakest-body">
+              <div className="weakest-eyebrow" style={{ color: tint }}>
+                {selection.isWeakestDefault
+                  ? `Weakest branch · ${selection.pillar.label}`
+                  : selection.pillar.label}
+              </div>
+              <div className="weakest-label">{selection.leaf.label}</div>
+              <div className="weakest-criterion">{selection.leaf.criterion}</div>
             </div>
-            <div className="weakest-label">{weakest.leaf.label}</div>
-            <div className="weakest-criterion">{weakest.leaf.criterion}</div>
+            <button type="button" className="ivory-pill" onClick={() => toggleLeaf(selection.leaf.id)}>
+              {ticked ? 'Untick' : 'Tick'}
+            </button>
           </div>
-          <button type="button" className="ivory-pill" onClick={() => toggleLeaf(weakest.leaf.id)}>
-            Tick
-          </button>
-        </div>
-      )}
+        );
+      })()}
 
       <section className="life-history" aria-label="Weekly history">
         <div className="life-history-head">Last {HISTORY_WEEKS} weeks</div>
@@ -118,7 +157,7 @@ const Life = () => {
           weeks={weeks}
           activeWeek={activeWeek}
           currentWeek={currentWeek}
-          onSelect={setActiveWeek}
+          onSelect={selectWeek}
         />
         {offline && (
           <p className="life-offline-dark">Couldn't reach the database — ticks are kept locally and sync once it's reachable.</p>

@@ -3,8 +3,13 @@ import React from 'react';
 // "The Tree" — the Life tab's SVG figure. One leaf node per life-tree leaf,
 // distributed across fixed twig endpoints per pillar (left = health,
 // top = wealth, right = happiness). Ticked leaves fill in the pillar's
-// on-dark tint with a soft halo; tapping toggles through the same write
-// path as before. Geometry follows the design file's paths.
+// on-dark tint with a soft halo.
+//
+// v3.1 fix 2 — ticking is never blind:
+// - every leaf carries a persistent short text label (from the leaf's
+//   `short` field), anchored away from the branch strokes;
+// - tap 1 selects the leaf (ivory ring; the screen's bottom card shows the
+//   full name + pass criterion), tap 2 on the same leaf confirms the tick.
 
 const ON_DARK = {
   health: '#8FBF96',
@@ -26,17 +31,31 @@ const LIMBS = [
   { d: 'M212 285 C212 297 212 308 210 318', w: 2.5, o: 0.22 },
 ];
 
-// Twig endpoints per pillar, consumed in leaf order.
+// Twig endpoints per pillar, consumed in leaf order. Each spot carries its
+// label anchor, chosen so labels sit away from the branch strokes.
 const LEAF_SPOTS = {
-  health: [[97, 228], [124, 251], [117, 313]],
-  wealth: [[180, 163], [214, 178]],
-  happiness: [[268, 224], [240, 258], [257, 303], [296, 263], [211, 322]],
+  health: [
+    { x: 97, y: 228, lx: 0, ly: -20, anchor: 'middle' },
+    { x: 124, y: 251, lx: -17, ly: 4, anchor: 'end' },
+    { x: 117, y: 313, lx: 0, ly: 26, anchor: 'middle' },
+  ],
+  wealth: [
+    { x: 180, y: 163, lx: 0, ly: -20, anchor: 'middle' },
+    { x: 214, y: 178, lx: 17, ly: 4, anchor: 'start' },
+  ],
+  happiness: [
+    { x: 268, y: 224, lx: 8, ly: -14, anchor: 'start' },
+    { x: 240, y: 258, lx: -16, ly: -6, anchor: 'end' },
+    { x: 257, y: 303, lx: 15, ly: 4, anchor: 'start' },
+    { x: 296, y: 263, lx: 0, ly: 25, anchor: 'middle' },
+    { x: 211, y: 322, lx: 0, ly: 26, anchor: 'middle' },
+  ],
 };
 
 // If the tree ever grows past the mapped spots, park extras along the ground.
-const fallbackSpot = (i) => [50 + (i % 7) * 44, 352];
+const fallbackSpot = (i) => ({ x: 50 + (i % 7) * 44, y: 352, lx: 0, ly: -18, anchor: 'middle' });
 
-const TreeFigure = ({ tree, ticks, onToggle, popId }) => {
+const TreeFigure = ({ tree, ticks, selectedId, onSelect, onToggle, popId }) => {
   let overflow = 0;
   return (
     <svg viewBox="0 0 362 400" className="tree-figure" role="group" aria-label="Weekly life tree">
@@ -55,21 +74,24 @@ const TreeFigure = ({ tree, ticks, onToggle, popId }) => {
         const tint = ON_DARK[pillar.id] ?? '#8FBF96';
         const spots = LEAF_SPOTS[pillar.id] ?? [];
         return pillar.children.map((leaf, i) => {
-          const [x, y] = spots[i] ?? fallbackSpot(overflow++);
+          const spot = spots[i] ?? fallbackSpot(overflow++);
+          const { x, y, lx, ly, anchor } = spot;
           const ticked = Boolean(ticks[leaf.id]);
-          const toggle = () => onToggle(leaf.id);
+          const selected = selectedId === leaf.id;
+          // Tap 1 = select (read the criterion first); tap 2 = confirm.
+          const tap = () => (selected ? onToggle(leaf.id) : onSelect(leaf.id));
           return (
             <g
               key={leaf.id}
-              className={`tree-leaf${ticked && popId === leaf.id ? ' pop' : ''}`}
+              className={`tree-leaf${ticked ? ' ticked' : ''}${ticked && popId === leaf.id ? ' pop' : ''}`}
               style={{ transformOrigin: `${x}px ${y}px` }}
               role="checkbox"
               aria-checked={ticked}
-              aria-label={`${leaf.label} — ${pillar.label}`}
+              aria-label={`${leaf.label} — ${pillar.label}${selected ? ' (tap again to toggle)' : ''}`}
               tabIndex={0}
-              onClick={toggle}
+              onClick={tap}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tap(); }
               }}
             >
               {ticked ? (
@@ -89,6 +111,20 @@ const TreeFigure = ({ tree, ticks, onToggle, popId }) => {
               ) : (
                 <circle cx={x} cy={y} r="11" fill="none" stroke="rgba(245,243,237,.45)" strokeWidth="2" />
               )}
+              {selected && (
+                <circle
+                  className="tree-leaf-ring"
+                  cx={x}
+                  cy={y}
+                  r="15.5"
+                  fill="none"
+                  stroke="#F5F3ED"
+                  strokeWidth="1.5"
+                />
+              )}
+              <text className="tree-leaf-label" x={x + lx} y={y + ly} textAnchor={anchor}>
+                {leaf.short ?? leaf.label}
+              </text>
               {/* ≥44px hit area in a 362-wide viewBox */}
               <circle cx={x} cy={y} r="24" fill="transparent" />
             </g>

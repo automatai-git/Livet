@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useId } from 'react';
-import { Link } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { ANDREAS_CATEGORIES, JULIE_CATEGORIES } from '../data/bucketData.js';
-import AppIcon from '../components/AppIcon.jsx';
-import TabBar from '../components/shell/TabBar.jsx';
+import AppShellV3, { HeroCard, ScopePill } from '../components/AppShellV3.jsx';
 
 const BucketList = () => {
   const [activeUser, setActiveUser] = useState('andreas');
@@ -113,91 +111,52 @@ const BucketList = () => {
   const difficulties = ['All', 'Easy', 'Medium', 'Hard', 'Very Hard', 'Extreme', 'Expert'];
 
   return (
-    <div style={{ '--app-accent': 'var(--accent-bucket)' }}>
-      <div className="sticky-header" style={{margin: 0}}>
-        <div className="header-row">
-          <Link to="/apps" className="back-circle" aria-label="Back">
-            <AppIcon name="back" size={16} strokeWidth="2" />
-          </Link>
-          <span className="app-dot" aria-hidden="true" />
-          <h1 className="heading-serif page-title">Bucket List</h1>
-          <div className="header-actions" />
+    <AppShellV3
+      app="bucket"
+      scope={
+        <div className="scope-row" role="group" aria-label="Filter by category">
+          <ScopePill on={activeCategory === 'all'} onClick={() => setActiveCategory('all')}>
+            All
+          </ScopePill>
+          {currentCategories.map(c => (
+            <ScopePill
+              key={c.id}
+              on={activeCategory === c.id}
+              onClick={() => setActiveCategory(c.id)}
+              aria-label={`Filter by ${c.name}`}
+            >
+              {c.name}
+            </ScopePill>
+          ))}
         </div>
-      </div>
-
-      <div style={{background: 'linear-gradient(135deg, #3d5a32 0%, #5a7a4a 50%, #7a9a5a 100%)', color: 'white', padding: '40px 20px', textAlign: 'center'}}>
-         <div role="tablist" aria-label="Choose whose bucket list to view" style={{display: 'inline-flex', background: 'rgba(0,0,0,0.2)', padding: '4px', borderRadius: '12px', marginBottom: '25px'}}>
-            <button
-              role="tab"
-              aria-selected={activeUser === 'andreas'}
-              onClick={() => setActiveUser('andreas')}
-              style={{
-                padding: '8px 24px', minHeight: 44, borderRadius: '10px', border: 'none',
-                background: activeUser === 'andreas' ? 'white' : 'transparent',
-                color: activeUser === 'andreas' ? '#3d5a32' : 'white',
-                fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
-              }}
-            >
-              Andreas
-            </button>
-            <button
-              role="tab"
-              aria-selected={activeUser === 'julie'}
-              onClick={() => setActiveUser('julie')}
-              style={{
-                padding: '8px 24px', minHeight: 44, borderRadius: '10px', border: 'none',
-                background: activeUser === 'julie' ? 'white' : 'transparent',
-                color: activeUser === 'julie' ? '#3d5a32' : 'white',
-                fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
-              }}
-            >
-              Julie
-            </button>
-         </div>
-         <h1 className="heading-serif" style={{fontSize: '2.5rem', marginBottom: '10px'}}>{activeUser === 'andreas' ? "Andreas's" : "Julie's"} Bucket List</h1>
-         <p style={{opacity: 0.8, marginBottom: '20px'}}>{stats.total} experiences across {currentCategories.length} categories</p>
-         <div style={{maxWidth: '400px', margin: '0 auto'}}>
-           <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '8px'}}>
-             <span style={{fontSize: '1.5rem', fontWeight: 600}}>{stats.done} / {stats.total}</span>
-             <span>{pct}%</span>
-           </div>
-           <div style={{background: 'rgba(255,255,255,0.2)', height: '8px', borderRadius: '4px'}}>
-             <div style={{background: 'white', height: '100%', borderRadius: '4px', width: `${pct}%`}}></div>
-           </div>
-         </div>
-      </div>
-
-      <div role="group" aria-label="Filter by category" style={{display: 'flex', gap: '8px', overflowX: 'auto', padding: '20px', background: 'var(--card)', borderBottom: '1px solid var(--border)'}}>
-        <button
-          type="button"
-          aria-pressed={activeCategory === 'all'}
-          onClick={() => setActiveCategory('all')}
-          style={{
-            padding: '8px 16px', minHeight: 44, background: activeCategory === 'all' ? 'var(--text)' : 'transparent',
-            color: activeCategory === 'all' ? 'white' : 'var(--text-muted)', border: 'none', borderRadius: '20px', fontWeight: 600, cursor: 'pointer'
-          }}
+      }
+      hero={
+        <HeroCard
+          eyebrow={`${activeUser === 'andreas' ? "Andreas's" : "Julie's"} bucket list`}
+          title={`${stats.done} / ${stats.total}`}
+          meta={`${pct}% done · ${stats.total} experiences across ${currentCategories.length} categories`}
         >
-          All
-        </button>
-        {currentCategories.map(c => (
-          <button
-            key={c.id}
-            type="button"
-            aria-pressed={activeCategory === c.id}
-            aria-label={`Filter by ${c.name}`}
-            onClick={() => setActiveCategory(c.id)}
-            style={{
-              padding: '8px 16px', minHeight: 44, background: activeCategory === c.id ? c.color : 'transparent',
-              color: activeCategory === c.id ? 'white' : 'var(--text-muted)', border: 'none', borderRadius: '20px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap'
-            }}
-          >
-            <span aria-hidden="true">{c.icon}</span> {c.name}
-          </button>
-        ))}
-      </div>
-
-      <div style={{padding: '20px', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', background: 'var(--bg)', borderBottom: '1px solid var(--border)'}}>
-         <span style={{color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 600}}>Difficulty:</span>
+          <div className="usage-bar" style={{ marginTop: 2 }} aria-hidden="true">
+            <div className="usage-bar-fill" style={{ width: `${pct}%`, background: 'var(--accent-bucket)' }} />
+          </div>
+          <div role="tablist" aria-label="Choose whose bucket list to view" style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+            {['andreas', 'julie'].map((u) => (
+              <ScopePill
+                key={u}
+                on={activeUser === u}
+                onClick={() => setActiveUser(u)}
+                role="tab"
+                aria-selected={activeUser === u}
+              >
+                {u === 'andreas' ? 'Andreas' : 'Julie'}
+              </ScopePill>
+            ))}
+          </div>
+        </HeroCard>
+      }
+      action={{ label: 'Add item', onClick: () => setShowAddModal(true) }}
+    >
+      <div role="group" aria-label="Filter by difficulty" style={{display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', marginBottom: 16}}>
          {difficulties.map(d => (
            <button
              key={d}
@@ -205,25 +164,18 @@ const BucketList = () => {
              aria-pressed={difficultyFilter === d}
              aria-label={`Filter by ${d} difficulty`}
              onClick={() => setDifficultyFilter(d)}
-             style={{
-               padding: '6px 12px', minHeight: 36, borderRadius: '12px', border: '1px solid var(--border)', cursor: 'pointer',
-               background: difficultyFilter === d ? 'var(--primary)' : 'var(--card)', color: difficultyFilter === d ? 'white' : 'var(--text-muted)',
-               fontSize: '0.85rem', fontWeight: 600
-             }}
+             className="ghost-pill sm"
+             style={difficultyFilter === d
+               ? { background: 'var(--ink)', color: '#fff', borderColor: 'var(--ink)' }
+               : undefined}
            >{d}</button>
          ))}
-         <label style={{marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '0.9rem'}}>
+         <label style={{marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '0.85rem'}}>
            <input type="checkbox" checked={hideDone} onChange={(e) => setHideDone(e.target.checked)} /> Hide done
          </label>
-         <button 
-           onClick={() => setShowAddModal(true)}
-           style={{background: 'var(--success)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', marginLeft: '10px'}}
-         >
-           + Add New
-         </button>
       </div>
 
-      <div style={{padding: '20px'}}>
+      <div>
         {loading ? (
           <div style={{textAlign: 'center', padding: '40px', color: 'var(--text-muted)'}}>Loading list...</div>
         ) : (
@@ -237,7 +189,8 @@ const BucketList = () => {
             return (
               <div key={cat.id} style={{marginBottom: '40px'}}>
                 <h2 className="heading-serif" style={{fontSize: '1.8rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px'}}>
-                  <span>{cat.icon}</span> {cat.name}
+                  <span aria-hidden="true" style={{ width: 8, height: 8, borderRadius: '50%', background: cat.color || 'var(--accent-bucket)' }} />
+                  {cat.name}
                 </h2>
                 <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
                   {catItems.map((item) => (
@@ -266,13 +219,13 @@ const BucketList = () => {
                         type="button"
                         aria-label={`Remove "${item.title}"`}
                         onClick={() => removeItem(item.id)}
-                        style={{background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1.2rem', opacity: 0.3, alignSelf: 'flex-start', padding: 8, minWidth: 36, minHeight: 36}}
+                        style={{background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1.3rem', color: 'var(--text-muted)', opacity: 0.4, alignSelf: 'flex-start', padding: 8, minWidth: 36, minHeight: 36}}
                         onMouseOver={(e) => e.currentTarget.style.opacity = '1'}
-                        onMouseOut={(e) => e.currentTarget.style.opacity = '0.3'}
+                        onMouseOut={(e) => e.currentTarget.style.opacity = '0.4'}
                         onFocus={(e) => e.currentTarget.style.opacity = '1'}
-                        onBlur={(e) => e.currentTarget.style.opacity = '0.3'}
+                        onBlur={(e) => e.currentTarget.style.opacity = '0.4'}
                       >
-                        <span aria-hidden="true">🗑️</span>
+                        <span aria-hidden="true">×</span>
                       </button>
                     </div>
                   ))}
@@ -313,7 +266,7 @@ const BucketList = () => {
                   style={{width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)'}}
                 >
                   <option value="">Select Category</option>
-                  {currentCategories.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
+                  {currentCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div style={{display: 'flex', gap: '15px'}}>
@@ -359,8 +312,7 @@ const BucketList = () => {
         </div>
       )}
 
-      <TabBar />
-    </div>
+    </AppShellV3>
   );
 };
 

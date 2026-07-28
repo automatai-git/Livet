@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../services/supabase';
-import AppShell from '../components/AppShell';
+import AppShellV3 from '../components/AppShellV3';
 
 // The long-term milestone record. The weekly life tree that used to sit
 // above this feed lives on the Life tab now (/life) — this page is reached
@@ -61,7 +61,7 @@ const Timeline = () => {
   };
 
   return (
-    <AppShell title="Milestones" accent="var(--accent-timeline)" back="/life">
+    <AppShellV3 app="life" title="Milestones" back="/life">
       <section aria-label="Milestone statistics" className="surface-card milestone-stats">
         <div>
           <div className="milestone-stat-num" aria-label={`${stats.past} past milestones`}>{stats.past}</div>
@@ -119,7 +119,7 @@ const Timeline = () => {
           </div>
         )}
       </div>
-    </AppShell>
+    </AppShellV3>
   );
 };
 
