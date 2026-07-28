@@ -7,22 +7,16 @@ import AppShell from '../components/AppShell';
 const MenuPlanner = () => {
   const [activeTab, setActiveTab] = useState('weekly'); // 'weekly' or 'database'
   const [databaseMeals, setDatabaseMeals] = useState([]);
-  const [dbLoading, setDbLoading] = useState(true);
 
-  // Fetch all meals so they can be passed to the weekly menu dropdowns
-  // and we refresh this list if needed
+  // Fetch all meals so they can be passed to the weekly menu dropdowns;
+  // re-fetch on tab switch so edits in the database tab show up in weekly.
   useEffect(() => {
-    fetchDatabaseMeals();
+    let cancelled = false;
+    supabase.from('meals').select('*').order('name').then(({ data, error }) => {
+      if (!cancelled && !error && data) setDatabaseMeals(data);
+    });
+    return () => { cancelled = true; };
   }, [activeTab]);
-
-  const fetchDatabaseMeals = async () => {
-    setDbLoading(true);
-    const { data, error } = await supabase.from('meals').select('*').order('name');
-    if (!error && data) {
-      setDatabaseMeals(data);
-    }
-    setDbLoading(false);
-  };
 
   const tabBtn = (id, label) => (
     <button

@@ -21,8 +21,11 @@ const TripDetail = () => {
   const navigate = useNavigate();
 
   const [trip, setTrip] = useState(null);
-  const [loadingTrip, setLoadingTrip] = useState(true);
   const [tripError, setTripError] = useState(null);
+  // "Loading" is derived: the loaded data doesn't belong to this tripId yet.
+  // (No synchronous setState in the effect that way.)
+  const [loadedId, setLoadedId] = useState(null);
+  const loadingTrip = loadedId !== tripId;
 
   const [plans, setPlans] = useState([]);
   const [activeTab, setActiveTab] = useState('overview');
@@ -32,22 +35,20 @@ const TripDetail = () => {
   // Load the trip row + plans on mount or when tripId changes.
   useEffect(() => {
     let cancelled = false;
-    setLoadingTrip(true);
-    setTripError(null);
     Promise.all([
       travelService.getTrip(tripId),
       travelService.listPlans(tripId),
     ]).then(([t, ps]) => {
       if (cancelled) return;
-      if (!t) setTripError('not-found');
+      setTripError(t ? null : 'not-found');
       setTrip(t);
       setPlans(ps);
-      setLoadingTrip(false);
+      setLoadedId(tripId);
     }).catch((err) => {
       if (cancelled) return;
       console.error(err);
       setTripError(err.message || 'load-failed');
-      setLoadingTrip(false);
+      setLoadedId(tripId);
     });
     return () => { cancelled = true; };
   }, [tripId]);
@@ -58,12 +59,8 @@ const TripDetail = () => {
   );
   const { meta, islands = [], experiences = [], checklist = [] } = destination || {};
 
-  // When status changes, keep activeTab in sync with what's valid.
-  useEffect(() => {
-    if (!trip) return;
-    const valid = VALID_TABS[trip.status] ?? VALID_TABS.planning;
-    if (!valid.includes(activeTab)) setActiveTab(valid[0]);
-  }, [trip?.status]); // eslint-disable-line react-hooks/exhaustive-deps
+  // The rendered tab is clamped to what's valid for the trip's status —
+  // derived at render time instead of synced with an effect.
 
   // --- Mutations ---
   const setStatus = async (newStatus) => {
@@ -125,12 +122,10 @@ const TripDetail = () => {
     } catch (e) { console.error(e); }
   };
 
-  // --- Derived ---
-  const plannedExperiences = useMemo(() => plans
+  // --- Derived --- (plain computation; React Compiler memoizes renders)
+  const plannedExperiences = plans
     .filter((p) => !String(p.experience_id).startsWith('chk-'))
-    .map((p) => ({ ...p, xp: experiences.find((e) => e.id === p.experience_id) || {} })),
-    [plans, experiences]
-  );
+    .map((p) => ({ ...p, xp: experiences.find((e) => e.id === p.experience_id) || {} }));
 
   const handleMapSelect = (islandId) => {
     setActiveIsland(islandId);
@@ -171,6 +166,7 @@ const TripDetail = () => {
   }
 
   const validTabs = VALID_TABS[trip.status] ?? VALID_TABS.planning;
+  const currentTab = validTabs.includes(activeTab) ? activeTab : validTabs[0];
 
   return (
     <div style={{ minHeight: '100vh', paddingBottom: 40, background: 'var(--bg)', '--app-accent': 'var(--accent-travel)' }}>
@@ -231,12 +227,12 @@ const TripDetail = () => {
             <button
               key={tab}
               role="tab"
-              aria-selected={activeTab === tab}
+              aria-selected={currentTab === tab}
               onClick={() => setActiveTab(tab)}
               style={{
                 padding: '8px 16px', minHeight: 44, borderRadius: 20, border: 'none',
-                background: activeTab === tab ? 'var(--primary)' : 'var(--card)',
-                color: activeTab === tab ? 'white' : 'var(--text-muted)',
+                background: currentTab === tab ? 'var(--primary)' : 'var(--card)',
+                color: currentTab === tab ? 'white' : 'var(--text-muted)',
                 fontWeight: 600, fontSize: '0.85rem', whiteSpace: 'nowrap', cursor: 'pointer', transition: 'all 0.2s'
               }}
             >
@@ -253,7 +249,7 @@ const TripDetail = () => {
       <div style={{ padding: 20, maxWidth: 600, margin: '0 auto' }}>
         {trip.status === 'planning' && (
           <div className="fade-in">
-            {activeTab === 'overview' && (
+            {currentTab === 'overview' && (
               <>
                 <div style={{ marginBottom: 30, padding: '0 10px' }}>
                   <h1 className="heading-serif" style={{ fontSize: '2.4rem', marginBottom: 12, color: 'var(--primary)' }}>{meta.name}</h1>
@@ -324,11 +320,11 @@ const TripDetail = () => {
               </>
             )}
 
-            {activeTab === 'checklist' && (
+            {currentTab === 'checklist' && (
               <ChecklistSection priorities={['CRITICAL', 'HIGH']} checklist={checklist} plans={plans} onToggle={toggleChecklistStatus} />
             )}
 
-            {activeTab === 'experiences' && (
+            {currentTab === 'experiences' && (
               <ExperiencesSection
                 islands={islands}
                 experiences={experiences}
@@ -343,7 +339,7 @@ const TripDetail = () => {
 
         {trip.status === 'booked' && (
           <div className="fade-in">
-            {activeTab === 'mytrip' && (
+            {currentTab === 'mytrip' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
                 {plannedExperiences.length === 0 ? (
                   <EmptyState title="Nothing booked yet" hint="Switch to Planning to build your trip." />
@@ -365,7 +361,7 @@ const TripDetail = () => {
                 ))}
               </div>
             )}
-            {activeTab === 'checklist' && (
+            {currentTab === 'checklist' && (
               <ChecklistSection priorities={['MEDIUM', 'FLEXIBLE']} checklist={checklist} plans={plans} onToggle={toggleChecklistStatus} />
             )}
           </div>
@@ -373,7 +369,7 @@ const TripDetail = () => {
 
         {trip.status === 'ontrip' && (
           <div className="fade-in">
-            {activeTab === 'itinerary' && (
+            {currentTab === 'itinerary' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 30 }}>
                 {islands.map((isl) => {
                   const islExp = plannedExperiences.filter((p) => p.xp.islandId === isl.id);
@@ -416,7 +412,7 @@ const TripDetail = () => {
                 })}
               </div>
             )}
-            {activeTab === 'habits' && (
+            {currentTab === 'habits' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 <h3 style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--primary)', letterSpacing: 1, paddingLeft: 5 }}>TRIP HABITS & DISCIPLINE</h3>
                 {checklist.filter((c) => c.priority === 'ON-TRIP').map((chk) => (

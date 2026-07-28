@@ -13,17 +13,16 @@ const Timeline = () => {
   // IntersectionObserver for scroll animations
   const observer = useRef(null);
 
-  const fetchTimeline = async () => {
-    const { data, error } = await supabase.from('timeline_events').select('*');
-    if (!error && data) {
-      const sorted = data.sort((a, b) => new Date(b.when_date) - new Date(a.when_date));
-      setMilestones(sorted);
-    }
-    setLoading(false);
-  };
-
   useEffect(() => {
-    fetchTimeline();
+    let cancelled = false;
+    supabase.from('timeline_events').select('*').then(({ data, error }) => {
+      if (cancelled) return;
+      if (!error && data) {
+        const sorted = data.sort((a, b) => new Date(b.when_date) - new Date(a.when_date));
+        setMilestones(sorted);
+      }
+      setLoading(false);
+    });
 
     observer.current = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
@@ -34,6 +33,7 @@ const Timeline = () => {
     }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
 
     return () => {
+      cancelled = true;
       if (observer.current) observer.current.disconnect();
     };
   }, []);

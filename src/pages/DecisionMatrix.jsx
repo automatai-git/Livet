@@ -14,40 +14,45 @@ const DecisionMatrix = () => {
     const [matrices, setMatrices] = useState([]);
     const [activeMatrix, setActiveMatrix] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [saveState, setSaveState] = useState('idle'); // 'idle' | 'pending' | 'saving' | 'error'
+    const [saveState, setSaveState] = useState('idle'); // 'idle' | 'saving' | 'error' — "pending" is derived from `dirty`
     const [lastSavedAt, setLastSavedAt] = useState(null);
     const [showNewModal, setShowNewModal] = useState(false);
     const [newTitle, setNewTitle] = useState('');
 
     // The snapshot of `activeMatrix` as it was last persisted. Compared
     // against the current state to derive `dirty`.
-    const savedSnapshotRef = useRef(null);
+    const [savedSnapshot, setSavedSnapshot] = useState(null);
     const autosaveTimerRef = useRef(null);
+    // Latest values for the debounced save callback — mirrored in an effect
+    // (refs must not be written or read during render).
     const activeMatrixRef = useRef(null);
-    activeMatrixRef.current = activeMatrix;
+    const savedSnapshotRef = useRef(null);
+    useEffect(() => {
+        activeMatrixRef.current = activeMatrix;
+        savedSnapshotRef.current = savedSnapshot;
+    });
 
-    const dirty = activeMatrix != null && snapshotOf(activeMatrix) !== savedSnapshotRef.current;
+    const dirty = activeMatrix != null && snapshotOf(activeMatrix) !== savedSnapshot;
 
     useEffect(() => {
-        fetchMatrices();
-    }, []);
-
-    const fetchMatrices = async () => {
-        setLoading(true);
-        const { data, error } = await supabase
+        let cancelled = false;
+        supabase
             .from('decision_matrices')
             .select('*')
-            .order('updated_at', { ascending: false });
-
-        if (!error && data) {
-            setMatrices(data);
-            if (data.length > 0 && !activeMatrix) {
-                setActiveMatrix(data[0]);
-                savedSnapshotRef.current = snapshotOf(data[0]);
-            }
-        }
-        setLoading(false);
-    };
+            .order('updated_at', { ascending: false })
+            .then(({ data, error }) => {
+                if (cancelled) return;
+                if (!error && data) {
+                    setMatrices(data);
+                    if (data.length > 0 && !activeMatrixRef.current) {
+                        setActiveMatrix(data[0]);
+                        setSavedSnapshot(snapshotOf(data[0]));
+                    }
+                }
+                setLoading(false);
+            });
+        return () => { cancelled = true; };
+    }, []);
 
     const createMatrix = async () => {
         if (!newTitle.trim()) return;
@@ -78,7 +83,7 @@ const DecisionMatrix = () => {
         if (!error && data) {
             setMatrices([data, ...matrices]);
             setActiveMatrix(data);
-            savedSnapshotRef.current = snapshotOf(data);
+            setSavedSnapshot(snapshotOf(data));
             setShowNewModal(false);
             setNewTitle('');
         }
@@ -107,23 +112,20 @@ const DecisionMatrix = () => {
             setSaveState('error');
             return;
         }
-        savedSnapshotRef.current = pendingSnapshot;
+        setSavedSnapshot(pendingSnapshot);
         setLastSavedAt(Date.now());
         setSaveState('idle');
         setMatrices((prev) => prev.map(m => m.id === current.id ? current : m));
     }, []);
 
-    // Debounced autosave: every edit schedules a save 1.5s later.
+    // Debounced autosave: every edit re-runs this (activeMatrix changed),
+    // clearing the previous timer and scheduling a save 1.5s later.
     useEffect(() => {
-        if (!activeMatrix) return;
-        if (snapshotOf(activeMatrix) === savedSnapshotRef.current) return;
-        setSaveState('pending');
-        if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
-        autosaveTimerRef.current = setTimeout(() => { saveMatrix(); }, AUTOSAVE_MS);
-        return () => {
-            if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
-        };
-    }, [activeMatrix, saveMatrix]);
+        if (!dirty) return undefined;
+        const id = setTimeout(() => { saveMatrix(); }, AUTOSAVE_MS);
+        autosaveTimerRef.current = id;
+        return () => clearTimeout(id);
+    }, [activeMatrix, dirty, saveMatrix]);
 
     // Cmd/Ctrl+S forces an immediate flush.
     useEffect(() => {
@@ -155,7 +157,7 @@ const DecisionMatrix = () => {
             saveMatrix();
         }
         setActiveMatrix(m);
-        savedSnapshotRef.current = snapshotOf(m);
+        setSavedSnapshot(snapshotOf(m));
         setSaveState('idle');
     };
 
@@ -173,7 +175,7 @@ const DecisionMatrix = () => {
             if (activeMatrix?.id === id) {
                 const next = updated[0] || null;
                 setActiveMatrix(next);
-                savedSnapshotRef.current = snapshotOf(next);
+                setSavedSnapshot(snapshotOf(next));
                 setSaveState('idle');
             }
         }

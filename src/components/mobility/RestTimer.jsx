@@ -8,15 +8,11 @@ const RestTimer = ({
   label = 'Rest',
   onComplete,
 }) => {
+  // NOTE: the timer resets via remount — the caller keys this component by
+  // exercise/set context (see FocusMode), so no prop→state sync effect.
   const [seconds, setSeconds] = useState(presetSeconds);
   const [running, setRunning] = useState(autoStart);
   const completedRef = useRef(false);
-
-  useEffect(() => {
-    setSeconds(presetSeconds);
-    setRunning(autoStart);
-    completedRef.current = false;
-  }, [presetSeconds, autoStart]);
 
   useEffect(() => {
     if (!running) return undefined;

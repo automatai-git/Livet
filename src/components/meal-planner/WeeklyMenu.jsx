@@ -12,23 +12,24 @@ const WeeklyMenu = ({ databaseMeals }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [shoppingPicker, setShoppingPicker] = useState(null); // { selected: Set<dayName> }
 
-  useEffect(() => { fetchWeeklyMenu(); }, []);
-
-  const fetchWeeklyMenu = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
+  useEffect(() => {
+    let cancelled = false;
+    supabase
       .from('weekly_menu')
       .select('id, day_of_week, meal_type, meal_id, meals ( id, name, emoji, ingredients )')
-      .eq('meal_type', 'Dinner');
-
-    if (error) console.error('Error fetching weekly menu', error);
-    else if (data) {
-      const menuMap = {};
-      data.forEach(item => { menuMap[item.day_of_week] = item; });
-      setWeeklyMenu(menuMap);
-    }
-    setLoading(false);
-  };
+      .eq('meal_type', 'Dinner')
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) console.error('Error fetching weekly menu', error);
+        else if (data) {
+          const menuMap = {};
+          data.forEach(item => { menuMap[item.day_of_week] = item; });
+          setWeeklyMenu(menuMap);
+        }
+        setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   const handleAssignMeal = async (day, mealId) => {
     const existing = weeklyMenu[day];

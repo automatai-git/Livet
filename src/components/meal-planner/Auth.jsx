@@ -12,7 +12,7 @@ const Auth = ({ onLogin }) => {
     setLoading(true);
 
     if (isSignUp) {
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      const { error } = await supabase.auth.signUp({ email, password });
       if (error) alert(error.message);
       else {
         alert('Check your email for the login link!');

@@ -11,7 +11,8 @@ const BucketList = () => {
   const [difficultyFilter, setDifficultyFilter] = useState('All');
   const [hideDone, setHideDone] = useState(false);
   const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loadedUser, setLoadedUser] = useState(null);
+  const loading = loadedUser !== activeUser;
   const [showAddModal, setShowAddModal] = useState(false);
   const [newItem, setNewItem] = useState({ title: '', difficulty: 'Medium', description: '', category_id: '' });
   const modalTitleId = useId();
@@ -20,8 +21,21 @@ const BucketList = () => {
   const fieldDifficultyId = useId();
   const fieldDescriptionId = useId();
 
+  // "Loading" = the fetched list doesn't belong to the selected user yet —
+  // derived rather than set synchronously, so switching users re-loads.
   useEffect(() => {
-    fetchItems();
+    let cancelled = false;
+    supabase
+      .from('bucket_list_items')
+      .select('*')
+      .eq('user_label', activeUser)
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (!error && data) setItems(data);
+        setLoadedUser(activeUser);
+      });
+    return () => { cancelled = true; };
   }, [activeUser]);
 
   // ESC closes the add-item modal.
@@ -31,20 +45,6 @@ const BucketList = () => {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [showAddModal]);
-
-  const fetchItems = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('bucket_list_items')
-      .select('*')
-      .eq('user_label', activeUser)
-      .order('created_at', { ascending: false });
-    
-    if (!error && data) {
-      setItems(data);
-    }
-    setLoading(false);
-  };
 
   const toggleItem = async (itemId, currentStatus) => {
     const { error } = await supabase
