@@ -2442,3 +2442,327 @@ body.screen-dark::before {
     justify-content: flex-end;
     max-width: 40%;
 }
+
+/* ---------- Menu Planner v3 (meal editing Â· staples Â· shopping sheet) ----------
+   Everything here follows the shared v3 anatomy: ivory surface cards, hairline
+   borders, ink for the one primary action, accent demoted to small marks. */
+
+/* Buttons wearing the shared pill classes need the browser chrome removed. */
+.ink-pill { border: none; font-family: inherit; cursor: pointer; }
+.ink-pill:disabled { opacity: 0.45; cursor: default; }
+.ghost-pill { font-family: inherit; }
+.ghost-pill:disabled { opacity: 0.45; cursor: default; }
+.ghost-pill.armed { border-color: var(--ink); color: var(--ink); background: rgba(27, 59, 47, 0.06); }
+.ghost-pill.danger { border-color: #DCC6C2; color: var(--danger); }
+.ghost-pill.danger.armed { background: var(--danger-bg); border-color: var(--danger); }
+
+.meal-notice {
+    margin: 10px 0 0;
+    padding: 9px 12px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    line-height: 1.45;
+}
+.meal-notice.error { background: var(--danger-bg); color: var(--danger); }
+.meal-notice.ok { background: var(--success-bg); color: var(--primary); }
+
+/* --- Meal database: rows are the tap target, the form is one card --- */
+.meal-list-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    text-align: left;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 10px 12px;
+    min-height: 60px;
+    font: inherit;
+    color: var(--text);
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s;
+}
+.meal-list-row:active { transform: scale(0.99); }
+.meal-list-row.editing { border-color: var(--app-accent, var(--ink)); }
+.meal-list-row .icon-chip { background: var(--app-tint-bg, rgba(27, 59, 47, 0.07)); }
+.meal-list-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+.meal-form { padding: 18px; margin-bottom: 16px; display: grid; gap: 12px; }
+.meal-form-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+.meal-form-head h3 { font-size: 1.15rem; }
+.meal-form-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+.meal-form-grid > .meal-field { flex: 1; min-width: 110px; }
+.meal-form-grid > .meal-field.emoji { flex: 0 0 64px; min-width: 64px; }
+.meal-form-grid > .meal-field.grow { flex: 3; min-width: 160px; }
+
+.meal-field { display: flex; flex-direction: column; gap: 5px; }
+.meal-field > span {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.meal-field input,
+.meal-field select,
+.meal-field textarea {
+    width: 100%;
+    padding: 11px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+.meal-field textarea { resize: vertical; line-height: 1.5; }
+.meal-field input:focus,
+.meal-field select:focus,
+.meal-field textarea:focus {
+    outline: none;
+    border-color: var(--app-accent, var(--primary));
+}
+.meal-field-row { display: flex; gap: 8px; align-items: center; }
+.meal-field-row input { flex: 1; min-width: 0; }
+
+.meal-form-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    margin-top: 2px;
+}
+.meal-form-actions .ghost-pill.danger { margin-right: auto; }
+
+/* --- Weekly menu header + drag tray --- */
+.weekly-actions { display: flex; gap: 8px; align-items: center; }
+.meal-tray {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 16px;
+    scrollbar-width: none;
+}
+.meal-tray::-webkit-scrollbar { display: none; }
+.meal-tray-chip {
+    padding: 8px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    cursor: grab;
+    white-space: nowrap;
+    font-weight: 600;
+    font-size: 0.82rem;
+    flex-shrink: 0;
+}
+
+/* --- Household staples: the list under the week --- */
+.staples-card { padding: 18px; margin-top: 20px; }
+.staples-card .section-head { margin: 0 0 6px; }
+.staples-count {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--app-tint-bg, rgba(27, 59, 47, 0.07));
+    color: var(--app-tint-fg, var(--primary-light));
+}
+.staples-hint { line-height: 1.5; margin: 0 0 12px; }
+.staples-add { display: flex; gap: 8px; margin-bottom: 12px; }
+.staples-add input {
+    flex: 1;
+    min-width: 0;
+    padding: 11px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+.staples-add input:focus { outline: none; border-color: var(--app-accent, var(--primary)); }
+.staples-empty { display: grid; gap: 8px; }
+.staples-suggestions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.staples-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.staple-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 0;
+    border-bottom: 1px solid var(--divider);
+}
+.staple-row:last-child { border-bottom: none; }
+.staple-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 2px;
+    cursor: pointer;
+}
+.staple-main input[type=checkbox] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--ink);
+    flex-shrink: 0;
+}
+.staple-name {
+    font-size: 0.88rem;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.staple-row.low .staple-name { font-weight: 600; }
+.staple-remove {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: none;
+    color: var(--text-faint);
+    font-size: 0.9rem;
+    cursor: pointer;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.staple-remove:hover { color: var(--danger); background: var(--danger-bg); }
+
+/* --- Shared bottom sheet (meal picker Â· shopping list) --- */
+.menu-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(18, 40, 30, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.menu-sheet {
+    background: var(--bg);
+    width: 100%;
+    max-width: 460px;
+    max-height: min(80vh, 640px);
+    border-radius: var(--radius);
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: var(--float-shadow);
+}
+.menu-sheet-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+.menu-sheet-head h3 { font-size: 1.2rem; }
+.sheet-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.sheet-search {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+.sheet-search:focus { outline: none; border-color: var(--app-accent, var(--primary)); }
+.sheet-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.sheet-toolbar { display: flex; justify-content: space-between; }
+.sheet-toolbar button {
+    background: none;
+    border: none;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    padding: 2px;
+}
+.sheet-toolbar button.muted { color: var(--text-muted); }
+.sheet-option,
+.sheet-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    text-align: left;
+    padding: 10px 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font: inherit;
+    color: var(--text);
+    cursor: pointer;
+}
+.sheet-option-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.sheet-check.disabled { opacity: 0.5; cursor: default; }
+.sheet-check input[type=checkbox] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--ink);
+    flex-shrink: 0;
+}
+.sheet-option .icon-chip { background: var(--app-tint-bg, rgba(27, 59, 47, 0.07)); }
+.sheet-cta { width: 100%; }
+.sheet-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.sheet-actions .btn-primary { margin-left: auto; }
+
+/* Aisle-grouped preview of the list that goes to the clipboard. */
+.shopping-preview { gap: 14px; }
+.shopping-section .eyebrow { display: block; margin-bottom: 4px; }
+.shopping-section ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 2px;
+}
+.shopping-section li {
+    font-size: 0.86rem;
+    padding: 4px 0 4px 16px;
+    position: relative;
+}
+.shopping-section li::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: 10px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--app-tint-fg, var(--text-faint));
+    opacity: 0.5;
+}
