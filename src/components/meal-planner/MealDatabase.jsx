@@ -1,171 +1,322 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { supabase } from '../../services/supabase';
+import AppIcon from '../AppIcon';
+import { mealToForm, formToPayload, parseIngredients, parseMacroSummary } from '../../lib/meals';
 
-const MealDatabase = () => {
-  const [meals, setMeals] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [isAddingMode, setIsAddingMode] = useState(false);
-  const [newMeal, setNewMeal] = useState({
-    name: '', category: 'Dinner', time_to_cook: '', emoji: '🍲',
-    ingredients: '', macros: '', portions: 2, cuisine: ''
-  });
+const CATEGORIES = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Dessert'];
+const BLANK_FORM = mealToForm({});
 
-  useEffect(() => {
-    fetchMeals();
-  }, []);
+// The meal collection: browse, add, and edit. A row is the tap target —
+// tapping opens the same form the "+ New meal" button does, pre-filled from
+// the row, so editing and adding are one surface rather than two.
+//
+// Props: meals, loading, onSaved(meal), onDeleted(id)
+const MealDatabase = ({ meals = [], loading = false, onSaved, onDeleted }) => {
+  const [editingId, setEditingId] = useState(null); // meal id, 'new', or null
+  const [form, setForm] = useState(BLANK_FORM);
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState(null); // { tone: 'error' | 'ok', text }
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const fetchMeals = async () => {
-    setLoading(true);
-    // Fetch from supabase logic
-    const { data, error } = await supabase.from('meals').select('*');
-    if (error) {
-      console.error('Error fetching meals', error);
-    } else {
-      setMeals(data || []);
-    }
-    setLoading(false);
+  const setField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  const closeForm = () => {
+    setEditingId(null);
+    setConfirmDelete(false);
+    setNotice(null);
   };
 
-  const handleAddMeal = async (e) => {
+  const openNew = () => {
+    setForm(BLANK_FORM);
+    setEditingId('new');
+    setConfirmDelete(false);
+    setNotice(null);
+  };
+
+  const openEdit = (meal) => {
+    setForm(mealToForm(meal));
+    setEditingId(meal.id);
+    setConfirmDelete(false);
+    setNotice(null);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const payload = {
-      name: newMeal.name,
-      category: newMeal.category,
-      time_to_cook: newMeal.time_to_cook,
-      emoji: newMeal.emoji,
-      // Store ingredients as JSON array splitting by comma or line breaks for simplicity right now
-      ingredients: JSON.stringify(newMeal.ingredients.split(',').map(i => i.trim()).filter(Boolean)),
-      macros: JSON.stringify({ summary: newMeal.macros }),
-      portions: parseInt(newMeal.portions) || 2,
-      cuisine: newMeal.cuisine
-    };
-
-    const { data, error } = await supabase.from('meals').insert([payload]).select();
-    if (error) {
-      alert('Error adding meal: ' + error.message);
-    } else if (data) {
-      setMeals([...meals, ...data]);
-      setIsAddingMode(false);
-      setNewMeal({ name: '', category: 'Dinner', time_to_cook: '', emoji: '🍲', ingredients: '', macros: '', portions: 2, cuisine: '' });
+    const payload = formToPayload(form);
+    if (!payload.name) {
+      setNotice({ tone: 'error', text: 'A meal needs a name.' });
+      return;
     }
+    setSaving(true);
+    setNotice(null);
+
+    const query = editingId === 'new'
+      ? supabase.from('meals').insert([payload]).select()
+      : supabase.from('meals').update(payload).eq('id', editingId).select();
+
+    const { data, error } = await query;
+    setSaving(false);
+
+    if (error) {
+      setNotice({ tone: 'error', text: `Could not save: ${error.message}` });
+      return;
+    }
+    // A policy that refuses the write returns success with nothing changed —
+    // an empty result is the only signal, so treat it as the failure it is.
+    if (!data || data.length === 0) {
+      setNotice({
+        tone: 'error',
+        text: 'The database accepted the request but changed nothing — check the table’s row-level security policies.',
+      });
+      return;
+    }
+    onSaved?.(data[0]);
+    closeForm();
   };
 
+  const handleDelete = async () => {
+    // Two-tap confirm rather than a browser dialog: the first tap arms it.
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    setSaving(true);
+    // .select() so a delete blocked by row-level security is visible: the
+    // request succeeds with an empty result rather than raising an error.
+    const { data, error } = await supabase.from('meals').delete().eq('id', editingId).select();
+    setSaving(false);
+    setConfirmDelete(false);
+    if (error) {
+      setNotice({ tone: 'error', text: `Could not delete: ${error.message}` });
+      return;
+    }
+    if (!data || data.length === 0) {
+      setNotice({
+        tone: 'error',
+        text: 'Nothing was deleted — the meals table has no delete policy for your account.',
+      });
+      return;
+    }
+    onDeleted?.(editingId);
+    closeForm();
+  };
+
+  // Ballpark macros from the ingredient list. Needs VITE_GEMINI_API_KEY in
+  // .env.local — the key is deliberately not part of the Pages build, so
+  // this is a local-only convenience (see README note in the repo).
   const calculateMacros = async () => {
-    if (!newMeal.ingredients) {
-      alert("Please enter ingredients first!");
+    const ingredients = form.ingredients.trim();
+    if (!ingredients) {
+      setNotice({ tone: 'error', text: 'Enter the ingredients first.' });
       return;
     }
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     if (!apiKey) {
-      alert("Please add VITE_GEMINI_API_KEY to your .env.local file to use the AI macro calculator.");
+      setNotice({
+        tone: 'error',
+        text: 'No VITE_GEMINI_API_KEY in .env.local — type the macros in by hand.',
+      });
       return;
     }
+    const previous = form.macros;
+    setField('macros', 'Calculating…');
+    setNotice(null);
     try {
-      setNewMeal(prev => ({...prev, macros: 'Calculating...'}));
-      
-      const prompt = `Analyze these ingredients for ${newMeal.portions} portions: ${newMeal.ingredients}. 
-      Give me a highly concise ballpark total macro summary for ONE portion in this format: "xxx kcal | xxg P | xxg C | xxg F". Do not include any other text or markdown.`;
+      const prompt =
+        `Ingredients for ${form.portions} portions: ${ingredients}. ` +
+        'Reply with ONLY one line, in exactly this format, for a SINGLE portion: ' +
+        '000 kcal | 00g P | 00g C | 00g F';
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { maxOutputTokens: 50 }
-        })
-      });
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          // The budget covers the model's reasoning tokens as well as the
+          // answer; too small a cap truncates the line away entirely.
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { maxOutputTokens: 2000 },
+          }),
+        }
+      );
 
       const data = await response.json();
       if (data.error) throw new Error(data.error.message);
-      
-      const resultText = data.candidates[0].content.parts[0].text.trim();
-      setNewMeal(prev => ({...prev, macros: resultText}));
-    } catch (e) {
-      console.error(e);
-      alert("Macro calculation failed: " + e.message);
-      setNewMeal(prev => ({...prev, macros: ''}));
+
+      const text = (data.candidates?.[0]?.content?.parts ?? [])
+        .map((p) => p?.text ?? '')
+        .join('')
+        .trim();
+      if (!text) throw new Error('The model returned no macro line.');
+      setField('macros', text.split('\n').filter(Boolean).pop().trim());
+    } catch (err) {
+      setField('macros', previous);
+      setNotice({ tone: 'error', text: `Macro estimate failed: ${err.message}` });
     }
   };
 
+  const sorted = useMemo(
+    () => [...meals].sort((a, b) =>
+      String(a.name ?? '').localeCompare(String(b.name ?? ''), undefined, { sensitivity: 'base' })
+    ),
+    [meals]
+  );
+
+  const isNew = editingId === 'new';
+  const editing = editingId !== null;
+
   return (
-    <div style={{ marginTop: '20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h2 className="heading-serif" style={{ fontSize: '1.5rem' }}>Meal Database</h2>
-        <button 
-          onClick={() => setIsAddingMode(!isAddingMode)}
-          style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
-        >
-          {isAddingMode ? 'Cancel' : '+ Add Meal'}
-        </button>
+    <div className="meal-db">
+      <div className="section-head">
+        <span className="eyebrow">
+          {meals.length} meal{meals.length === 1 ? '' : 's'} saved
+        </span>
+        {!editing && (
+          <button type="button" className="ink-pill sm" onClick={openNew}>+ New meal</button>
+        )}
       </div>
 
-      {isAddingMode && (
-        <form onSubmit={handleAddMeal} style={{ background: 'var(--card)', padding: '20px', borderRadius: '12px', marginBottom: '20px' }}>
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-            <div style={{ flex: '0 0 60px' }}>
-              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '5px' }}>Emoji</label>
-              <input required value={newMeal.emoji} onChange={e => setNewMeal({...newMeal, emoji: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '5px' }}>Meal Name</label>
-              <input required value={newMeal.name} onChange={e => setNewMeal({...newMeal, name: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }} />
-            </div>
+      {editing && (
+        <form className="surface-card meal-form" onSubmit={handleSubmit}>
+          <div className="meal-form-head">
+            <h3 className="heading-serif">{isNew ? 'New meal' : 'Edit meal'}</h3>
+            <button type="button" className="ghost-pill sm" onClick={closeForm}>Cancel</button>
           </div>
-          <div style={{ marginBottom: '10px' }}>
-            <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '5px' }}>Ingredients (comma separated)</label>
-            <textarea required value={newMeal.ingredients} onChange={e => setNewMeal({...newMeal, ingredients: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', minHeight: '60px' }} />
+
+          <div className="meal-form-grid">
+            <label className="meal-field emoji">
+              <span>Emoji</span>
+              <input
+                value={form.emoji}
+                onChange={(e) => setField('emoji', e.target.value)}
+                maxLength={4}
+              />
+            </label>
+            <label className="meal-field grow">
+              <span>Meal name</span>
+              <input
+                required
+                autoFocus
+                value={form.name}
+                onChange={(e) => setField('name', e.target.value)}
+              />
+            </label>
           </div>
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '5px' }}>Portions</label>
-              <input type="number" min="1" value={newMeal.portions} onChange={e => setNewMeal({...newMeal, portions: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '5px' }}>Cuisine</label>
-              <input placeholder="Italian, Mexican..." value={newMeal.cuisine} onChange={e => setNewMeal({...newMeal, cuisine: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }} />
-            </div>
+
+          <label className="meal-field">
+            <span>Ingredients (comma or line separated)</span>
+            <textarea
+              value={form.ingredients}
+              onChange={(e) => setField('ingredients', e.target.value)}
+              rows={3}
+            />
+          </label>
+
+          <div className="meal-form-grid">
+            <label className="meal-field">
+              <span>Category</span>
+              <select value={form.category} onChange={(e) => setField('category', e.target.value)}>
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </label>
+            <label className="meal-field">
+              <span>Portions</span>
+              <input
+                type="number"
+                min="1"
+                value={form.portions}
+                onChange={(e) => setField('portions', e.target.value)}
+              />
+            </label>
+            <label className="meal-field">
+              <span>Cuisine</span>
+              <input
+                placeholder="Italian, Mexican…"
+                value={form.cuisine}
+                onChange={(e) => setField('cuisine', e.target.value)}
+              />
+            </label>
           </div>
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '5px' }}>Time to cook (e.g., 30 mins)</label>
-              <input value={newMeal.time_to_cook} onChange={e => setNewMeal({...newMeal, time_to_cook: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }} />
+
+          <label className="meal-field">
+            <span>Time to cook</span>
+            <input
+              placeholder="30 mins"
+              value={form.time_to_cook}
+              onChange={(e) => setField('time_to_cook', e.target.value)}
+            />
+          </label>
+
+          <label className="meal-field">
+            <span>Macros per portion</span>
+            <div className="meal-field-row">
+              <input
+                placeholder="600 kcal | 35g P | 70g C | 18g F"
+                value={form.macros}
+                onChange={(e) => setField('macros', e.target.value)}
+              />
+              <button type="button" className="ghost-pill sm" onClick={calculateMacros}>
+                Estimate
+              </button>
             </div>
-            <div style={{ flex: 2 }}>
-              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '5px' }}>Macros Summary (per portion)</label>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <input value={newMeal.macros} onChange={e => setNewMeal({...newMeal, macros: e.target.value})} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }} />
-                <button type="button" onClick={calculateMacros} style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', padding: '0 15px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
-                  ✨ Auto-Calc
-                </button>
-              </div>
-            </div>
+          </label>
+
+          {notice && <p className={`meal-notice ${notice.tone}`}>{notice.text}</p>}
+
+          <div className="meal-form-actions">
+            {!isNew && (
+              <button
+                type="button"
+                className={`ghost-pill danger${confirmDelete ? ' armed' : ''}`}
+                onClick={handleDelete}
+                disabled={saving}
+              >
+                {confirmDelete ? 'Tap again to delete' : 'Delete'}
+              </button>
+            )}
+            <button type="submit" className="btn-primary" disabled={saving}>
+              {saving ? 'Saving…' : isNew ? 'Add meal' : 'Save changes'}
+            </button>
           </div>
-          <button type="submit" style={{ background: 'var(--success)', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}>
-            Save Meal
-          </button>
         </form>
       )}
 
       {loading ? (
-        <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>Loading meals...</p>
-      ) : meals.length === 0 ? (
-        <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>No meals found in database.</p>
+        <p className="muted-row">Loading meals…</p>
+      ) : sorted.length === 0 ? (
+        <p className="muted-row">No meals yet — add the first one.</p>
       ) : (
-        <div className="meal-grid">
-          {meals.map(meal => (
-            <div key={meal.id} className="meal-card tight-card">
-              <div className="card-top">
-                <span style={{ fontSize: '2.2rem' }}>{meal.emoji}</span>
-                <span className="cat-badge">{meal.category}</span>
-              </div>
-              <div className="card-name heading-serif">{meal.name}</div>
-              <div className="card-desc" style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '6px' }}>
-                Cook: {meal.time_to_cook || 'N/A'}
-              </div>
-            </div>
-          ))}
+        <div className="row-stack">
+          {sorted.map((meal) => {
+            const ingredients = parseIngredients(meal.ingredients);
+            const macros = parseMacroSummary(meal.macros);
+            return (
+              <button
+                type="button"
+                key={meal.id}
+                className={`meal-list-row${editingId === meal.id ? ' editing' : ''}`}
+                onClick={() => openEdit(meal)}
+              >
+                <span className="icon-chip md" aria-hidden="true">
+                  <span className="chip-emoji">{meal.emoji}</span>
+                </span>
+                <span className="meal-list-body">
+                  <span className="row-title ellipsis">{meal.name}</span>
+                  <span className="row-meta ellipsis">
+                    {[
+                      meal.time_to_cook,
+                      meal.portions ? `${meal.portions} portions` : null,
+                      macros || (ingredients.length
+                        ? `${ingredients.length} ingredient${ingredients.length === 1 ? '' : 's'}`
+                        : null),
+                    ].filter(Boolean).join(' · ') || 'Tap to add details'}
+                  </span>
+                </span>
+                <AppIcon name="chev" size={16} className="row-chev" />
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

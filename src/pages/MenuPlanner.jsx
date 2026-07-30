@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../services/supabase';
 import WeeklyMenu from '../components/meal-planner/WeeklyMenu';
 import MealDatabase from '../components/meal-planner/MealDatabase';
@@ -7,16 +7,35 @@ import AppShellV3, { ScopePill } from '../components/AppShellV3';
 const MenuPlanner = () => {
   const [activeTab, setActiveTab] = useState('weekly'); // 'weekly' or 'database'
   const [databaseMeals, setDatabaseMeals] = useState([]);
+  const [loadingMeals, setLoadingMeals] = useState(true);
 
-  // Fetch all meals so they can be passed to the weekly menu dropdowns;
-  // re-fetch on tab switch so edits in the database tab show up in weekly.
+  // The page owns the meal collection so an edit in the database tab is
+  // reflected in the weekly dropdowns and the shopping list immediately,
+  // without a re-fetch on every tab switch.
   useEffect(() => {
     let cancelled = false;
     supabase.from('meals').select('*').order('name').then(({ data, error }) => {
-      if (!cancelled && !error && data) setDatabaseMeals(data);
+      if (cancelled) return;
+      if (error) console.error('Error fetching meals', error);
+      else if (data) setDatabaseMeals(data);
+      setLoadingMeals(false);
     });
     return () => { cancelled = true; };
-  }, [activeTab]);
+  }, []);
+
+  const handleMealSaved = useCallback((meal) => {
+    if (!meal) return;
+    setDatabaseMeals((prev) => {
+      const without = prev.filter((m) => m.id !== meal.id);
+      return [...without, meal].sort((a, b) =>
+        String(a.name ?? '').localeCompare(String(b.name ?? ''), undefined, { sensitivity: 'base' })
+      );
+    });
+  }, []);
+
+  const handleMealDeleted = useCallback((id) => {
+    setDatabaseMeals((prev) => prev.filter((m) => m.id !== id));
+  }, []);
 
   const tabs = [
     { id: 'weekly', label: 'Weekly menu' },
@@ -48,7 +67,14 @@ const MenuPlanner = () => {
         {activeTab === 'weekly' && <WeeklyMenu databaseMeals={databaseMeals} />}
       </div>
       <div role="tabpanel" id="menu-panel-database" aria-labelledby="menu-tab-database" hidden={activeTab !== 'database'}>
-        {activeTab === 'database' && <MealDatabase />}
+        {activeTab === 'database' && (
+          <MealDatabase
+            meals={databaseMeals}
+            loading={loadingMeals}
+            onSaved={handleMealSaved}
+            onDeleted={handleMealDeleted}
+          />
+        )}
       </div>
     </AppShellV3>
   );
