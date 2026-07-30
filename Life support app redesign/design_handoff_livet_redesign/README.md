@@ -125,3 +125,57 @@ Keep each page's existing functionality and information architecture; restyle su
 - `Livet Redesign.dc.html` — the full exploration canvas. Locked screens: sections labeled **3d** (Today), **3c** (Apps), **3a** (Life), **4a** (You), **4b** (figures), **1e** (sub-page shell). Section **1a** is a recreation of the CURRENT app for before/after reference. Other sections are unpicked explorations — ignore unless referenced.
 - `ios-frame.jsx` — presentation-only phone bezel; not part of the design.
 - `livet-icons.svg` — production icon sprite.
+
+## v3.1 fixes (after first implementation pass — supersede anything above where they conflict)
+
+### 1. Safe-area top offset (iPhone 15 collision)
+Screen content must never sit under the status clock / Dynamic Island. Give every tab and sub-page one shared content offset:
+- `.screen { padding-top: calc(env(safe-area-inset-top) + 24px); }` — with a 24px minimum fallback when the env() is 0 (desktop).
+- The serif page title is the first element below that offset; nothing (eyebrow, date, back button) may be placed above it with negative margins.
+- Sticky headers, if any, get the same `padding-top` inside their own surface.
+- Verify on a real notch device: the `MONDAY 27 JULY` eyebrow must clear the system time with visible air (~12px).
+
+### 2. Life tree — leaf identification
+Ticking must never be blind. Two mechanisms, both required:
+- **Persistent labels**: each leaf carries a short SVG text label (1–2 words, e.g. `Sleep`, `Train 3×`, `Read`, `Outdoors`) placed beside/below its circle: 10–11px Inter 500, fill `rgba(245,243,237,.65)` (full `#F5F3ED` when ticked), anchored away from the branch so labels never overlap strokes. Label text comes from a new short `label` field per leaf in `lifeTreeData.js` (add it; keep the long name).
+- **Tap = select, then tick**: first tap on a leaf selects it — the leaf gets a `#F5F3ED` ring and the bottom card (same anatomy as the "weakest branch" card) switches to that leaf: pillar eyebrow, full leaf name, its written pass criterion, and the `Tick` / `Untick` pill. Second tap on the same leaf or the pill confirms. This makes the criterion readable before committing and keeps 44px effective targets. The weakest-branch card is simply the default selection on load.
+
+### 3. AppShell v3 — full re-work of ALL sub-apps under one framework
+Every sub-app was built independently; that ends here. **All nine apps** (Menu Planner, Life Tree*, Mobility, Workout Finder, Clothing, Trip Planner, Bucket List, Decision Matrix, Book Cloud — *Life Tree only where it appears as a sub-page, the Life tab keeps its dark screen) are rebuilt onto ONE slotted page component. Apps fill the same slots in the same order; an app may omit a slot, never rearrange or duplicate one. Per-app nuance lives ONLY inside slot 4's content and slot 2's selector choice.
+
+```
+<AppShellV3
+  app={id}            // supplies accent, icon, serif name
+  scope={<Selector/>} // optional, exactly one row
+  hero={<HeroCard/>}  // optional, exactly one card
+  action={{label, onClick}} // optional, exactly one
+>{content}</AppShellV3>
+```
+
+**Slot 1 — Header (required, identical everywhere):** 36px circular back button (ivory, hairline) · 8px app-accent dot · serif app name 1.35rem, left-aligned. Sits below the safe-area offset (fix #1). No underlines, no per-app header layouts.
+
+**Slot 2 — Scope selector (optional, exactly one row):** one horizontal row, one shared pill anatomy: ivory bg, hairline border, radius 999 (day pills radius 12); selected = ink fill + white text; today/special = inset 1.5px accent ring. Three permitted flavours:
+- day pills (7 equal cells: letter + date) — Mobility, Workout
+- segmented view pills — Book Cloud (Cloud / Read next / Rate / Library), Bucket List (categories), Clothing (Palette / Wardrobe / Outfits), Decision Matrix (matrix list / edit)
+- filter chips (scrollable) — Trip Planner (trips), Menu Planner (weeks)
+
+**Slot 3 — Hero card (optional, exactly one):** the page's single summary surface. Ivory, radius 20, hairline: eyebrow · serif title 1.6rem · meta line · accent-tint tag chips. Per app: Mobility = today's routine; Workout = current program week/block; Trips = next/selected trip (dates, countdown); Menu = this week (X of 7 planned, shopping-list state); Bucket = progress (38/425 + category split); Clothing = the palette summary; Books = currently reading; Decision = active matrix.
+
+**Slot 4 — Content (required):** the app's own UI, restyled to tokens. Shared row/card primitives only: icon-chip rows, numbered rows (28px accent-tint number circle), divider-separated card groups, grid tiles. App-specific visualizations (book cloud SVG, trip map, decision matrix grid, palette swatches) are content INSIDE these surfaces — chrome around them is never custom.
+- Menu: week grid of dinner rows (emoji chip) + drag reorder; shopping list as divider rows with ticks
+- Mobility: numbered exercise rows + region tag chips (as mocked in 1e)
+- Workout: session list rows; rehab ladder keeps semantic status colours on ivory chips
+- Trips: itinerary day cards; map block full-bleed inside a radius-20 card
+- Bucket: tickable rows grouped by category; done = muted + check
+- Clothing: swatch grid tiles + outfit cards
+- Decision: criteria/option rows; the matrix itself as a grid card
+- Books: the cloud SVG inside a card; rate flow as numbered rows
+
+**Slot 5 — Sticky primary action (optional, exactly one):** ink button, radius 16, full width, floating over `linear-gradient(to top, var(--bg) 70%, transparent)`. Per app: `Start session` (Mobility, Workout), `Add dinner` (Menu), `Add pin` (Trips), `Add item` (Bucket), `New matrix` (Decision), `Import books` (Books). Secondary actions move into rows or the You-style card patterns — never a second floating button.
+
+**Behavioral contract (all apps):** whole rows are tap targets (no inline CTAs) · tab bar visible on the app's top level, hidden in focus flows where slot 5's flow takes over · usage-count increment on mount (feeds Today's most-used) · scroll position preserved per app · empty states = dashed-border card (Finance-slot pattern) with one sentence, no illustrations.
+
+**Migration order:** build `AppShellV3` + primitives first, then Mobility (reference, matches mock 1e), Workout, Trips, Bucket, Clothing, then Menu, Books, Decision. Delete the old `AppShell` and all per-app header/selector/CTA variants when the last app lands — no legacy fallback path.
+
+### 4. Rename
+"Soft Summer Palette" → **Clothing** everywhere: Apps list row, page title `Clothing`, tab/nav labels; route may stay `/colour`. Icon and accent (dusty rose) unchanged.
