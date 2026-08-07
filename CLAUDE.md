@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Life & Training Hub** (repo "Livet") — a React 19 + Vite single-page app with Supabase auth and persistence, deployed to GitHub Pages. Hash routing serves nine sub-apps behind one login, inside the **v3 four-tab shell** (Today / Apps / Life / You — see Architecture). The original five-single-file static PWA lives in `legacy_static/` for reference only (it fails lint — pre-existing, don't fix). `Life support app redesign/` holds the v3 design handoff bundle (reference only, lint-ignored).
+**Life & Training Hub** (repo "Livet") — a React 19 + Vite single-page app with Supabase auth and persistence, deployed to GitHub Pages. Hash routing serves ten sub-apps behind one login, inside the **v3 four-tab shell** (Today / Apps / Life / You — see Architecture). The original five-single-file static PWA lives in `legacy_static/` for reference only (it fails lint — pre-existing, don't fix). `Life support app redesign/` holds the v3 design handoff bundle (reference only, lint-ignored).
 
 ## Running Locally
 
@@ -28,18 +28,18 @@ Push to `main` → `.github/workflows/static.yml` builds with Vite (Supabase URL
 ### v3 shell (four tabs)
 Routes live in `src/App.jsx`. The hub-and-spoke dashboard is gone; navigation is a fixed bottom tab bar (`src/components/shell/TabBar.jsx`, ink active pill, dark variant on `/life`):
 - `/` — **Today** (`src/pages/Today.jsx`): day track (05:00–21:00, configurable), single agenda card (mobility/workout/dinner rows, "Up next" + Start pill), Life Tree summary ink card, "Most used" rows.
-- `/apps` — **Apps** (`src/pages/Apps.jsx`): search + all nine apps in one usage-sorted list (3px usage bars) + dashed Finance ghost slot. A future app = a registry row, an accent, a Today card — no layout changes.
+- `/apps` — **Apps** (`src/pages/Apps.jsx`): search + all ten apps in one usage-sorted list (3px usage bars) + dashed Finance ghost slot. A future app = a registry row, an accent, a Today card — no layout changes.
 - `/life` — **Life** (`src/pages/Life.jsx`): the app's ONLY dark screen; SVG tree (`src/components/life/TreeFigure.jsx`) with tappable leaves, pillar chips, weakest-branch card, 12-week heatmap, link to `/timeline` (legacy milestone feed, now milestones-only).
 - `/you` — **You** (`src/pages/You.jsx`): profile/sign-out, sync state, install-on-home-screen (`src/lib/installPrompt.js`), day-window setting, reset usage sorting.
 
 Shell state (localStorage, never cache data): `app-usage-v1` (`src/lib/appUsage.js` — open timestamps per route, capped at 90; sort score = trailing-30-day opens, ties fall back to `src/data/appRegistry.js` canonical order; recorded by `UsageTracker` in App.jsx) and `day-window-v1` (`src/lib/dayWindow.js` — drives the Today day track and "up next").
 
-Sub-pages wrap in `AppShellV3` (see Shared components) — one slotted framework for all nine apps: header (back circle + 8px accent dot + left serif app name) · scope selector · hero card · content · sticky primary action. Tab bar visible except in focus flows via `hideTabBar`.
+Sub-pages wrap in `AppShellV3` (see Shared components) — one slotted framework for all ten apps: header (back circle + 8px accent dot + left serif app name) · scope selector · hero card · content · sticky primary action. Tab bar visible except in focus flows via `hideTabBar`.
 
 Every screen carries the v3.1 safe-area top offset: `.tab-page` and `.sticky-header` pad top by `calc(env(safe-area-inset-top, 0px) + 24px)` so content clears the iPhone status clock / Dynamic Island (24px minimum on desktop). Don't place anything above the serif title with negative margins.
 
 ### Layering conventions
-- `src/pages/` — one page component per route (routes live in `src/App.jsx`: the four tabs above plus `/menu`, `/timeline`, `/mobility`, `/workout`, `/colour`, `/bucket`, `/travel`, `/decision`, `/books`).
+- `src/pages/` — one page component per route (routes live in `src/App.jsx`: the four tabs above plus `/menu`, `/timeline`, `/mobility`, `/workout`, `/colour`, `/bucket`, `/travel`, `/decision`, `/books`, `/property`).
 - `src/components/<feature>/` — feature-scoped components (e.g. `mobility/`, `rehab/`, `colour/`).
 - `src/services/` — the **only** files that touch their Supabase tables.
 - `src/lib/` — pure helpers, unit-tested with vitest in sibling `*.test.js` files.
@@ -82,6 +82,38 @@ The Audible library drawn as connected theme clouds: read books are solid dots, 
 - `src/lib/bookCloud.js` — pure engine, unit-tested: `parseImport` (handles both "Title by Author" lines and multi-line Audible copy blocks with `By:`/`Narrated by:` rows), relatedness (`same author` = 3, each shared theme = 1), edge rules (single shared theme only counts across clouds), deterministic sunflower-spiral + row-packed layout, and wishlist ranking: each link is scaled by `ratingFactor` (rating/3, unrated = 1), so 5★ reads pull ~1.7× and 1★ demotes; reasons are human-readable and clouds carry `avgRating`.
 - `src/components/books/` — `BookCloud.jsx` (SVG: blurred cloud blobs, curved edges, tap-to-highlight), `BookImport.jsx` (paste box with live parse count, read/wishlist toggle), `BookDetailCard.jsx` (status, rating stars, theme chips, related list, delete), `StarRating.jsx`.
 - `src/services/bookService.js` → `book_cloud_books` table (`input/book-cloud-schema.sql`, incl. idempotent `rating` alter), one row per (user, book), `themes` jsonb; `book-cloud-library-v1` localStorage fallback, cache-first on save. An empty table with a non-empty cache seeds the server from the cache (first-run migration).
+
+### Property Search (/property)
+Browses the Finn.no listings a pipeline on Andreas's NAS collects, filters and
+Claude-scores into `public.property_listings` roughly 3x daily (data contract:
+`HANDOVER-property-search.md`; DDL copy in `input/property-listings-schema.sql`;
+the collector lives outside this repo in `NAS-setup and system/property-search/`).
+Two profiles: `bolig` (primary residence) and `fritid` (sea cabin).
+- **Ownership split:** the NAS owns every column except `user_state`
+  (`interested`/`viewed`/`hidden`/null) and `user_notes` — the only two the
+  `authenticated` role may update (column-level grant). The NAS upsert never
+  sends the user columns, so there is no clobber risk in either direction.
+  Same RLS gotcha as `meals`: a refused write is success-with-zero-rows, so
+  `propertyService.updateUserFields` uses `.select()` and treats empty as
+  failure.
+- `src/lib/property.js` — pure helpers, unit-tested: `displayPrice`
+  (`total_price` = honest totalpris, `price` fallback), NOK formatting,
+  `priceCut` (price_history last < first → badge with delta), `daysOnMarket`,
+  `sortListings` (score desc, unevaluated last, newest-first among them),
+  `filterListings` (default: active, not hidden). jsonb columns go through
+  `parseJsonArray` since cached rows may hold JSON strings.
+- `src/services/propertyService.js` — read-all + user-field updates,
+  `property-listings-cache-v1` localStorage fallback, cache-first on write.
+- `src/pages/PropertySearch.jsx` + `src/components/property/` —
+  `ListingCard` (image, score chip coloured by recommendation, price-cut
+  badge, top red flag; `score >= 80` = the pipeline's "book a viewing"
+  threshold → accent border + chip) and `ListingDetail` (bottom sheet: facts
+  grid, price-history sparkline, eval summary/highlights/red flags,
+  Finn.no + Google Maps links, state pills, notes saved on blur).
+- Semantics: `active = false` = gone from Finn (sold/withdrawn) — dimmed
+  behind the "Sold / gone" toggle; `status` `shortlist`/`queued` = not yet
+  scored (evaluation runs daily at 13:00 CET, so fresh listings sit unscored
+  up to a day); hidden listings drop out of the default view.
 
 ### Design system (v3)
 Global tokens live in `src/index.css` `:root` and apply across every page.

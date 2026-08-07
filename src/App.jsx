@@ -13,6 +13,7 @@ import BucketList from './pages/BucketList';
 import TravelPlanner from './pages/TravelPlanner';
 import DecisionMatrix from './pages/DecisionMatrix';
 import Books from './pages/Books';
+import PropertySearch from './pages/PropertySearch';
 import { supabase } from './services/supabase';
 import { recordOpen } from './lib/appUsage';
 import { usageRouteFor } from './data/appRegistry';
@@ -88,6 +89,7 @@ function App() {
               <Route path="/travel/*" element={<ErrorBoundary key="travel"><TravelPlanner /></ErrorBoundary>} />
               <Route path="/decision" element={<ErrorBoundary key="decision"><DecisionMatrix /></ErrorBoundary>} />
               <Route path="/books" element={<ErrorBoundary key="books"><Books /></ErrorBoundary>} />
+              <Route path="/property" element={<ErrorBoundary key="property"><PropertySearch /></ErrorBoundary>} />
             </Routes>
           </>
         )}

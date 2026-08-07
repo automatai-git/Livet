@@ -60,6 +60,11 @@ export const IconSprite = () => (
         <path d="M12 7v12.2" />
         <path d="M7.5 9.5c1-.2 2-.1 3 .3M7.5 12.5c1-.2 2-.1 3 .3M16.5 9.5c-1-.2-2-.1-3 .3M16.5 12.5c-1-.2-2-.1-3 .3" />
       </symbol>
+      <symbol id="icon-house" viewBox="0 0 24 24">
+        <path d="M4 11.2L12 4l8 7.2" />
+        <path d="M6.2 9.4V20h11.6V9.4" />
+        <path d="M10 20v-5.5h4V20" />
+      </symbol>
       {/* Shell glyphs (v3 redesign): tabs, search, chevrons, future apps. */}
       <symbol id="icon-grid" viewBox="0 0 24 24">
         <rect x="4" y="4" width="7" height="7" rx="2" />
