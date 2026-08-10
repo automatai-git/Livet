@@ -15,7 +15,14 @@
       "mcp__claude_ai_Google_Drive__search_files",
       "mcp__claude_ai_Google_Drive__read_file_content",
       "Bash(cmd *)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(echo \"--- select with rating ---\")",
+      "Bash(curl -s 'https://ycsivbzsfrphkxrqfoyi.supabase.co/rest/v1/book_cloud_books?select=id,title,rating&limit=3' -H 'apikey: sb_publishable_SJ3ywzNb2G_Cy74jjlNE-g_qDd4d2Kv' -H 'Authorization: Bearer sb_publishable_SJ3ywzNb2G_Cy74jjlNE-g_qDd4d2Kv')",
+      "Bash(echo)",
+      "Bash(echo \"--- select without rating ---\")",
+      "Bash(curl -s 'https://ycsivbzsfrphkxrqfoyi.supabase.co/rest/v1/book_cloud_books?select=id,title&limit=3' -H 'apikey: sb_publishable_SJ3ywzNb2G_Cy74jjlNE-g_qDd4d2Kv' -H 'Authorization: Bearer sb_publishable_SJ3ywzNb2G_Cy74jjlNE-g_qDd4d2Kv')",
+      "Bash(command -v supabase)",
+      "Bash(supabase projects *)"
     ]
   },
   "CLAUDE_CODE_MAX_OUTPUT_TOKENS": 10000

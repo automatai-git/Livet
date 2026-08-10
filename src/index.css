@@ -49,6 +49,7 @@
     --accent-decision: #C8804A; /* burnt amber */
     --accent-books:    #8A6B4D; /* leather brown */
     --accent-property: #9C5B43; /* brick */
+    --accent-goals:    #56628E; /* dusty indigo — north star */
 
     /* Default fallback for components that read --app-accent. */
     --app-accent: var(--primary);
@@ -3002,3 +3003,270 @@ body.screen-dark::before {
     resize: vertical;
 }
 .listing-close { margin-top: 18px; }
+
+/* ============================================================
+   Goals app (/goals): sprint markdown view, north-star
+   constellation, sprint state tracker.
+   ============================================================ */
+
+.goal-card { margin-top: 14px; padding: 18px; }
+
+.goal-progress-track {
+    margin-top: 12px;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--divider);
+    overflow: hidden;
+}
+.goal-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--app-accent, var(--accent-goals));
+    transition: width .3s ease;
+}
+
+/* ---- markdown view ---- */
+.md-view { font-size: 0.92rem; line-height: 1.55; color: var(--text); }
+.md-view > :first-child { margin-top: 0; }
+.md-h { font-family: 'DM Serif Display', serif; font-weight: 400; line-height: 1.2; margin: 18px 0 6px; }
+.md-h1 { font-size: 1.45rem; }
+.md-h2 { font-size: 1.2rem; }
+.md-h3 { font-size: 1.02rem; font-family: 'Inter', sans-serif; font-weight: 600; }
+.md-h4, .md-h5, .md-h6 { font-size: 0.95rem; font-family: 'Inter', sans-serif; font-weight: 600; }
+.md-para { margin: 8px 0; }
+.md-quote {
+    margin: 10px 0;
+    padding: 8px 14px;
+    border-left: 3px solid var(--app-tint-fg, var(--accent-goals));
+    background: var(--app-tint-bg, rgba(86,98,142,.08));
+    border-radius: 0 10px 10px 0;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+}
+.md-quote p { margin: 4px 0; }
+.md-list { margin: 8px 0 8px 22px; display: grid; gap: 6px; }
+.md-code {
+    font-family: ui-monospace, monospace;
+    font-size: 0.85em;
+    background: var(--divider);
+    padding: 1px 5px;
+    border-radius: 6px;
+}
+.md-link { color: var(--app-tint-fg, var(--accent-goals)); }
+.md-hr { border: none; border-top: 1px solid var(--divider); margin: 16px 0; }
+.md-table-wrap { overflow-x: auto; margin: 10px 0; }
+.md-table { border-collapse: collapse; font-size: 0.84rem; min-width: 100%; }
+.md-table th, .md-table td {
+    text-align: left;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--divider);
+    vertical-align: top;
+}
+.md-table th { font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: .6px; color: var(--text-muted); }
+
+/* ---- sprint state tracker ---- */
+.goal-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--divider);
+}
+.goal-item:last-of-type { border-bottom: none; }
+.goal-item.closed .goal-item-label { text-decoration: line-through; color: var(--text-faint); }
+.goal-item.done .goal-item-label { color: var(--text-muted); }
+.goal-item-body { flex: 1; min-width: 0; }
+.goal-item-label { font-size: 0.92rem; font-weight: 500; }
+.goal-item-detail { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+.goal-tick {
+    width: 26px; height: 26px;
+    flex: 0 0 26px;
+    margin-top: 1px;
+    border-radius: 999px;
+    border: 1.6px solid var(--border);
+    background: var(--card);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    padding: 0;
+}
+.goal-tick.on { background: var(--app-accent, var(--accent-goals)); border-color: var(--app-accent, var(--accent-goals)); }
+.goal-count-ctrl {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+}
+.goal-count-ctrl button {
+    width: 26px; height: 26px;
+    border-radius: 999px;
+    border: 1.6px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+}
+.goal-count-ctrl button:disabled { opacity: .35; cursor: default; }
+.goal-count { font-size: 0.92rem; font-weight: 600; min-width: 40px; text-align: center; }
+.goal-count-target { color: var(--text-faint); font-weight: 500; }
+.goal-close-btn {
+    border: none;
+    background: none;
+    color: var(--text-faint);
+    font-size: 0.74rem;
+    cursor: pointer;
+    padding: 4px 0 4px 8px;
+    margin-top: 2px;
+}
+.goal-close-btn:hover { color: var(--text-muted); }
+.goal-closed-head { margin-top: 14px; }
+.goal-add-row { display: flex; gap: 8px; margin: 12px 0 4px; }
+.goal-add-row input {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 9px 12px;
+    font-size: 0.88rem;
+    background: var(--card);
+    color: var(--text);
+}
+.goal-add-row input:focus { outline: none; border-color: var(--app-accent, var(--accent-goals)); }
+.goal-add-row button {
+    border: none;
+    border-radius: 999px;
+    padding: 0 16px;
+    background: var(--ink);
+    color: #fff;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.goal-add-row button:disabled { opacity: .4; cursor: default; }
+.goal-notes { list-style: none; margin: 8px 0 0; padding: 0; }
+.goal-notes li {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--divider);
+    font-size: 0.88rem;
+}
+.goal-notes li:last-child { border-bottom: none; }
+.goal-note-date { color: var(--text-faint); font-size: 0.76rem; flex: 0 0 auto; }
+.goal-note-text { flex: 1; min-width: 0; }
+.goal-note-del {
+    border: none; background: none;
+    color: var(--text-faint);
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0 4px;
+}
+
+/* ---- sprint import ---- */
+.goal-import-actions { margin: 10px 0; }
+.goal-import-btn {
+    border: 1.6px dashed var(--app-tint-fg, var(--accent-goals));
+    background: var(--app-tint-bg, rgba(86,98,142,.08));
+    color: var(--app-tint-fg, var(--accent-goals));
+    border-radius: 12px;
+    padding: 10px 18px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+}
+.goal-import-text {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 0.82rem;
+    font-family: ui-monospace, monospace;
+    background: var(--card);
+    color: var(--text);
+    resize: vertical;
+    margin-top: 4px;
+}
+.goal-import-text:focus { outline: none; border-color: var(--app-accent, var(--accent-goals)); }
+.goal-import-apply {
+    margin-top: 8px;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 18px;
+    background: var(--ink);
+    color: #fff;
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* ---- north star constellation + timeline ---- */
+.ns-card { margin-top: 14px; padding: 18px; }
+.ns-svg { width: 100%; height: auto; display: block; margin-top: 8px; }
+.ns-pillar { cursor: pointer; }
+.ns-pillar:focus { outline: none; }
+.ns-star-label {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    fill: var(--text);
+}
+.ns-pillar-n { font-size: 15px; font-weight: 700; fill: #fff; font-family: 'Inter', sans-serif; }
+.ns-pillar-name { font-size: 13px; font-weight: 600; fill: var(--text); font-family: 'Inter', sans-serif; }
+.ns-pillar-active { font-size: 9px; font-weight: 700; letter-spacing: 1.4px; fill: var(--text-muted); font-family: 'Inter', sans-serif; }
+.ns-detail {
+    margin-top: 6px;
+    border-left: 3px solid var(--pillar, var(--accent-goals));
+    padding: 4px 0 4px 14px;
+}
+.ns-detail-head { display: flex; align-items: center; gap: 8px; font-size: 0.92rem; }
+.ns-detail-dot {
+    width: 8px; height: 8px;
+    flex: 0 0 8px;
+    border-radius: 999px;
+    background: var(--pillar, var(--accent-goals));
+}
+.ns-active-chip {
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--pillar, var(--accent-goals));
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    padding: 1px 8px;
+}
+.ns-identity { font-style: italic; color: var(--text); font-size: 0.92rem; margin: 8px 0 4px; line-height: 1.5; }
+.ns-note { color: var(--text-muted); font-size: 0.82rem; margin: 4px 0 8px; }
+.ns-subgoals { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.ns-subgoals li { font-size: 0.84rem; color: var(--text-muted); padding-left: 14px; position: relative; }
+.ns-subgoals li::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0.5em;
+    width: 5px; height: 5px;
+    border-radius: 999px;
+    background: var(--pillar, var(--accent-goals));
+    opacity: .6;
+}
+.ns-tick { font-size: 12px; fill: var(--text-faint); font-family: 'Inter', sans-serif; }
+.ns-today { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; fill: var(--accent-timeline); font-family: 'Inter', sans-serif; }
+.ns-marker-label { font-size: 12px; font-weight: 600; fill: var(--text); font-family: 'Inter', sans-serif; }
+.ns-marker-label.achieved { fill: var(--text-muted); }
+.ns-marker-date { font-size: 10.5px; fill: var(--text-faint); font-family: 'Inter', sans-serif; }
+.ns-marker-list { list-style: none; margin: 4px 0 0; padding: 0; }
+.ns-marker-list li {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--divider);
+}
+.ns-marker-list li:last-child { border-bottom: none; }
+.ns-marker-list .ns-detail-dot { position: relative; top: -1px; }
+.ns-marker-row-label { font-size: 0.88rem; font-weight: 500; }
+.ns-marker-date-inline { color: var(--text-faint); font-weight: 400; font-size: 0.8rem; }
+.ns-marker-row-detail { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
