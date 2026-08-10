@@ -279,3 +279,34 @@ export const suggestNextReads = (books) => {
     })
     .sort((a, b) => b.score - a.score || a.book.title.localeCompare(b.book.title));
 };
+
+// ---------- sync recovery ----------
+
+// Fill server-null ratings from the locally cached copy of the library.
+// A rating held only in a device's cache (its write to the server failed)
+// would otherwise be wiped when a later successful fetch overwrites the
+// cache with the server's unrated rows. Matches by id first, then by
+// title/author key, so ratings survive even when the two sides hold
+// different generated ids (e.g. each device seeded its own library while
+// writes were failing). Ratings only fill nulls — a rating already on the
+// server is never overwritten. Returns the merged list plus the rows that
+// changed, for pushing back to the server.
+export const mergeCachedRatings = (serverBooks, cachedBooks) => {
+  const byId = new Map();
+  const byName = new Map();
+  for (const b of cachedBooks) {
+    if (!b.rating) continue;
+    byId.set(b.id, b.rating);
+    byName.set(bookKey(b.title, b.author), b.rating);
+  }
+  const rescued = [];
+  const books = serverBooks.map((b) => {
+    if (b.rating) return b;
+    const rating = byId.get(b.id) ?? byName.get(bookKey(b.title, b.author));
+    if (!rating) return b;
+    const merged = { ...b, rating };
+    rescued.push(merged);
+    return merged;
+  });
+  return { books, rescued };
+};

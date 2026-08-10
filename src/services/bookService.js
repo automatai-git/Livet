@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { mergeCachedRatings } from '../lib/bookCloud.js';
 
 // Book cloud library. One row per (user, book) in `book_cloud_books`;
 // `themes` is a jsonb array of theme ids (first entry = the book's cloud).
@@ -51,8 +52,17 @@ export const bookService = {
           return { books: cached, offline: !ok };
         }
       }
-      writeCache(books);
-      return { books, offline: false };
+      // Ratings that only ever landed in this device's cache (their server
+      // write failed, e.g. while the `rating` column was missing from the
+      // live table) fill the server's nulls and are pushed back, instead of
+      // being wiped by the cache overwrite below.
+      const { books: merged, rescued } = mergeCachedRatings(books, readCache());
+      if (rescued.length) {
+        const { ok } = await this.saveBooks(rescued, merged);
+        return { books: merged, offline: !ok };
+      }
+      writeCache(merged);
+      return { books: merged, offline: false };
     } catch (err) {
       console.warn('[bookService] fetch failed, using cache:', err?.message ?? err);
       return { books: readCache(), offline: true };

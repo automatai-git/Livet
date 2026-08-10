@@ -9,6 +9,7 @@ import {
   suggestNextReads,
   ratingFactor,
   primaryTheme,
+  mergeCachedRatings,
   NODE_R,
 } from './bookCloud.js';
 
@@ -244,5 +245,45 @@ describe('ratings', () => {
     expect(ranked[0].reasons[0]).toContain('avg ★4.5');
     const unrated = buildClouds([book('r9', 'Z', 'z', 'read', ['fiction'])]);
     expect(unrated[0].avgRating).toBe(null);
+  });
+});
+
+describe('mergeCachedRatings', () => {
+  const server = (id, title, author, rating = null) =>
+    ({ id, title, author, status: 'read', themes: [], rating });
+
+  it('fills a server-null rating from the cache by id', () => {
+    const { books, rescued } = mergeCachedRatings(
+      [server('a', 'Deep Work', 'Cal Newport')],
+      [server('a', 'Deep Work', 'Cal Newport', 4)]
+    );
+    expect(books[0].rating).toBe(4);
+    expect(rescued).toEqual([books[0]]);
+  });
+
+  it('falls back to title/author when ids differ (both devices seeded locally)', () => {
+    const { books, rescued } = mergeCachedRatings(
+      [server('server-id', 'Atomic Habits', 'James Clear')],
+      [server('phone-id', 'atomic  habits', 'JAMES CLEAR', 5)]
+    );
+    expect(books[0].rating).toBe(5);
+    expect(books[0].id).toBe('server-id');
+    expect(rescued).toHaveLength(1);
+  });
+
+  it('never overwrites a rating the server already has', () => {
+    const { books, rescued } = mergeCachedRatings(
+      [server('a', 'Sapiens', 'Yuval Noah Harari', 3)],
+      [server('a', 'Sapiens', 'Yuval Noah Harari', 5)]
+    );
+    expect(books[0].rating).toBe(3);
+    expect(rescued).toEqual([]);
+  });
+
+  it('returns server books untouched with nothing to rescue', () => {
+    const rows = [server('a', 'Meditations', 'Marcus Aurelius')];
+    const { books, rescued } = mergeCachedRatings(rows, []);
+    expect(books).toEqual(rows);
+    expect(rescued).toEqual([]);
   });
 });
