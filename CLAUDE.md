@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Life & Training Hub** (repo "Livet") — a React 19 + Vite single-page app with Supabase auth and persistence, deployed to GitHub Pages. Hash routing serves ten sub-apps behind one login, inside the **v3 four-tab shell** (Today / Apps / Life / You — see Architecture). The original five-single-file static PWA lives in `legacy_static/` for reference only (it fails lint — pre-existing, don't fix). `Life support app redesign/` holds the v3 design handoff bundle (reference only, lint-ignored).
+**Life & Training Hub** (repo "Livet") — a React 19 + Vite single-page app with Supabase auth and persistence, deployed to GitHub Pages. Hash routing serves eleven sub-apps behind one login, inside the **v3 four-tab shell** (Today / Apps / Life / You — see Architecture). The original five-single-file static PWA lives in `legacy_static/` for reference only (it fails lint — pre-existing, don't fix). `Life support app redesign/` holds the v3 design handoff bundle (reference only, lint-ignored).
 
 ## Running Locally
 
@@ -28,13 +28,13 @@ Push to `main` → `.github/workflows/static.yml` builds with Vite (Supabase URL
 ### v3 shell (four tabs)
 Routes live in `src/App.jsx`. The hub-and-spoke dashboard is gone; navigation is a fixed bottom tab bar (`src/components/shell/TabBar.jsx`, ink active pill, dark variant on `/life`):
 - `/` — **Today** (`src/pages/Today.jsx`): day track (05:00–21:00, configurable), single agenda card (mobility/workout/dinner rows, "Up next" + Start pill), Life Tree summary ink card, "Most used" rows.
-- `/apps` — **Apps** (`src/pages/Apps.jsx`): search + all ten apps in one usage-sorted list (3px usage bars) + dashed Finance ghost slot. A future app = a registry row, an accent, a Today card — no layout changes.
+- `/apps` — **Apps** (`src/pages/Apps.jsx`): search + all eleven apps in one usage-sorted list (3px usage bars) + dashed Finance ghost slot. A future app = a registry row, an accent, a Today card — no layout changes.
 - `/life` — **Life** (`src/pages/Life.jsx`): the app's ONLY dark screen; SVG tree (`src/components/life/TreeFigure.jsx`) with tappable leaves, pillar chips, weakest-branch card, 12-week heatmap, link to `/timeline` (legacy milestone feed, now milestones-only).
 - `/you` — **You** (`src/pages/You.jsx`): profile/sign-out, sync state, install-on-home-screen (`src/lib/installPrompt.js`), day-window setting, reset usage sorting.
 
 Shell state (localStorage, never cache data): `app-usage-v1` (`src/lib/appUsage.js` — open timestamps per route, capped at 90; sort score = trailing-30-day opens, ties fall back to `src/data/appRegistry.js` canonical order; recorded by `UsageTracker` in App.jsx) and `day-window-v1` (`src/lib/dayWindow.js` — drives the Today day track and "up next").
 
-Sub-pages wrap in `AppShellV3` (see Shared components) — one slotted framework for all ten apps: header (back circle + 8px accent dot + left serif app name) · scope selector · hero card · content · sticky primary action. Tab bar visible except in focus flows via `hideTabBar`.
+Sub-pages wrap in `AppShellV3` (see Shared components) — one slotted framework for all eleven apps: header (back circle + 8px accent dot + left serif app name) · scope selector · hero card · content · sticky primary action. Tab bar visible except in focus flows via `hideTabBar`.
 
 Every screen carries the v3.1 safe-area top offset: `.tab-page` and `.sticky-header` pad top by `calc(env(safe-area-inset-top, 0px) + 24px)` so content clears the iPhone status clock / Dynamic Island (24px minimum on desktop). Don't place anything above the serif title with negative margins.
 
@@ -115,6 +115,32 @@ Two profiles: `bolig` (primary residence) and `fritid` (sea cabin).
   scored (evaluation runs daily at 13:00 CET, so fresh listings sit unscored
   up to a day); hidden listings drop out of the default view.
 
+### Goals (/goals)
+The layer above the other sub-apps: Andreas's long-horizon goals OS (the
+Cowork project in `C:\Users\enga\OneDrive\Claude-online\Livet\`) surfaced in
+the hub. Three scope views over one document:
+- **Current** — load (file-pick or paste) the active sprint markdown
+  (SPRINT.md / STATUS.md from the OneDrive project), rendered read-only by a
+  scoped md parser in `src/lib/goals.js` (`parseBlocks`/`parseInline`:
+  headings, loose lists with continuation lines, tables, quotes, hr —
+  exactly the subset those files use; unit-tested against replicas of them).
+- **Long term** — `src/data/northStarData.js` is NORTH_STAR.md vendored as
+  data (safe: the file is locked until annual review — re-sync on rewrite).
+  `NorthStarChart.jsx` draws it as an SVG constellation (2036 star → three
+  pillar nodes → sub-goal star fans, select-then-detail like the life tree)
+  plus the dated annual markers on a 2026→2036 timeline (piecewise scale:
+  near years get ~62% of the width; near-same-date dots nudged apart).
+- **Sprint state** — `extractSprintItems` pulls numbered entries and
+  "Commitment" table rows from sections headed *criteria/commitments*; a
+  detected target ("≥4", "— 12 reps", "(target 12)"; 4-digit numbers
+  excluded so dates never match) makes a count item, else a tick. Items can
+  also be closed (dropped from scope — out of the progress denominator) or
+  added manually. Dated note log below. Re-importing an updated file keeps
+  logged state by item id (`mergeItems`).
+- `src/services/goalService.js` → `goal_sprints` table
+  (`input/goals-schema.sql`), single live row per user (id `current`),
+  `goal-sprint-cache-v1` cache, `.select()` zero-row guard on the upsert.
+
 ### Design system (v3)
 Global tokens live in `src/index.css` `:root` and apply across every page.
 - Surfaces: `--bg: #F5F3ED` (warm ground) · `--card: #FDFCF9` (ivory) · `--border: #E6E2D6` (hairline) · `--divider: #EFEBE0` (inside-card) · `--ink: #1B3B2F` (the single dark surface colour — cards, active tab, buttons).
@@ -123,7 +149,8 @@ Global tokens live in `src/index.css` `:root` and apply across every page.
   `--accent-menu` (primary green), `--accent-timeline` (terracotta `#C57B57`),
   `--accent-mobility` (sage `#6B9E72`), `--accent-workout` (slate teal `#2D5A6C`),
   `--accent-palette` (dusty rose `#B5838D`), `--accent-bucket` (lavender `#8E7CC3`),
-  `--accent-travel` (ocean `#2F7DA0`), `--accent-decision` (amber `#C8804A`).
+  `--accent-travel` (ocean `#2F7DA0`), `--accent-decision` (amber `#C8804A`), `--accent-books` (leather `#8A6B4D`),
+  `--accent-property` (brick `#9C5B43`), `--accent-goals` (dusty indigo `#56628E`).
   Chip tint pairs live per app in `src/data/appRegistry.js`.
 - Dark screen (Life only): `--dark-bg` radial gradient, on-dark ivory text, `--tint-health/wealth/happiness`.
 - Radii: cards 20 · rows 14–16 · icon chips 10–12 · pills 999. Card shadow nearly flat (`--card-shadow`).
