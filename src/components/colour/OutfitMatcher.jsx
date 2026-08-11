@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { WADA_COLOURS } from '../../data/wadaData.js';
 import { wearableColours } from '../../data/colourData.js';
-import { SLOT_SETS, buildOutfitLibrary, assignSlots, suggestMetal, filterLibrary } from '../../lib/colourMatch.js';
+import { SLOT_SETS, buildOutfitLibrary, assignSlots, suggestMetal, filterLibrary, relativeLuminance } from '../../lib/colourMatch.js';
 
 const SAVED_KEY = 'outfit-matcher-saved-v1';
 
@@ -22,8 +22,9 @@ const chipStyle = (active) => ({
   whiteSpace: 'nowrap', cursor: 'pointer', fontWeight: 600, fontSize: '13px',
 });
 
-const lightHexes = new Set(['#EDE8E3', '#C4BAB0', '#B5ADA4', '#B8B3AE']);
-const swatchText = (hex) => (lightHexes.has(hex) ? '#3D3D3D' : '#F5F0EB');
+// Ink on light swatches, ivory on dark — by luminance, never per-hex.
+const isLightSwatch = (hex) => relativeLuminance(hex) > 0.55;
+const swatchText = (hex) => (isLightSwatch(hex) ? '#1B3B2F' : '#F5F3ED');
 
 const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
@@ -193,7 +194,7 @@ const OutfitMatcher = () => {
               onClick={() => { setMustInclude((prev) => (prev === c.name ? null : c.name)); setComboId(null); }}
               style={{
                 width: '34px', height: '34px', borderRadius: '8px', background: c.hex, cursor: 'pointer', padding: 0,
-                border: mustInclude === c.name ? '3px solid var(--text)' : lightHexes.has(c.hex) ? '1px solid #D0CCC7' : '1px solid transparent',
+                border: mustInclude === c.name ? '3px solid var(--text)' : isLightSwatch(c.hex) ? '1px solid var(--border)' : '1px solid transparent',
               }}
             ></button>
           ))}
@@ -213,7 +214,7 @@ const OutfitMatcher = () => {
               <div key={o.key} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--card)', padding: '12px 14px', borderRadius: '12px' }}>
                 <div style={{ display: 'flex', gap: '4px' }}>
                   {o.slots.map((s) => (
-                    <div key={s.slot} title={`${SLOT_LABELS[s.slot]}: ${s.name}`} style={{ width: '28px', height: '28px', borderRadius: '6px', background: s.hex, border: lightHexes.has(s.hex) ? '1px solid #D0CCC7' : 'none' }}></div>
+                    <div key={s.slot} title={`${SLOT_LABELS[s.slot]}: ${s.name}`} style={{ width: '28px', height: '28px', borderRadius: '6px', background: s.hex, border: isLightSwatch(s.hex) ? '1px solid var(--border)' : 'none' }}></div>
                   ))}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>

@@ -32,7 +32,7 @@ Routes live in `src/App.jsx`. The hub-and-spoke dashboard is gone; navigation is
 - `/life` — **Life** (`src/pages/Life.jsx`): the app's ONLY dark screen; SVG tree (`src/components/life/TreeFigure.jsx`) with tappable leaves, pillar chips, weakest-branch card, 12-week heatmap, link to `/timeline` (legacy milestone feed, now milestones-only).
 - `/you` — **You** (`src/pages/You.jsx`): profile/sign-out, sync state, install-on-home-screen (`src/lib/installPrompt.js`), day-window setting, reset usage sorting.
 
-Shell state (localStorage, never cache data): `app-usage-v1` (`src/lib/appUsage.js` — open timestamps per route, capped at 90; sort score = trailing-30-day opens, ties fall back to `src/data/appRegistry.js` canonical order; recorded by `UsageTracker` in App.jsx) and `day-window-v1` (`src/lib/dayWindow.js` — drives the Today day track and "up next").
+Shell state (localStorage, never cache data): `property-profile-v1` (last-used Property profile), `property-controls-v1` (per-profile sort + filters — sort orders rows *within* the verdict groups; the map view obeys the same filters), `property-seen-v1` (max seen listing scores → Today moment card), `app-usage-v1` (`src/lib/appUsage.js` — open timestamps per route, capped at 90; sort score = trailing-30-day opens, ties fall back to `src/data/appRegistry.js` canonical order; recorded by `UsageTracker` in App.jsx) and `day-window-v1` (`src/lib/dayWindow.js` — drives the Today day track and "up next").
 
 Sub-pages wrap in `AppShellV3` (see Shared components) — one slotted framework for all eleven apps: header (back circle + 8px accent dot + left serif app name) · scope selector · hero card · content · sticky primary action. Tab bar visible except in focus flows via `hideTabBar`.
 
@@ -50,7 +50,7 @@ Every screen carries the v3.1 safe-area top offset: `.tab-page` and `.sticky-hea
 Supabase-backed features write through a service module and mirror state into a localStorage cache; on load they try the network and fall back to the cache. Purely local features (e.g. saved outfits, custom travel pins) use localStorage directly with a versioned key (`outfit-matcher-saved-v1`, `travel_custom_pins_v1`).
 
 ### Life tree (Life tab)
-`/life` is the **Life** tab: a weekly life tree from Naval Ravikant's *Almanack*, drawn as a dark full-screen SVG tree. `/timeline` keeps the original milestone feed (linked from the Life screen). The conceptual frame: the other sub-apps are supporting tools; weekly tree inputs compound into the milestones.
+`/life` is the **Life** tab: a weekly life tree from Naval Ravikant's *Almanack*, drawn as a dark full-screen SVG tree. `/timeline` keeps the original milestone feed (linked from the Life screen; v3.2 §4 — ScopePills All · Past · Ahead, list grouped under Ahead/Past heads with `in {n} days` metas, categories mapped to sprite glyphs + registry tints, the emoji `icon` column ignored, stat card gone). The conceptual frame: the other sub-apps are supporting tools; weekly tree inputs compound into the milestones.
 - `src/data/lifeTreeData.js` — the n-ary tree: health / wealth / happiness pillars → 10 leaf practices, each with a written pass criterion (tick against the sentence, not the feeling).
 - `src/lib/lifeTree.js` — ISO-week (Monday-start) helpers + strict-AND roll-up: a node is `complete` only when every leaf below is ticked; partial nodes carry `done/total`. Unit-tested in `lifeTree.test.js`.
 - `src/services/lifeTreeService.js` → `life_tree_weeks` table (`input/life-tree-schema.sql`), one row per (user, ISO week), `ticks` jsonb; `life-tree-cache-v1` localStorage fallback, cache-first on save.
@@ -88,7 +88,12 @@ Browses the Finn.no listings a pipeline on Andreas's NAS collects, filters and
 Claude-scores into `public.property_listings` roughly 3x daily (data contract:
 `HANDOVER-property-search.md`; DDL copy in `input/property-listings-schema.sql`;
 the collector lives outside this repo in `NAS-setup and system/property-search/`).
-Two profiles: `bolig` (primary residence) and `fritid` (sea cabin).
+Two profiles: `bolig` (primary residence) and `fritid` (sea cabin) — the
+scope pills are `Bolig · Fritid · Map` (no "All"; last-used profile persists
+in `property-profile-v1`), the browse list groups by verdict (Book a viewing
+≥ 80 as rich cards · Awaiting score · The rest as compact rows via
+`groupListings`), and the detail view is a focus flow at
+`/property/:finnkode` (AppShellV3, `hideTabBar`, sticky Done) — no modal.
 - **Ownership split:** the NAS owns every column except `user_state`
   (`interested`/`viewed`/`hidden`/null) and `user_notes` — the only two the
   `authenticated` role may update (column-level grant). The NAS upsert never
@@ -105,11 +110,24 @@ Two profiles: `bolig` (primary residence) and `fritid` (sea cabin).
 - `src/services/propertyService.js` — read-all + user-field updates,
   `property-listings-cache-v1` localStorage fallback, cache-first on write.
 - `src/pages/PropertySearch.jsx` + `src/components/property/` —
-  `ListingCard` (image, score chip coloured by recommendation, price-cut
-  badge, top red flag; `score >= 80` = the pipeline's "book a viewing"
-  threshold → accent border + chip) and `ListingDetail` (bottom sheet: facts
-  grid, price-history sparkline, eval summary/highlights/red flags,
-  Finn.no + Google Maps links, state pills, notes saved on blur).
+  `ListingCard` (rich card: image, score chip, days-on-Finn in the meta,
+  price-cut badge, one flag line with the `icon-flag` glyph) and
+  `ListingRow` (compact: thumb, meta, dashed queued chip, `ny i dag`);
+  `PropertyMap.jsx` = the Map scope (Leaflet + Esri satellite, pins are
+  score chips coloured by verdict band, dashed while queued; tap → mini
+  card linking to the detail route; hidden/gone never pinned).
+  `src/pages/PropertyListing.jsx` = the detail flow: photo · heading +
+  score · meta · price card (serif price, cut badge with date, sparkline,
+  Totalpris/Pris/m²/Areal/Soverom strip) · "Claude's read" card (summary +
+  highlights/red flags merged into one dot-list) · links · state pills ·
+  notes saved on blur. Labels stay Norwegian for domain terms.
+- v3.2 QoL: `propertyService.subscribeListings` (Supabase realtime, merged
+  via `applyChange`) and `src/lib/propertySeen.js` — `property-seen-v1`
+  localStorage of max seen score per finnkode + the local date it first
+  crossed 80; `crossedToday()` feeds the Today moment card (one accent-
+  bordered card the day a listing crosses 80, gone the next day; first run
+  is a baseline so nothing floods). Today and Apps read the listings cache
+  for their `metaFor` / `statusFor` lines.
 - Semantics: `active = false` = gone from Finn (sold/withdrawn) — dimmed
   behind the "Sold / gone" toggle; `status` `shortlist`/`queued` = not yet
   scored (evaluation runs daily at 13:00 CET, so fresh listings sit unscored
@@ -177,6 +195,10 @@ Global tokens live in `src/index.css` `:root` and apply across every page.
   `search`/`chev`/`back`. Add a new icon by appending a `<symbol>` to
   `IconSprite` then `<AppIcon name="…" />`. The sprite is mounted once in
   `main.jsx` so all `<use href="#icon-…">` references resolve globally.
+- `src/components/feedback/OfflineNote.jsx` — the one offline pattern
+  app-wide (v3.2 §7): dot + "Offline — changes queue locally and sync when
+  back." on an ivory row, `dark` variant for the Life screen. Always last
+  in the content slot; no bespoke offline notes anywhere.
 - `src/components/TravelMap.jsx` — Leaflet map with Esri World Imagery
   satellite tiles. Click in edit mode to add a labelled pin; drag to move;
   right-click / long-press to delete. Custom pins persist to

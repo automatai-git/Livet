@@ -3,6 +3,7 @@ import { supabase } from '../services/supabase';
 import { getDayWindow, setDayWindow, DEFAULT_WINDOW, parseHM } from '../lib/dayWindow';
 import { resetUsage } from '../lib/appUsage';
 import { canInstall, onInstallAvailable, promptInstall, isIOS, isStandalone } from '../lib/installPrompt';
+import { APP_REGISTRY } from '../data/appRegistry';
 import AppIcon from '../components/AppIcon';
 import TabBar from '../components/shell/TabBar';
 
@@ -81,7 +82,7 @@ const You = () => {
         <div className="you-row">
           <span className="status-dot" style={{ background: '#D5D0C2' }} aria-hidden="true" />
           <div className="you-row-title">Offline cache</div>
-          <div className="row-meta">{cachesReady ? 'ready · all 9 apps' : 'builds as you use the apps'}</div>
+          <div className="row-meta">{cachesReady ? `ready · all ${APP_REGISTRY.length} apps` : 'builds as you use the apps'}</div>
         </div>
       </div>
 
@@ -144,7 +145,7 @@ const You = () => {
         </button>
       </div>
 
-      <footer className="you-footer">Livet v3 · one system, nine apps</footer>
+      <footer className="you-footer">Livet v3 · one system, {APP_REGISTRY.length} apps</footer>
 
       <TabBar />
     </div>

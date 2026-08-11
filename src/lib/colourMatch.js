@@ -22,6 +22,17 @@ export const SLOT_SETS = {
   4: ['jacket', 'top', 'trousers', 'accent'],
 };
 
+// WCAG relative luminance (0–1) — used to pick ink vs ivory text on
+// arbitrary swatch colours (never hard-code per-hex label colours).
+export function relativeLuminance(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => {
+    const c = v / 255;
+    return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
 export function hexToLab(hex) {
   const n = parseInt(hex.slice(1), 16);
   const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => {

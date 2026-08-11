@@ -1,11 +1,14 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+import AppIcon from '../AppIcon';
 import {
   displayPrice, formatNokCompact, formatNok, priceCut, parseJsonArray,
-  VIEWING_THRESHOLD,
+  daysOnMarket, isNewToday,
 } from '../../lib/property';
 
-// One listing in the browse list. The whole card is the tap target (opens
-// the detail sheet); everything here is glanceable summary only.
+// Browse-list surfaces for one listing. Rich card for the "Book a viewing"
+// group, compact row for the awaiting/rest groups. Whole surface links to
+// the /property/:finnkode focus flow.
 
 export const ScoreChip = ({ listing, size = 'sm' }) => {
   const { score, recommendation, status } = listing;
@@ -25,23 +28,27 @@ export const ScoreChip = ({ listing, size = 'sm' }) => {
   );
 };
 
-const ListingCard = ({ listing, onOpen }) => {
+const domLabel = (listing) => {
+  const dom = daysOnMarket(listing.first_seen);
+  return dom != null ? `${dom} d on Finn` : null;
+};
+
+// Rich card — "Book a viewing" group.
+const ListingCard = ({ listing }) => {
   const cut = priceCut(listing.price_history);
   const flags = parseJsonArray(listing.red_flags);
   const gone = listing.active === false;
-  const hot = (listing.score ?? 0) >= VIEWING_THRESHOLD && !gone;
   const meta = [
     listing.location,
     listing.area_m2 != null ? `${listing.area_m2} m²` : null,
     listing.bedrooms != null ? `${listing.bedrooms} soverom` : null,
-    listing.property_type,
+    domLabel(listing),
   ].filter(Boolean).join(' · ');
 
   return (
-    <button
-      type="button"
-      className={`listing-card surface-card${hot ? ' hot' : ''}${gone ? ' gone' : ''}`}
-      onClick={() => onOpen(listing)}
+    <Link
+      to={`/property/${listing.finnkode}`}
+      className={`listing-card surface-card${gone ? ' gone' : ''}`}
       aria-label={`Open ${listing.heading ?? listing.finnkode}`}
     >
       {listing.image_url && (
@@ -60,16 +67,56 @@ const ListingCard = ({ listing, onOpen }) => {
               −{formatNokCompact(cut.delta)}
             </span>
           )}
-          {hot && <span className="listing-hot-chip">Book a viewing</span>}
           {gone && <span className="listing-gone-chip">Gone from Finn</span>}
           {listing.user_state === 'interested' && <span className="listing-interest-chip">Interested</span>}
           {listing.user_state === 'viewed' && <span className="listing-interest-chip viewed">Viewed</span>}
         </div>
         {flags.length > 0 && (
-          <div className="listing-flag">⚑ {flags[0]}</div>
+          <div className="listing-flag">
+            <AppIcon name="flag" size={14} strokeWidth="1.8" />
+            {flags[0]}
+          </div>
         )}
       </div>
-    </button>
+    </Link>
+  );
+};
+
+// Compact row — awaiting-score and "the rest" groups. Standard row anatomy:
+// thumb/icon chip · title · meta · status chip · chevron.
+export const ListingRow = ({ listing }) => {
+  const gone = listing.active === false;
+  const skip = listing.recommendation === 'skip';
+  const cut = priceCut(listing.price_history);
+  const fresh = listing.score == null && isNewToday(listing.first_seen);
+  const meta = [
+    listing.location,
+    formatNokCompact(displayPrice(listing)),
+    cut ? `−${formatNokCompact(cut.delta)}` : null,
+    gone ? 'gone from Finn' : null,
+  ].filter(Boolean).join(' · ');
+
+  return (
+    <Link
+      to={`/property/${listing.finnkode}`}
+      className={`listing-row surface-card${skip || gone ? ' dim' : ''}`}
+      aria-label={`Open ${listing.heading ?? listing.finnkode}`}
+    >
+      {listing.image_url ? (
+        <img className="listing-row-thumb" src={listing.image_url} alt="" loading="lazy" />
+      ) : (
+        <span className="icon-chip sm listing-row-chip">
+          <AppIcon name="house" size={18} />
+        </span>
+      )}
+      <div className="listing-row-body">
+        <div className="row-title sm ellipsis">{listing.heading ?? `Finn ${listing.finnkode}`}</div>
+        <div className="row-meta ellipsis">{meta}</div>
+      </div>
+      {fresh && <span className="listing-new-chip">ny i dag</span>}
+      <ScoreChip listing={listing} />
+      <AppIcon name="chev" size={14} className="row-chev" />
+    </Link>
   );
 };
 

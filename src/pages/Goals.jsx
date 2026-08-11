@@ -4,6 +4,7 @@ import MarkdownView from '../components/goals/MarkdownView';
 import NorthStarChart from '../components/goals/NorthStarChart';
 import SprintTracker from '../components/goals/SprintTracker';
 import SprintImport from '../components/goals/SprintImport';
+import OfflineNote from '../components/feedback/OfflineNote';
 import { titleFromMarkdown, extractSprintItems, mergeItems, sprintProgress } from '../lib/goals.js';
 import { NORTH_STAR, pillarById } from '../data/northStarData.js';
 import { goalService } from '../services/goalService.js';
@@ -66,7 +67,7 @@ const Goals = () => {
       title={doc?.title || 'No sprint loaded'}
       meta={
         doc
-          ? `${progress.done} of ${progress.total} commitments done · ${progress.pct}%${offline ? ' · offline, saved locally' : ''}`
+          ? `${progress.done} of ${progress.total} commitments done · ${progress.pct}%`
           : 'Load the active sprint markdown to start tracking.'
       }
       chips={activePillar ? [`Active pillar: ${activePillar.short}`] : []}
@@ -120,6 +121,8 @@ const Goals = () => {
           onNotesChange={(next) => save({ ...(doc || { title: 'Current sprint', markdown: '', items: [] }), notes: next })}
         />
       )}
+
+      {offline && <OfflineNote />}
     </AppShellV3>
   );
 };

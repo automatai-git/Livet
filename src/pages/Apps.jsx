@@ -1,18 +1,36 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { sortByUsage } from '../lib/appUsage';
+import { sprintProgress } from '../lib/goals';
 import { APP_REGISTRY } from '../data/appRegistry';
 import AppIcon from '../components/AppIcon';
 import TabBar from '../components/shell/TabBar';
 
 // Live status texts are optional per app; read cheap local caches only —
-// the Apps directory must render instantly.
+// the Apps directory must render instantly — and return null when there's
+// nothing worth saying ("0 items" never is).
 const statusFor = (route) => {
   if (route === '/books') {
     try {
       const { books } = JSON.parse(localStorage.getItem('book-cloud-library-v1')) || {};
       const toRate = (books || []).filter((b) => b.status === 'read' && !b.rating).length;
       return toRate > 0 ? `${toRate} to rate` : null;
+    } catch { return null; }
+  }
+  if (route === '/property') {
+    try {
+      const rows = JSON.parse(localStorage.getItem('property-listings-cache-v1')) || [];
+      const hot = rows.filter((l) =>
+        l.active !== false && l.user_state !== 'hidden' && (l.score ?? 0) >= 80
+      ).length;
+      return hot > 0 ? `${hot} ≥ 80` : null;
+    } catch { return null; }
+  }
+  if (route === '/goals') {
+    try {
+      const doc = JSON.parse(localStorage.getItem('goal-sprint-cache-v1'));
+      if (!doc?.items?.length) return null;
+      return `sprint ${sprintProgress(doc.items).pct}%`;
     } catch { return null; }
   }
   return null;

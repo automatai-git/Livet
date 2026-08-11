@@ -8,6 +8,11 @@ import {
   daysOnMarket,
   sortListings,
   filterListings,
+  groupListings,
+  isNewToday,
+  sortListingsBy,
+  applyListingFilters,
+  activeFilterCount,
 } from './property';
 
 // Intl 'nb-NO' group separator can be NBSP or narrow NBSP depending on ICU —
@@ -112,5 +117,88 @@ describe('filterListings', () => {
   });
   it('re-admits hidden and gone listings via toggles', () => {
     expect(filterListings(rows, { showHidden: true, showGone: true })).toHaveLength(4);
+  });
+});
+
+describe('groupListings', () => {
+  it('splits by verdict: ≥80 / unscored / the rest, each internally sorted', () => {
+    const rows = [
+      { finnkode: 'a', score: 45 },
+      { finnkode: 'b', score: 92 },
+      { finnkode: 'c', score: null, first_seen: '2026-08-01' },
+      { finnkode: 'd', score: 80 },
+      { finnkode: 'e', score: null, first_seen: '2026-08-05' },
+      { finnkode: 'f', score: 79 },
+    ];
+    const g = groupListings(rows);
+    expect(g.viewing.map((r) => r.finnkode)).toEqual(['b', 'd']);
+    expect(g.awaiting.map((r) => r.finnkode)).toEqual(['e', 'c']);
+    expect(g.rest.map((r) => r.finnkode)).toEqual(['f', 'a']);
+  });
+  it('returns empty groups for an empty list', () => {
+    expect(groupListings([])).toEqual({ viewing: [], awaiting: [], rest: [] });
+  });
+});
+
+describe('sortListingsBy', () => {
+  const rows = [
+    { finnkode: 'a', score: 60, total_price: 5_000_000, first_seen: '2026-08-01', price_history: [{ price: 5_200_000 }, { price: 5_000_000 }] },
+    { finnkode: 'b', score: 90, total_price: 3_000_000, first_seen: '2026-08-05', price_history: [] },
+    { finnkode: 'c', score: 70, price: 7_000_000, first_seen: null, price_history: [{ price: 7_800_000 }, { price: 7_000_000 }] },
+  ];
+  it("defaults to the score order ('score')", () => {
+    expect(sortListingsBy(rows, 'score').map((r) => r.finnkode)).toEqual(['b', 'c', 'a']);
+  });
+  it('sorts newest-first with missing dates last', () => {
+    expect(sortListingsBy(rows, 'newest').map((r) => r.finnkode)).toEqual(['b', 'a', 'c']);
+  });
+  it('sorts by price both ways (displayPrice, nulls last)', () => {
+    expect(sortListingsBy(rows, 'price-asc').map((r) => r.finnkode)).toEqual(['b', 'a', 'c']);
+    expect(sortListingsBy(rows, 'price-desc').map((r) => r.finnkode)).toEqual(['c', 'a', 'b']);
+  });
+  it('sorts by largest price cut with cut-less rows last', () => {
+    expect(sortListingsBy(rows, 'cut').map((r) => r.finnkode)).toEqual(['c', 'a', 'b']);
+  });
+  it('does not mutate the input', () => {
+    sortListingsBy(rows, 'price-asc');
+    expect(rows[0].finnkode).toBe('a');
+  });
+});
+
+describe('applyListingFilters / activeFilterCount', () => {
+  const rows = [
+    { finnkode: 'a', total_price: 5_000_000, bedrooms: 2, area_m2: 70, price_history: [{ price: 5_500_000 }, { price: 5_000_000 }] },
+    { finnkode: 'b', total_price: 8_000_000, bedrooms: 4, area_m2: 150, price_history: [] },
+    { finnkode: 'c', bedrooms: null, area_m2: null, price_history: [] },
+  ];
+  it('passes everything through with no active filters', () => {
+    expect(applyListingFilters(rows)).toHaveLength(3);
+    expect(activeFilterCount({})).toBe(0);
+  });
+  it('applies max price, excluding price-less rows', () => {
+    expect(applyListingFilters(rows, { maxPrice: 6_000_000 }).map((r) => r.finnkode)).toEqual(['a']);
+  });
+  it('applies min bedrooms and min area, excluding unknowns', () => {
+    expect(applyListingFilters(rows, { minBedrooms: 3 }).map((r) => r.finnkode)).toEqual(['b']);
+    expect(applyListingFilters(rows, { minArea: 100 }).map((r) => r.finnkode)).toEqual(['b']);
+  });
+  it('cutOnly keeps only price-cut listings', () => {
+    expect(applyListingFilters(rows, { cutOnly: true }).map((r) => r.finnkode)).toEqual(['a']);
+  });
+  it('counts active filters', () => {
+    expect(activeFilterCount({ maxPrice: 1, cutOnly: true })).toBe(2);
+    expect(activeFilterCount({ maxPrice: null, cutOnly: false })).toBe(0);
+  });
+});
+
+describe('isNewToday', () => {
+  const now = new Date('2026-08-11T15:00:00');
+  it('matches the local calendar day', () => {
+    expect(isNewToday('2026-08-11T02:00:00', now)).toBe(true);
+    expect(isNewToday('2026-08-10T23:59:00', now)).toBe(false);
+  });
+  it('handles missing/invalid dates', () => {
+    expect(isNewToday(null, now)).toBe(false);
+    expect(isNewToday('garbage', now)).toBe(false);
   });
 });

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import AppShellV3, { ScopePill } from '../components/AppShellV3';
+import OfflineNote from '../components/feedback/OfflineNote';
 import EmptyState from '../components/feedback/EmptyState';
 import AppIcon from '../components/AppIcon';
 import BookCloud from '../components/books/BookCloud';
@@ -186,12 +187,6 @@ const Books = () => {
             {readBooks.length} read · {wishCount} wishlist{untagged ? ` · ${untagged} untagged` : ''}
           </p>
 
-          {offline && (
-            <p className="book-offline-note">
-              Offline — changes are saved on this device and sync when the connection is back.
-            </p>
-          )}
-
           {view === 'cloud' && (
             <>
               <div className="book-legend muted-row">
@@ -358,6 +353,8 @@ const Books = () => {
           )}
         </>
       )}
+
+      {offline && <OfflineNote />}
     </AppShellV3>
   );
 };

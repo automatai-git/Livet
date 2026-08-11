@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import AppShellV3, { HeroCard } from '../../components/AppShellV3';
+import AppIcon from '../../components/AppIcon';
 import LoadingState from '../../components/feedback/LoadingState';
 import EmptyState from '../../components/feedback/EmptyState';
 import { travelService } from '../../services/travelService';
@@ -13,13 +14,6 @@ const STATUS_LABEL = {
   archived: 'Archived',
 };
 
-const STATUS_COLOR = {
-  planning: 'var(--text-muted)',
-  booked: 'var(--accent-travel)',
-  ontrip: 'var(--success)',
-  archived: 'var(--border)',
-};
-
 const fmtDateRange = (start, end) => {
   if (!start && !end) return null;
   const f = (d) => d ? new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
@@ -28,7 +22,6 @@ const fmtDateRange = (start, end) => {
 };
 
 const TripList = () => {
-  const navigate = useNavigate();
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   const destinations = listDestinations();
@@ -83,54 +76,34 @@ const TripList = () => {
             ? `Pick a destination to get started — ${destinations.length} template${destinations.length === 1 ? '' : 's'} ready.`
             : 'Add a destination template under src/data/destinations/ to begin.'}
           action={
-            <Link
-              to="/travel/new"
-              className="error-boundary-btn"
-              style={{ padding: '10px 18px', fontSize: '0.9rem' }}
-            >
+            <Link to="/travel/new" className="ghost-pill">
               Create your first trip
             </Link>
           }
         />
       ) : (
-        <div style={{ display: 'grid', gap: 12 }}>
+        <div className="row-stack">
           {trips.map((trip) => {
             const dest = destinations.find((d) => d.key === trip.destination_key);
             const dates = fmtDateRange(trip.start_date, trip.end_date);
             return (
-              <button
+              <Link
                 key={trip.id}
-                type="button"
-                onClick={() => navigate(`/travel/${trip.id}`)}
-                style={{
-                  textAlign: 'left',
-                  background: 'var(--card)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 16,
-                  padding: '18px 20px',
-                  cursor: 'pointer',
-                  display: 'grid',
-                  gap: 6,
-                }}
+                to={`/travel/${trip.id}`}
+                className={`surface-card trip-row${trip.status === 'archived' ? ' dim' : ''}`}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                  <h3 className="heading-serif" style={{ fontSize: '1.25rem' }}>{trip.name}</h3>
-                  <span
-                    style={{
-                      fontSize: '0.7rem',
-                      fontWeight: 700,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.08em',
-                      color: STATUS_COLOR[trip.status] || 'var(--text-muted)',
-                    }}
-                  >
-                    {STATUS_LABEL[trip.status] || trip.status}
-                  </span>
+                <div className="icon-chip md" style={{ background: 'var(--app-tint-bg)', color: 'var(--app-tint-fg)' }}>
+                  <AppIcon name="travel" size={20} />
                 </div>
-                <div className="muted-row" style={{ fontSize: '0.85rem' }}>
-                  {dest ? dest.name : trip.destination_key}{dates ? ` · ${dates}` : ''}
+                <div className="trip-row-body">
+                  <h3 className="heading-serif trip-row-name">{trip.name}</h3>
+                  <div className="row-meta ellipsis">
+                    {dest ? dest.name : trip.destination_key}{dates ? ` · ${dates}` : ''}
+                  </div>
                 </div>
-              </button>
+                <span className="trip-status-chip">{STATUS_LABEL[trip.status] || trip.status}</span>
+                <AppIcon name="chev" size={14} className="row-chev" />
+              </Link>
             );
           })}
         </div>

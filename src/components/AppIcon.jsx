@@ -70,6 +70,10 @@ export const IconSprite = () => (
         <path d="M12 3v18M5.5 12h13" />
         <path d="M8.7 8.7l1.5 1.5M15.3 8.7l-1.5 1.5M8.7 15.3l1.5-1.5M15.3 15.3l-1.5-1.5" />
       </symbol>
+      <symbol id="icon-flag" viewBox="0 0 24 24">
+        <path d="M6 21V4" />
+        <path d="M6 4h11l-2.5 4L17 12H6" />
+      </symbol>
       <symbol id="icon-check" viewBox="0 0 24 24">
         <path d="M5 12.5l4.5 4.5L19 7.5" />
       </symbol>

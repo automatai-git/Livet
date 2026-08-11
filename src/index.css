@@ -355,6 +355,21 @@ button {
 .agenda-row.past .icon-chip { opacity: 0.7; }
 .agenda-row-body { flex: 1; min-width: 0; }
 
+/* Moment card (v3.2 §2): one accent-bordered card the day something
+   crosses a threshold the user cares about, gone the next day. */
+.moment-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    border: 1.5px solid var(--moment-accent, var(--ink));
+    color: var(--text);
+    text-decoration: none;
+}
+.moment-body { flex: 1; min-width: 0; }
+.moment-eyebrow { color: var(--moment-accent, var(--text-muted)); }
+
 .tree-summary-card {
     display: flex;
     align-items: center;
@@ -726,7 +741,6 @@ body.screen-dark::before {
 .life-screen .life-heatcell.now .life-heatbox { border-color: var(--on-dark); }
 .life-screen .life-heatcell.active .life-heatbox { border-color: var(--on-dark); box-shadow: 0 0 0 1px var(--on-dark); }
 .life-screen .life-heatlabel { color: var(--on-dark-muted); }
-.life-offline-dark { margin-top: 10px; font-size: 0.78rem; color: var(--on-dark-muted); }
 .life-milestones-link {
     display: inline-flex;
     align-items: center;
@@ -739,54 +753,25 @@ body.screen-dark::before {
     padding-bottom: 1px;
 }
 
-/* ---------- Milestones (legacy feed) ---------- */
-.milestone-stats {
+/* ---------- Milestones (v3.2 §4: grouped rows, accent icon chips) ---------- */
+.milestone-section-head { margin-bottom: 10px; }
+.milestone-stack { margin-bottom: 22px; }
+.milestone-row {
     display: flex;
-    justify-content: space-around;
-    padding: 24px 16px;
-    margin-bottom: 20px;
-    text-align: center;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 16px;
 }
-.milestone-stat-num { font-size: 2rem; font-weight: 700; }
-.milestone-stat-num.total { color: var(--primary); }
-.milestone-stat-num.future { color: var(--success); }
-.milestone-stat-label {
-    font-size: 0.75rem;
+.milestone-row .icon-chip { flex-shrink: 0; }
+.milestone-row-body { flex: 1; min-width: 0; }
+.milestone-row-title { font-size: 1.15rem; line-height: 1.25; }
+.milestone-row-why {
+    margin-top: 6px;
+    font-size: 0.86rem;
+    line-height: 1.5;
     color: var(--text-muted);
-    text-transform: uppercase;
 }
-.filter-pill {
-    padding: 10px 20px;
-    min-height: 44px;
-    background: transparent;
-    color: var(--text-muted);
-    border: 1.5px solid var(--border);
-    border-radius: 20px;
-    cursor: pointer;
-    text-transform: capitalize;
-    font-weight: 500;
-}
-.filter-pill.on {
-    background: var(--ink);
-    color: #fff;
-    border-color: var(--ink);
-}
-.milestone-card {
-    margin-bottom: 20px;
-    padding: 20px;
-    border-radius: 16px;
-}
-.milestone-icon {
-    font-size: 2rem;
-    background: var(--bg);
-    width: 50px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
+.milestone-row-days { flex-shrink: 0; white-space: nowrap; padding-top: 4px; }
 
 /* Sub-page sticky header. v3.1 fix 1: same safe-area top offset inside the
    sticky surface, so the serif title clears the system clock everywhere. */
@@ -888,20 +873,6 @@ body.screen-dark::before {
     font-weight: 600;
     letter-spacing: 0.3px;
     text-transform: uppercase;
-}
-
-@keyframes fadeUp {
-    from { opacity: 0; transform: translateY(40px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.timeline-node {
-    opacity: 0;
-    transform: translateY(40px);
-}
-
-.timeline-node.visible {
-    animation: fadeUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
 
 /* ---------- Workout / Mobility shared styles ---------- */
@@ -1119,7 +1090,9 @@ body.screen-dark::before {
     gap: 6px;
     min-height: 44px;
     padding: 8px 15px;
-    border-radius: 999px;
+    /* Squared-off selectors (owner request 2026-08-11): matches the
+       day-pill radius so every scope flavour shares one shape. */
+    border-radius: 12px;
     background: var(--card);
     border: 1px solid var(--border);
     color: var(--text);
@@ -2102,6 +2075,33 @@ body.screen-dark::before {
 }
 
 /* ---------- Leaflet container ---------- */
+/* Trip list rows (v3.2 §5): standard anatomy — icon chip · serif name ·
+   meta · status chip · chevron. */
+.trip-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    min-height: 44px;
+    color: var(--text);
+    text-decoration: none;
+}
+.trip-row.dim { opacity: 0.65; }
+.trip-row .icon-chip { flex-shrink: 0; }
+.trip-row-body { flex: 1; min-width: 0; }
+.trip-row-name { font-size: 1.15rem; line-height: 1.25; }
+.trip-status-chip {
+    flex-shrink: 0;
+    font-size: 0.62rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--app-tint-bg, var(--divider));
+    color: var(--app-tint-fg, var(--text-muted));
+}
+
 .trip-map {
     width: 100%;
     height: 360px;
@@ -2156,12 +2156,6 @@ body.screen-dark::before {
 .life-heatlabel { font-size: 0.62rem; color: var(--text-muted); }
 
 /* ---------- Book cloud (/books) ---------- */
-.book-offline-note {
-    margin: 0 0 10px;
-    font-size: 0.78rem;
-    color: var(--text-muted);
-}
-
 .book-legend {
     display: flex;
     gap: 16px;
@@ -2770,21 +2764,69 @@ body.screen-dark::before {
 }
 
 /* ===== Property Search (/property) ===== */
+/* v3.2: secondary toggles are centered ghost pills AFTER the list. */
 .listing-toggles {
     display: flex;
+    justify-content: center;
     gap: 8px;
-    margin-bottom: 14px;
+    margin: 20px 0 6px;
 }
 .ghost-pill.on-ink {
     background: var(--ink);
     color: #fff;
     border-color: var(--ink);
 }
+/* Sort + filter controls (per profile; the map obeys the same filters). */
+.listing-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+.listing-sort-row {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.listing-sort-row::-webkit-scrollbar { display: none; }
+.listing-filter-toggle { margin-left: auto; flex-shrink: 0; }
+.listing-filter-card {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+}
+.listing-filter-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.listing-filter-field input {
+    width: 100%;
+    padding: 9px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.86rem;
+    font-variant-numeric: tabular-nums;
+}
+.listing-filter-foot {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
 .listing-list {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    margin-bottom: 18px;
 }
+.listing-list.tight { gap: 8px; }
+.listing-group-head { margin-bottom: 10px; }
 .listing-card {
     display: block;
     width: 100%;
@@ -2795,9 +2837,41 @@ body.screen-dark::before {
     cursor: pointer;
     font: inherit;
     color: var(--text);
+    text-decoration: none;
 }
-.listing-card.hot { border-color: var(--app-accent, var(--accent-property)); }
 .listing-card.gone { opacity: 0.55; }
+/* Compact row (awaiting / the rest): thumb · title · meta · chip · chev. */
+.listing-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    min-height: 44px;
+    color: var(--text);
+    text-decoration: none;
+}
+.listing-row.dim { opacity: 0.65; }
+.listing-row-thumb {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    object-fit: cover;
+    background: var(--divider);
+    flex-shrink: 0;
+}
+.listing-row-chip { flex-shrink: 0; }
+.listing-row-body { flex: 1; min-width: 0; }
+.listing-new-chip {
+    flex-shrink: 0;
+    font-size: 0.62rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--app-tint-bg, rgba(156, 91, 67, 0.11));
+    color: var(--app-tint-fg, var(--accent-property));
+}
 .listing-img {
     display: block;
     width: 100%;
@@ -2846,16 +2920,6 @@ body.screen-dark::before {
     border-radius: 999px;
     font-variant-numeric: tabular-nums;
 }
-.listing-hot-chip {
-    background: var(--app-tint-bg, rgba(156,91,67,.11));
-    color: var(--app-tint-fg, var(--accent-property));
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
-    padding: 3px 8px;
-    border-radius: 999px;
-}
 .listing-gone-chip,
 .listing-interest-chip {
     font-size: 0.7rem;
@@ -2874,10 +2938,14 @@ body.screen-dark::before {
     color: var(--text-muted);
 }
 .listing-flag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     margin-top: 8px;
     font-size: 0.8rem;
     color: var(--danger);
 }
+.listing-flag svg { flex-shrink: 0; }
 .listing-score-chip {
     flex-shrink: 0;
     display: inline-flex;
@@ -2911,77 +2979,63 @@ body.screen-dark::before {
     padding: 48px 20px;
     color: var(--text-muted);
 }
-/* Detail sheet */
-.listing-detail-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.55);
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    z-index: 1000;
+/* Listing focus flow (/property/:finnkode — v3.2, replaces the modal). */
+.listing-detail-img {
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    margin-bottom: 16px;
 }
-.listing-detail-card {
-    background: var(--card);
-    width: 100%;
-    max-width: 560px;
-    max-height: 92dvh;
-    overflow-y: auto;
-    border-radius: 20px 20px 0 0;
-}
-@media (min-width: 600px) {
-    .listing-detail-overlay { align-items: center; padding: 24px; }
-    .listing-detail-card { border-radius: 20px; }
-}
-.listing-detail-body { padding: 18px 20px calc(env(safe-area-inset-bottom, 0px) + 20px); }
+.listing-page-top { margin-bottom: 2px; }
 .listing-detail-title { font-size: 1.45rem; line-height: 1.2; }
-.listing-detail-price {
+.listing-sparkline { color: var(--app-tint-fg, var(--accent-property)); flex-shrink: 0; }
+.listing-price-card { margin-top: 14px; padding: 16px; }
+.listing-price-main {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+}
+.listing-price-serif { font-size: 1.7rem; font-variant-numeric: tabular-nums; }
+.listing-price-main .listing-cut-badge { display: inline-block; margin-top: 6px; }
+.listing-fact-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 10px;
     margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--divider);
 }
-.listing-sparkline { color: var(--app-tint-fg, var(--accent-property)); }
-.listing-facts {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px 16px;
-    margin-top: 16px;
-    padding: 12px 14px;
-    background: var(--bg);
-    border-radius: 14px;
+.listing-fact-cell { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.listing-fact-k { font-size: 0.66rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+.listing-fact-v { font-size: 0.86rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+@media (max-width: 420px) {
+    .listing-fact-strip { grid-template-columns: repeat(2, 1fr); }
 }
-.listing-fact { display: flex; justify-content: space-between; gap: 8px; font-size: 0.84rem; }
-.listing-fact-k { color: var(--text-muted); }
-.listing-fact-v { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
-.listing-eval { margin-top: 16px; }
-.listing-eval p { margin-top: 6px; font-size: 0.92rem; line-height: 1.55; }
-.listing-eval.queued {
-    margin-top: 16px;
-    font-size: 0.85rem;
-    color: var(--text-faint);
-    border: 1px dashed var(--border);
-    border-radius: 14px;
-    padding: 12px 14px;
-}
-.listing-points {
+.listing-read-card { margin-top: 12px; padding: 16px; }
+.listing-read-summary { margin-top: 8px; font-size: 0.92rem; line-height: 1.55; }
+.listing-read-queued { margin-top: 8px; font-size: 0.85rem; color: var(--text-faint); }
+/* Highlights and red flags in ONE list: coloured dots, not two ULs. */
+.listing-read-lines {
     list-style: none;
     margin: 12px 0 0;
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 7px;
     font-size: 0.86rem;
 }
-.listing-points li { padding-left: 20px; position: relative; }
-.listing-points li::before {
+.listing-read-lines li { padding-left: 18px; position: relative; }
+.listing-read-lines li::before {
+    content: '';
     position: absolute;
-    left: 0;
-    font-weight: 700;
+    left: 2px;
+    top: 7px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
 }
-.listing-points.good li::before { content: '✓'; color: var(--success); }
-.listing-points.bad li::before { content: '⚑'; color: var(--danger); }
+.listing-read-lines li.good::before { background: var(--accent-mobility); }
+.listing-read-lines li.bad::before { background: var(--accent-timeline); }
 .listing-links, .listing-actions {
     display: flex;
     flex-wrap: wrap;
@@ -2989,6 +3043,7 @@ body.screen-dark::before {
     margin-top: 16px;
 }
 .listing-links a { text-decoration: none; }
+.listing-notes-label { display: block; margin-top: 16px; }
 .listing-notes {
     width: 100%;
     min-height: 76px;
@@ -3002,7 +3057,88 @@ body.screen-dark::before {
     font-size: 0.9rem;
     resize: vertical;
 }
-.listing-close { margin-top: 18px; }
+
+/* Map scope (#9a): score-chip pins on satellite tiles, mini card below. */
+.pmap-profile-toggle { margin-bottom: 12px; }
+.pmap-card { padding: 6px; overflow: hidden; }
+.pmap-canvas {
+    height: 380px;
+    border-radius: 15px;
+    background: var(--divider);
+    z-index: 0;
+}
+.pmap-pin-wrap { background: none; border: none; }
+.pmap-pin {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #fff;
+    border: 2px solid rgba(253, 252, 249, 0.9);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.pmap-pin.view { background: var(--accent-mobility); }
+.pmap-pin.maybe { background: var(--accent-decision); }
+.pmap-pin.skip { background: var(--text-faint); }
+.pmap-pin.queued {
+    background: rgba(27, 59, 47, 0.55);
+    border-style: dashed;
+    color: rgba(253, 252, 249, 0.85);
+}
+.pmap-pin.selected { outline: 3px solid rgba(253, 252, 249, 0.85); outline-offset: 1px; }
+.pmap-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 14px;
+    margin: 10px 0 4px;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+.pmap-legend-item { display: inline-flex; align-items: center; gap: 5px; }
+.pmap-legend-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.pmap-legend-dot.view { background: var(--accent-mobility); }
+.pmap-legend-dot.maybe { background: var(--accent-decision); }
+.pmap-legend-dot.skip { background: var(--text-faint); }
+.pmap-legend-dot.queued { background: transparent; border: 1.5px dashed var(--text-faint); }
+.pmap-mini { margin-top: 10px; }
+
+/* ===== OfflineNote — the one offline pattern app-wide (v3.2 §7) ===== */
+.offline-note {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: 16px;
+    padding: 11px 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+.offline-note-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #D5D0C2;
+    flex-shrink: 0;
+}
+.offline-note.dark {
+    background: rgba(245, 243, 237, 0.07);
+    border-color: rgba(245, 243, 237, 0.12);
+    color: var(--on-dark-muted, rgba(245, 243, 237, 0.6));
+}
+.offline-note.dark .offline-note-dot { background: rgba(245, 243, 237, 0.45); }
 
 /* ============================================================
    Goals app (/goals): sprint markdown view, north-star

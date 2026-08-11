@@ -2,21 +2,26 @@ import React, { useState } from 'react';
 import { SECTIONS, coreColours, sisterColours, neutralColours, cautionColours, metalColours, outfitCombos } from '../data/colourData.js';
 import OutfitMatcher from '../components/colour/OutfitMatcher.jsx';
 import AppShellV3, { HeroCard, ScopePill } from '../components/AppShellV3.jsx';
+import { relativeLuminance } from '../lib/colourMatch.js';
 
 const ColourCard = ({ c }) => {
+  // Label colour by swatch luminance (v3.2 §6), never per-hex hard-coding:
+  // light swatches carry ink, dark swatches carry ivory.
+  const light = relativeLuminance(c.hex) > 0.55;
+  const label = light ? '#1B3B2F' : '#F5F3ED';
   return (
     <div
       role="img"
       aria-label={`${c.name}, hex ${c.hex}`}
       style={{
         background: c.hex,
-        border: c.hex === '#FFFFFF' || c.hex === '#EDE8E3' ? '1.5px solid #D0CCC7' : 'none',
+        border: light ? '1.5px solid var(--border)' : 'none',
         borderRadius: '14px', padding: '22px 24px', minHeight: '120px', display: 'flex', flexDirection: 'column',
-        justifyContent: 'flex-end', boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+        justifyContent: 'flex-end', boxShadow: 'var(--card-shadow)'
       }}
     >
-      <div style={{fontWeight: 600, fontSize: '15px', color: (c.hex === '#FFFFFF' || c.hex === '#EDE8E3') ? '#3D3D3D' : '#F5F0EB'}}>{c.name}</div>
-      <div style={{fontFamily: 'monospace', fontSize: '11px', textTransform: 'uppercase', color: (c.hex === '#FFFFFF' || c.hex === '#EDE8E3') ? '#3D3D3D' : '#F5F0EB', opacity: 0.8}}>{c.hex}</div>
+      <div style={{fontWeight: 600, fontSize: '15px', color: label}}>{c.name}</div>
+      <div style={{fontFamily: 'monospace', fontSize: '11px', textTransform: 'uppercase', color: label, opacity: 0.75}}>{c.hex}</div>
     </div>
   );
 };

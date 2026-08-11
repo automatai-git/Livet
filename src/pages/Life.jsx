@@ -5,6 +5,7 @@ import { LIFE_TREE } from '../data/lifeTreeData';
 import { weekKey, lastNWeekKeys, weekLabel, rollUp } from '../lib/lifeTree';
 import TreeFigure from '../components/life/TreeFigure';
 import WeekHeatmap from '../components/life/WeekHeatmap';
+import OfflineNote from '../components/feedback/OfflineNote';
 import TabBar from '../components/shell/TabBar';
 
 const HISTORY_WEEKS = 12;
@@ -159,13 +160,11 @@ const Life = () => {
           currentWeek={currentWeek}
           onSelect={selectWeek}
         />
-        {offline && (
-          <p className="life-offline-dark">Couldn't reach the database — ticks are kept locally and sync once it's reachable.</p>
-        )}
         <Link to="/timeline" className="life-milestones-link">
           Milestone timeline
           <span aria-hidden="true">→</span>
         </Link>
+        {offline && <OfflineNote dark />}
       </section>
 
       <TabBar dark />

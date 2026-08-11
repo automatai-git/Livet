@@ -11,6 +11,12 @@ import { weekKey, isoWeekParts, rollUp } from '../lib/lifeTree';
 import { getDayWindow, parseHM, windowFraction, minutesOfDay, hourLabels } from '../lib/dayWindow';
 import { sortByUsage } from '../lib/appUsage';
 import { APP_REGISTRY } from '../data/appRegistry';
+import { propertyService } from '../services/propertyService';
+import { goalService } from '../services/goalService';
+import { crossedToday } from '../lib/propertySeen';
+import { displayPrice, formatNokCompact, priceCut, VIEWING_THRESHOLD } from '../lib/property';
+import { sprintProgress } from '../lib/goals';
+import { ScoreChip } from '../components/property/ListingCard';
 import AppIcon from '../components/AppIcon';
 import TabBar from '../components/shell/TabBar';
 
@@ -21,7 +27,9 @@ const AGENDA_TIMES = { workout: '12:00', mobility: '15:00', dinner: '17:00' };
 // On-dark pillar tints for the Life Tree summary dots.
 const PILLAR_TINTS = { health: '#8FBF96', wealth: '#7FB2C4', happiness: '#DBA283' };
 
-// Quiet fallback meta lines for apps without a live signal.
+// Quiet fallback meta lines for apps without a live signal. Every registry
+// route must resolve to a non-empty meta (v3.2 §2) — /menu, /mobility,
+// /life, /property and /goals are computed live in metaFor.
 const STATIC_META = {
   '/workout': 'Your training block',
   '/travel': 'Itineraries & satellite map',
@@ -29,6 +37,8 @@ const STATIC_META = {
   '/bucket': '425 lifetime experiences',
   '/colour': 'Outfit combinations',
   '/decision': 'Weighted choices',
+  '/property': 'Finn.no watchlist',
+  '/goals': 'Sprint & north star',
 };
 
 const registryFor = (route) => APP_REGISTRY.find((a) => a.route === route);
@@ -39,6 +49,7 @@ const Today = () => {
   const [dinnersPlanned, setDinnersPlanned] = useState(null);
   const [ticks, setTicks] = useState({});
   const [now, setNow] = useState(() => new Date());
+  const [propListings, setPropListings] = useState(propertyService.getCachedListings);
 
   const dayWindow = useMemo(() => getDayWindow(), []);
   const currentWeek = weekKey(now);
@@ -54,6 +65,9 @@ const Today = () => {
     lifeTreeService.getWeeks([currentWeek]).then(({ weeks }) => {
       setTicks(weeks[currentWeek] || {});
     });
+    // Refresh the listings cache quietly so the moment card and the
+    // Property meta line reflect today's scores (cache fallback offline).
+    propertyService.getListings().then(({ listings }) => setPropListings(listings));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -179,12 +193,29 @@ const Today = () => {
     ? `${weakestPillar.pillar.label} branch needs a tick`
     : 'All branches complete';
 
+  // ----- property moment card (v3.2 §2): listings that crossed the
+  // viewing threshold today, gone again tomorrow. -----
+  const crossed = useMemo(() => crossedToday(propListings, now), [propListings, now]);
+  const propActive = propListings.filter((l) => l.active !== false && l.user_state !== 'hidden');
+  const propHot = propActive.filter((l) => (l.score ?? 0) >= VIEWING_THRESHOLD).length;
+  const propUnscored = propActive.filter((l) => l.score == null).length;
+
   // ----- most used -----
   const mostUsed = useMemo(() => sortByUsage(APP_REGISTRY).slice(0, 3), []);
   const metaFor = (route) => {
     if (route === '/menu') return dinnersPlanned != null ? `${dinnersPlanned} of 7 dinners planned` : 'Plan the week’s dinners';
     if (route === '/mobility') return streak != null ? `${streak} of last 7 days` : 'Weekly mobility work';
     if (route === '/life') return treeHint;
+    if (route === '/property' && propActive.length > 0) {
+      return `${propHot} worth a viewing · ${propUnscored} awaiting score`;
+    }
+    if (route === '/goals') {
+      const doc = goalService.getCachedDoc();
+      if (doc?.items?.length) {
+        const p = sprintProgress(doc.items);
+        return `Sprint ${p.pct}% · ${p.total - p.done} open`;
+      }
+    }
     return STATIC_META[route] ?? '';
   };
 
@@ -253,6 +284,34 @@ const Today = () => {
           );
         })}
       </div>
+
+      {crossed.length > 0 && (() => {
+        const one = crossed.length === 1 ? crossed[0] : null;
+        const cut = one ? priceCut(one.price_history) : null;
+        return (
+          <Link
+            to={one ? `/property/${one.finnkode}` : '/property'}
+            className="surface-card moment-card"
+            style={{ '--moment-accent': 'var(--accent-property)' }}
+          >
+            <div className="moment-body">
+              <div className="row-eyebrow moment-eyebrow">
+                Crossed {VIEWING_THRESHOLD} today · Property
+              </div>
+              <div className="row-title">
+                {one ? (one.heading ?? `Finn ${one.finnkode}`) : `${crossed.length} crossed ${VIEWING_THRESHOLD} today`}
+              </div>
+              <div className="row-meta ellipsis">
+                {one
+                  ? [formatNokCompact(displayPrice(one)), cut ? `price cut −${formatNokCompact(cut.delta)}` : null]
+                    .filter(Boolean).join(' · ')
+                  : crossed.map((l) => l.heading ?? l.finnkode).join(' · ')}
+              </div>
+            </div>
+            {one && <ScoreChip listing={one} />}
+          </Link>
+        );
+      })()}
 
       <Link to="/life" className="tree-summary-card">
         <div className="tree-summary-main">
