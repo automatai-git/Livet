@@ -61,6 +61,7 @@ const PropertySearch = () => {
   const [profile, setProfileState] = useState(readProfile);
   const [showHidden, setShowHidden] = useState(false);
   const [showGone, setShowGone] = useState(false);
+  const [goneLoaded, setGoneLoaded] = useState(false);
   const [allControls, setAllControls] = useState(readControls);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -93,6 +94,23 @@ const PropertySearch = () => {
     });
     return () => { cancelled = true; unsubscribe(); };
   }, []);
+
+  // Gone listings aren't in the default fetch (or the cache) — pull the full
+  // set the first time the "Sold / gone" toggle turns on.
+  useEffect(() => {
+    if (!showGone || goneLoaded) return;
+    let cancelled = false;
+    propertyService.getListings({ includeGone: true }).then(({ listings, offline }) => {
+      if (cancelled) return;
+      setOffline(offline);
+      // Offline falls back to the compact cache, which has no gone rows —
+      // keep what we have and let the next toggle retry.
+      if (offline) return;
+      setListings(listings);
+      setGoneLoaded(true);
+    });
+    return () => { cancelled = true; };
+  }, [showGone, goneLoaded]);
 
   const visible = useMemo(
     () => applyListingFilters(

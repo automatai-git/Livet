@@ -121,14 +121,14 @@ describe('filterListings', () => {
 });
 
 describe('groupListings', () => {
-  it('splits by verdict: ≥80 / unscored / the rest, each internally sorted', () => {
+  it('splits by verdict: ≥65 / unscored / the rest, each internally sorted', () => {
     const rows = [
       { finnkode: 'a', score: 45 },
       { finnkode: 'b', score: 92 },
       { finnkode: 'c', score: null, first_seen: '2026-08-01' },
-      { finnkode: 'd', score: 80 },
+      { finnkode: 'd', score: 65 },
       { finnkode: 'e', score: null, first_seen: '2026-08-05' },
-      { finnkode: 'f', score: 79 },
+      { finnkode: 'f', score: 64 },
     ];
     const g = groupListings(rows);
     expect(g.viewing.map((r) => r.finnkode)).toEqual(['b', 'd']);

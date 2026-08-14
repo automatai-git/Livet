@@ -91,7 +91,7 @@ the collector lives outside this repo in `NAS-setup and system/property-search/`
 Two profiles: `bolig` (primary residence) and `fritid` (sea cabin) — the
 scope pills are `Bolig · Fritid · Map` (no "All"; last-used profile persists
 in `property-profile-v1`), the browse list groups by verdict (Book a viewing
-≥ 80 as rich cards · Awaiting score · The rest as compact rows via
+≥ 65 as rich cards · Awaiting score · The rest as compact rows via
 `groupListings`), and the detail view is a focus flow at
 `/property/:finnkode` (AppShellV3, `hideTabBar`, sticky Done) — no modal.
 - **Ownership split:** the NAS owns every column except `user_state`
@@ -107,8 +107,16 @@ in `property-profile-v1`), the browse list groups by verdict (Book a viewing
   `sortListings` (score desc, unevaluated last, newest-first among them),
   `filterListings` (default: active, not hidden). jsonb columns go through
   `parseJsonArray` since cached rows may hold JSON strings.
-- `src/services/propertyService.js` — read-all + user-field updates,
+- `src/services/propertyService.js` — paged reads (PostgREST caps unpaged
+  selects at 1000 rows; the collector adds ~100+/day) + user-field updates,
   `property-listings-cache-v1` localStorage fallback, cache-first on write.
+  The default fetch excludes gone listings (`active = false`) unless
+  user-touched; the "Sold / gone" toggle lazily pulls the full set
+  (`{ includeGone: true }`). The cache only ever stores the compact default
+  set (localStorage budget). Server-side retention: a pg_cron job
+  (`input/property-listings-retention.sql`) deletes gone, untouched rows —
+  unscored after 30 days, scored <65 after 90; 65+ and user-touched rows
+  are kept.
 - `src/pages/PropertySearch.jsx` + `src/components/property/` —
   `ListingCard` (rich card: image, score chip, days-on-Finn in the meta,
   price-cut badge, one flag line with the `icon-flag` glyph) and
@@ -124,10 +132,14 @@ in `property-profile-v1`), the browse list groups by verdict (Book a viewing
 - v3.2 QoL: `propertyService.subscribeListings` (Supabase realtime, merged
   via `applyChange`) and `src/lib/propertySeen.js` — `property-seen-v1`
   localStorage of max seen score per finnkode + the local date it first
-  crossed 80; `crossedToday()` feeds the Today moment card (one accent-
-  bordered card the day a listing crosses 80, gone the next day; first run
+  crossed the threshold; `crossedToday()` feeds the Today moment card (one
+  accent-bordered card the day a listing crosses it, gone the next day; first run
   is a baseline so nothing floods). Today and Apps read the listings cache
   for their `metaFor` / `statusFor` lines.
+- Threshold: `VIEWING_THRESHOLD` = 65 — the pipeline mailer's prospect cut
+  ("only those scoring 65+ are shown"); the handover's original 80 is
+  outdated. Everything score-gated (verdict groups, hot styling, Today
+  crossing card) keys off this constant.
 - Semantics: `active = false` = gone from Finn (sold/withdrawn) — dimmed
   behind the "Sold / gone" toggle; `status` `shortlist`/`queued` = not yet
   scored (evaluation runs daily at 13:00 CET, so fresh listings sit unscored

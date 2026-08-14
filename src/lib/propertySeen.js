@@ -2,7 +2,7 @@ import { VIEWING_THRESHOLD } from './property';
 
 // property-seen-v1 — per-listing max seen score, kept in localStorage so the
 // Today moment card can tell *new* threshold crossings from listings that
-// have sat at ≥ 80 for a while. Each entry also remembers the local date the
+// have sat above the threshold for a while. Each entry also remembers the local date the
 // listing first crossed VIEWING_THRESHOLD; the moment card shows crossings
 // dated today and nothing else, so the card disappears on its own the next
 // day. The very first run (empty cache) only records a baseline — nothing

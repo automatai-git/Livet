@@ -58,8 +58,11 @@ export const daysOnMarket = (firstSeen, now = Date.now()) => {
   return Math.max(0, Math.floor((now - t) / 86_400_000));
 };
 
-// score >= 80 is the pipeline's "book a viewing" threshold.
-export const VIEWING_THRESHOLD = 80;
+// score >= 65 is the pipeline's prospect threshold — the NAS mailer only
+// surfaces listings at 65+ ("only those scoring 65+ are shown"), so the app
+// highlights the same set. (The original handover said 80; the pipeline
+// moved to 65.)
+export const VIEWING_THRESHOLD = 65;
 
 // Default browse order: score desc, unevaluated (null score) after all
 // scored rows sorted newest-first, ties broken by finnkode for stability.
@@ -143,7 +146,7 @@ export const activeFilterCount = (f = {}) =>
   [f.maxPrice != null, f.minBedrooms != null, f.minArea != null, Boolean(f.cutOnly)]
     .filter(Boolean).length;
 
-// Browse groups by verdict (v3.2): "Book a viewing" (score ≥ 80, rich
+// Browse groups by verdict (v3.2): "Book a viewing" (score ≥ threshold, rich
 // cards) · "Awaiting score" (unscored, newest first via sortListings'
 // null-handling) · "The rest" (scored below threshold). Feed it an
 // already-filtered list.
