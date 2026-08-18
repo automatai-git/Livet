@@ -264,3 +264,52 @@ unblocked — build against live data, not just the seeded schema.
     exact seed row) into `input/training-schema.sql` per §B4. The §2
     contract itself is unchanged — no column was added, renamed, or
     retyped. Contract changes still route via the coach project only.
+
+---
+
+## 8. SECTION B COMPLETION REPORT — Livet instance, 2026-08-18
+
+**§4 is COMPLETE. §5.3 done-criteria are met.** `/training` is deployed
+(commit `f623285`, Pages build green), renders the current block from live
+data, lint+tests green (241 tests), offline cache verified by the owner on
+device. Owner is running a one-week live test; adjustments may follow.
+
+### 8.1 What was done (deviations from §4 as written)
+- **Service filename:** `src/services/trainingService.js` was already taken
+  by a legacy service (workout-program position over `relevant_dates`, used
+  by Today and mobilityService). The pipeline data layer is
+  `src/services/trainingDataService.js` instead. Cache keys and behaviour
+  are exactly per §B2 (`training-cache-v1`, `training-wellness-cache-v1`,
+  paged reads, default window = active block + 90 days, read-only).
+- **Uke view keys on the calendar week (Europe/Oslo, Mon–Sun), not the
+  `week` column** — pre-Block-5 rows carry no block stamp (§7.2), so a
+  block-week view would be empty until 2026-08-24. Block stamps drive only
+  the Blokk grid. Oslo conversion per §7.3.2 is explicit
+  (`Intl … timeZone: 'Europe/Oslo'`), unit-tested across midnight both
+  in CEST and CET.
+- **Week compliance chips ship dormant** (`WEEK_TARGETS = null` in
+  Training.jsx, shape documented) — Block 5 targets don't exist until the
+  coach's design session. Block goals display from
+  `training_blocks.a_goal`/`b_goals` (currently the seeded placeholders).
+- **TSB** is rendered as `ctl − atl` client-side (intervals.icu's own
+  definition; the schema has no tsb column). Flagged as the one permitted
+  piece of arithmetic under §1 rule 1 — if the coach project objects, a
+  `tsb` column via the NAS is the contract-clean alternative.
+- **`raw` jsonb is never selected** — nothing displays from it and the
+  cache lives in localStorage (compact-set precedent from propertyService).
+- Accent: muted mulberry `#7A4E66` (moss suggestion declined — three greens
+  in the accent set already; owner approved).
+- No realtime subscription (cron-only refresh, 3×/day — nothing to react to).
+
+### 8.2 For the coach project (observed while building, not Section B scope)
+- The legacy in-app planning stack (`blocks` + `user_config` tables → the
+  Workout Finder schedule; `relevant_dates` 'training_start' → Mobility's
+  block/week stamping) is now a **parallel, disconnected block system**: it
+  knows nothing of `training_blocks`, and without a manually-entered Block 5
+  plan it goes stale on 2026-08-24. Whether to retire the Workout Finder
+  and re-point Mobility's stamping belongs to the architecture review, not
+  this handover.
+- Mobility sessions logged in the Livet Mobility app land in
+  `mobility_sessions` — invisible to the pipeline, so `/training`'s Blokk
+  mobility count reflects **Hevy-titled workouts only** (§7.3.4). Until
+  mobility is logged in Hevy, that count reads 0 by design.
