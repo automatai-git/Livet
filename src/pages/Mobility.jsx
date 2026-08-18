@@ -2,8 +2,9 @@ import React, { useEffect, useMemo, useReducer, useState, useCallback } from 're
 import { useSearchParams } from 'react-router-dom';
 import AppShellV3, { HeroCard, ScopePill } from '../components/AppShellV3';
 import { MOBILITY_DATA, DAYS } from '../data/mobilityData';
-import { parseSets, uniqueTags } from '../lib/mobility';
+import { parseSets, uniqueTags, sourceDayForDayType, planDayLabel } from '../lib/mobility';
 import { mobilityService } from '../services/mobilityService';
+import { getActiveBlock, getWeekNumber, getPhaseForWeek, resolveDayForPhase } from '../lib/blocks';
 import RoutineOverview from '../components/mobility/RoutineOverview';
 import FocusMode from '../components/mobility/FocusMode';
 import SessionSummary from '../components/mobility/SessionSummary';
@@ -144,20 +145,59 @@ const Mobility = () => {
   const [blockWeek, setBlockWeek] = useState(null);
   const [saving, setSaving] = useState(false);
   const [hydratedOnce, setHydratedOnce] = useState(false);
+  // The MOBILITY_DATA key the active routine came from (may differ from the
+  // selected weekday once the block plan redirects it), and the week's plan:
+  // { [weekday]: { sourceDay, label } } from the active block's
+  // weekly_template + phase overrides. null = plan unavailable, fall back to
+  // the static weekday schedule.
+  const [routineSource, setRoutineSource] = useState(null);
+  const [weekPlan, setWeekPlan] = useState(null);
 
-  const routine = routineKey ? MOBILITY_DATA[selectedDay]?.routines?.[routineKey] : null;
+  const routine = routineKey
+    ? MOBILITY_DATA[routineSource ?? selectedDay]?.routines?.[routineKey]
+    : null;
+
+  // What the plan says the selected weekday is, and which MOBILITY_DATA key
+  // supplies its routines. sourceDay null = planned rest day (nothing
+  // scheduled); weekPlan null = no plan reachable, static weekday stands.
+  const planned = weekPlan?.[selectedDay] ?? null;
+  const displaySource = planned ? planned.sourceDay : selectedDay;
 
   useEffect(() => {
     mobilityService.flushOfflineQueue().catch(() => {});
     mobilityService.getBlockWeek().then(setBlockWeek).catch(() => {});
+
+    // The week's schedule follows the active block plan (same source the
+    // Workout Finder reads): resolve each weekday's day type for the current
+    // week + phase, and map it onto the routine set that fits it. If no plan
+    // is reachable (offline, no cache) the static weekday schedule stands.
+    getActiveBlock()
+      .then((block) => {
+        const now = new Date();
+        const monday = new Date(now);
+        monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+        const plan = {};
+        WEEK_DAYS.forEach((day, i) => {
+          const d = new Date(monday);
+          d.setDate(monday.getDate() + i);
+          const week = getWeekNumber(block, d);
+          const phase = getPhaseForWeek(block, week);
+          const resolved = resolveDayForPhase(block.weekly_template?.[day], phase.name);
+          plan[day] = { sourceDay: sourceDayForDayType(resolved), label: planDayLabel(resolved) };
+        });
+        setWeekPlan(plan);
+      })
+      .catch(() => {});
 
     const saved = sessionStorage.getItem(ACTIVE_SESSION_KEY);
     let restoredFromSession = false;
     if (saved) {
       try {
         const data = JSON.parse(saved);
-        if (data.date === todayISO() && MOBILITY_DATA[data.dayName]?.routines?.[data.routineKey]) {
+        const savedSource = data.routineSource ?? data.dayName;
+        if (data.date === todayISO() && MOBILITY_DATA[savedSource]?.routines?.[data.routineKey]) {
           setSelectedDay(data.dayName);
+          setRoutineSource(savedSource);
           setRoutineKey(data.routineKey);
           dispatch({ type: 'HYDRATE', state: data.state });
           setView(data.state.status === 'finished' ? 'summary' : 'focus');
@@ -177,6 +217,7 @@ const Mobility = () => {
       const qRoutine = searchParams.get('routine');
       if (qDay && qRoutine && MOBILITY_DATA[qDay]?.routines?.[qRoutine]) {
         setSelectedDay(qDay);
+        setRoutineSource(qDay);
         setRoutineKey(qRoutine);
         setView('overview');
         prefetchLastWeights(MOBILITY_DATA[qDay].routines[qRoutine]);
@@ -196,11 +237,12 @@ const Mobility = () => {
       JSON.stringify({
         date: todayISO(),
         dayName: selectedDay,
+        routineSource,
         routineKey,
         state: sessionState,
       })
     );
-  }, [sessionState, routineKey, selectedDay, view, hydratedOnce]);
+  }, [sessionState, routineKey, selectedDay, routineSource, view, hydratedOnce]);
 
   const prefetchLastWeights = useCallback(async (rt) => {
     if (!rt) return;
@@ -216,9 +258,10 @@ const Mobility = () => {
   }, []);
 
   const handleSelectRoutine = (key) => {
+    setRoutineSource(displaySource);
     setRoutineKey(key);
     setView('overview');
-    prefetchLastWeights(MOBILITY_DATA[selectedDay].routines[key]);
+    prefetchLastWeights(MOBILITY_DATA[displaySource].routines[key]);
   };
 
   const handleStartRoutine = () => {
@@ -233,7 +276,7 @@ const Mobility = () => {
     await mobilityService.saveSession(
       {
         day_name: selectedDay,
-        day_label: MOBILITY_DATA[selectedDay].name,
+        day_label: dayLabel,
         routine_key: routineKey,
         routine_name: routine.name,
         status: 'skipped',
@@ -244,6 +287,7 @@ const Mobility = () => {
     setSaving(false);
     setView('day-pick');
     setRoutineKey(null);
+    setRoutineSource(null);
   };
 
   const handleExitFocus = () => {
@@ -278,7 +322,7 @@ const Mobility = () => {
     await mobilityService.saveSession(
       {
         day_name: selectedDay,
-        day_label: MOBILITY_DATA[selectedDay].name,
+        day_label: dayLabel,
         routine_key: routineKey,
         routine_name: routine.name,
         status,
@@ -292,6 +336,7 @@ const Mobility = () => {
     dispatch({ type: 'RESET' });
     setView('day-pick');
     setRoutineKey(null);
+    setRoutineSource(null);
   };
 
   const handleDiscardSession = () => {
@@ -300,9 +345,14 @@ const Mobility = () => {
     dispatch({ type: 'RESET' });
     setView('day-pick');
     setRoutineKey(null);
+    setRoutineSource(null);
   };
 
-  const dayLabel = useMemo(() => MOBILITY_DATA[selectedDay]?.name ?? selectedDay, [selectedDay]);
+  // Plan-aware day label ("Tuesday · Run · Tempo"); static name as fallback.
+  const dayLabel = useMemo(() => {
+    if (planned) return `${selectedDay[0].toUpperCase() + selectedDay.slice(1)} · ${planned.label}`;
+    return MOBILITY_DATA[selectedDay]?.name ?? selectedDay;
+  }, [planned, selectedDay]);
 
   // AppShellV3 slots (day-pick view). Scope = 7 equal day cells for the
   // current week; hero = the day's routine; sticky action = Start session.
@@ -317,7 +367,9 @@ const Mobility = () => {
     });
   }, []);
 
-  const dayEntries = Object.entries(MOBILITY_DATA[selectedDay]?.routines ?? {});
+  const dayEntries = Object.entries(
+    (displaySource ? MOBILITY_DATA[displaySource]?.routines : null) ?? {}
+  );
   const firstRoutine = dayEntries[0]?.[1] ?? null;
 
   const scope = view === 'day-pick' ? (

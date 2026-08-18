@@ -77,6 +77,45 @@ export function countWeighted(routine) {
   return routine.exercises.filter((ex) => ex.load && ex.load !== 'None' && !/bodyweight/i.test(ex.load)).length;
 }
 
+// The block plan (weekly_template + phase overrides, lib/blocks) is the
+// source of truth for what kind of day it is. MOBILITY_DATA's weekday keys
+// embed the old static schedule ("Monday - Strength", "Tuesday - Run"), so a
+// planned day type maps back onto the weekday whose routines fit it — the
+// content stays keyed as-is, only the lookup follows the plan.
+export function sourceDayForDayType(dayType) {
+  if (!dayType) return null;
+  switch (dayType.kind) {
+    case 'strength':
+      return /upper/i.test(dayType.focus || '') ? 'friday' : 'monday';
+    case 'run':
+      return dayType.quality === 'long' ? 'sunday' : 'tuesday';
+    case 'mobility':
+      return 'wednesday';
+    case 'sport':
+    case 'flex':
+      return 'saturday';
+    default:
+      return null; // rest (or unknown) — nothing scheduled
+  }
+}
+
+// Short human label for a planned day type ("Strength · Upper", "Run · Long").
+export function planDayLabel(dayType) {
+  if (!dayType) return 'Rest';
+  const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
+  switch (dayType.kind) {
+    case 'strength':
+      return dayType.focus ? `Strength · ${dayType.focus.split('—')[0].trim()}` : 'Strength';
+    case 'run':
+      return dayType.quality ? `Run · ${cap(dayType.quality)}` : 'Run';
+    case 'mobility': return 'Mobility';
+    case 'sport': return dayType.activity ? `Sport · ${cap(dayType.activity)}` : 'Sport';
+    case 'flex': return 'Flex';
+    case 'rest': return 'Rest';
+    default: return cap(dayType.kind);
+  }
+}
+
 // Dashboard agenda rule: on days with both a pre- and post- routine
 // (Mon/Tue/Thu/Fri/Sun), show the pre- before noon and the post- after.
 // Single-routine days (Wed full-session, Sat pre-sport) ignore the hour.
