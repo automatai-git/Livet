@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Life & Training Hub** (repo "Livet") — a React 19 + Vite single-page app with Supabase auth and persistence, deployed to GitHub Pages. Hash routing serves eleven sub-apps behind one login, inside the **v3 four-tab shell** (Today / Apps / Life / You — see Architecture). The original five-single-file static PWA lives in `legacy_static/` for reference only (it fails lint — pre-existing, don't fix). `Life support app redesign/` holds the v3 design handoff bundle (reference only, lint-ignored).
+**Life & Training Hub** (repo "Livet") — a React 19 + Vite single-page app with Supabase auth and persistence, deployed to GitHub Pages. Hash routing serves twelve sub-apps behind one login, inside the **v3 four-tab shell** (Today / Apps / Life / You — see Architecture). The original five-single-file static PWA lives in `legacy_static/` for reference only (it fails lint — pre-existing, don't fix). `Life support app redesign/` holds the v3 design handoff bundle (reference only, lint-ignored).
 
 ## Running Locally
 
@@ -28,18 +28,18 @@ Push to `main` → `.github/workflows/static.yml` builds with Vite (Supabase URL
 ### v3 shell (four tabs)
 Routes live in `src/App.jsx`. The hub-and-spoke dashboard is gone; navigation is a fixed bottom tab bar (`src/components/shell/TabBar.jsx`, ink active pill, dark variant on `/life`):
 - `/` — **Today** (`src/pages/Today.jsx`): day track (05:00–21:00, configurable), single agenda card (mobility/workout/dinner rows, "Up next" + Start pill), Life Tree summary ink card, "Most used" rows.
-- `/apps` — **Apps** (`src/pages/Apps.jsx`): search + all eleven apps in one usage-sorted list (3px usage bars) + dashed Finance ghost slot. A future app = a registry row, an accent, a Today card — no layout changes.
+- `/apps` — **Apps** (`src/pages/Apps.jsx`): search + all twelve apps in one usage-sorted list (3px usage bars) + dashed Finance ghost slot. A future app = a registry row, an accent, a Today card — no layout changes.
 - `/life` — **Life** (`src/pages/Life.jsx`): the app's ONLY dark screen; SVG tree (`src/components/life/TreeFigure.jsx`) with tappable leaves, pillar chips, weakest-branch card, 12-week heatmap, link to `/timeline` (legacy milestone feed, now milestones-only).
 - `/you` — **You** (`src/pages/You.jsx`): profile/sign-out, sync state, install-on-home-screen (`src/lib/installPrompt.js`), day-window setting, reset usage sorting.
 
 Shell state (localStorage, never cache data): `property-profile-v1` (last-used Property profile), `property-controls-v1` (per-profile sort + filters — sort orders rows *within* the verdict groups; the map view obeys the same filters), `property-seen-v1` (max seen listing scores → Today moment card), `app-usage-v1` (`src/lib/appUsage.js` — open timestamps per route, capped at 90; sort score = trailing-30-day opens, ties fall back to `src/data/appRegistry.js` canonical order; recorded by `UsageTracker` in App.jsx) and `day-window-v1` (`src/lib/dayWindow.js` — drives the Today day track and "up next").
 
-Sub-pages wrap in `AppShellV3` (see Shared components) — one slotted framework for all eleven apps: header (back circle + 8px accent dot + left serif app name) · scope selector · hero card · content · sticky primary action. Tab bar visible except in focus flows via `hideTabBar`.
+Sub-pages wrap in `AppShellV3` (see Shared components) — one slotted framework for all twelve apps: header (back circle + 8px accent dot + left serif app name) · scope selector · hero card · content · sticky primary action. Tab bar visible except in focus flows via `hideTabBar`.
 
 Every screen carries the v3.1 safe-area top offset: `.tab-page` and `.sticky-header` pad top by `calc(env(safe-area-inset-top, 0px) + 24px)` so content clears the iPhone status clock / Dynamic Island (24px minimum on desktop). Don't place anything above the serif title with negative margins.
 
 ### Layering conventions
-- `src/pages/` — one page component per route (routes live in `src/App.jsx`: the four tabs above plus `/menu`, `/timeline`, `/mobility`, `/workout`, `/colour`, `/bucket`, `/travel`, `/decision`, `/books`, `/property`).
+- `src/pages/` — one page component per route (routes live in `src/App.jsx`: the four tabs above plus `/menu`, `/timeline`, `/mobility`, `/workout`, `/colour`, `/bucket`, `/travel`, `/decision`, `/books`, `/property`, `/goals`, `/training`).
 - `src/components/<feature>/` — feature-scoped components (e.g. `mobility/`, `rehab/`, `colour/`).
 - `src/services/` — the **only** files that touch their Supabase tables.
 - `src/lib/` — pure helpers, unit-tested with vitest in sibling `*.test.js` files.
@@ -171,6 +171,54 @@ the hub. Three scope views over one document:
   (`input/goals-schema.sql`), single live row per user (id `current`),
   `goal-sprint-cache-v1` cache, `.select()` zero-row guard on the upsert.
 
+### Training (/training)
+Read-only dashboard over the NAS training pipeline (data contract:
+`HANDOVER-training-pipeline.md` §2 — **binding**, column changes route via
+the coach Cowork project, never this repo; DDL copy in
+`input/training-schema.sql`). Sources: intervals.icu (runs/watch activities,
+CTL/ATL snapshots, wellness) + Hevy (strength/mobility). The collector on
+the NAS upserts `training_sessions` / `training_wellness` 3×/day
+(06:10/13:10/21:10 CET); `training_blocks` is seeded/updated manually at
+each block boundary. `/workout` and `/mobility` are untouched *content*
+apps — `/training` only displays executed data.
+- **Ownership:** NAS (service role) owns every column; the app is
+  select-only (`authenticated`, RLS) in v1 — no user columns yet. If they
+  arrive, copy the property `user_*` pattern + the `.select()` zero-row
+  guard (noted in the service header).
+- **Display-not-derive rule:** CTL/ATL/load/pace arrive precomputed; the
+  app only groups/formats/max/means for display. TSB is rendered as
+  `ctl − atl` (intervals.icu's own definition) — the one permitted piece of
+  arithmetic. Never re-model fitness client-side.
+- **Timezones:** `start_time` is UTC, but `block`/`week`/`day` were stamped
+  from Europe/Oslo local dates on the NAS — all day/week grouping converts
+  through `osloDateParts` (explicit `Europe/Oslo`, never device tz).
+- `src/lib/training.js` — pure helpers (Oslo date parts, Mon–Sun week
+  ranges, domain grouping, block grid, mm:ss/km + nb-NO formatters,
+  sparkline paths), unit-tested in `training.test.js`.
+- `src/services/trainingDataService.js` — the only file touching the three
+  tables (`trainingService.js` was already taken by the legacy
+  workout-program position service over `relevant_dates`, used by Today and
+  mobilityService — leave that one alone). Paged reads, default window = active block + previous 90 days
+  (`{ fullHistory: true }` drops it, uncached); never selects `raw` jsonb.
+  Caches: `training-cache-v1` (sessions+blocks),
+  `training-wellness-cache-v1`. No realtime — data refreshes on cron only.
+- `src/pages/Training.jsx` — AppShellV3, scope `Uke · Blokk · Trend`, hero =
+  active block (phase, week N of 12 or "starter om N dager", A goal, days
+  left). Uke groups the current *calendar* week (Oslo) by domain — pre-block
+  rows carry no block stamp, so the week view never keys on `week`. Blokk =
+  per-week domain grid + longest-run sparkline + mobility count (a 0 stuck
+  forever usually means Hevy titles don't follow the "mobility"/"exercise"
+  naming convention — flag to the coach, don't fix app-side). Trend =
+  CTL/ATL/TSB lines + HRV/resting-HR sparklines + sleep bars. Sparse data is
+  the launch state ("Venter på data fra NAS-pipeline"): no run history until
+  the Strava import lands, no strength rows until the Hevy key exists.
+  `WEEK_TARGETS` in Training.jsx is dormant (null) until the coach's Block 5
+  design supplies compliance targets; block goals display from
+  `training_blocks.a_goal`/`b_goals` (placeholder "TBD" until then).
+- Accent: muted mulberry `#7A4E66` (`--accent-training`) — the only dark
+  plum in the accent set, keeping the fitness cluster (mobility sage,
+  workout slate teal) visually distinct.
+
 ### Design system (v3)
 Global tokens live in `src/index.css` `:root` and apply across every page.
 - Surfaces: `--bg: #F5F3ED` (warm ground) · `--card: #FDFCF9` (ivory) · `--border: #E6E2D6` (hairline) · `--divider: #EFEBE0` (inside-card) · `--ink: #1B3B2F` (the single dark surface colour — cards, active tab, buttons).
@@ -180,7 +228,7 @@ Global tokens live in `src/index.css` `:root` and apply across every page.
   `--accent-mobility` (sage `#6B9E72`), `--accent-workout` (slate teal `#2D5A6C`),
   `--accent-palette` (dusty rose `#B5838D`), `--accent-bucket` (lavender `#8E7CC3`),
   `--accent-travel` (ocean `#2F7DA0`), `--accent-decision` (amber `#C8804A`), `--accent-books` (leather `#8A6B4D`),
-  `--accent-property` (brick `#9C5B43`), `--accent-goals` (dusty indigo `#56628E`).
+  `--accent-property` (brick `#9C5B43`), `--accent-goals` (dusty indigo `#56628E`), `--accent-training` (muted mulberry `#7A4E66`).
   Chip tint pairs live per app in `src/data/appRegistry.js`.
 - Dark screen (Life only): `--dark-bg` radial gradient, on-dark ivory text, `--tint-health/wealth/happiness`.
 - Radii: cards 20 · rows 14–16 · icon chips 10–12 · pills 999. Card shadow nearly flat (`--card-shadow`).

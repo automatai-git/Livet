@@ -16,6 +16,7 @@ import Books from './pages/Books';
 import PropertySearch from './pages/PropertySearch';
 import PropertyListing from './pages/PropertyListing';
 import Goals from './pages/Goals';
+import Training from './pages/Training';
 import { supabase } from './services/supabase';
 import { recordOpen } from './lib/appUsage';
 import { usageRouteFor } from './data/appRegistry';
@@ -94,6 +95,7 @@ function App() {
               <Route path="/property" element={<ErrorBoundary key="property"><PropertySearch /></ErrorBoundary>} />
               <Route path="/property/:finnkode" element={<ErrorBoundary key="property-listing"><PropertyListing /></ErrorBoundary>} />
               <Route path="/goals" element={<ErrorBoundary key="goals"><Goals /></ErrorBoundary>} />
+              <Route path="/training" element={<ErrorBoundary key="training"><Training /></ErrorBoundary>} />
             </Routes>
           </>
         )}

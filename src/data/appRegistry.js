@@ -1,4 +1,4 @@
-// Single source of truth for the ten sub-apps in the v3 shell.
+// Single source of truth for the twelve sub-apps in the v3 shell.
 // Order here is the canonical order — usage sorting falls back to it on ties.
 // `tintBg`/`tintFg` are the accent-tint chip colours from the design system
 // (accent at 9–13% opacity behind the darker accent-coloured glyph).
@@ -16,6 +16,7 @@ export const APP_REGISTRY = [
   { id: 'decision', route: '/decision', icon: 'decision', name: 'Decision Matrix', accent: 'var(--accent-decision)', barColor: '#C8804A', tintBg: 'rgba(200,128,74,.12)',  tintFg: '#C8804A' },
   { id: 'property', route: '/property', icon: 'house',    name: 'Property Search', accent: 'var(--accent-property)', barColor: '#9C5B43', tintBg: 'rgba(156,91,67,.11)',   tintFg: '#9C5B43' },
   { id: 'goals',    route: '/goals',    icon: 'goals',    name: 'Goals',           accent: 'var(--accent-goals)',    barColor: '#56628E', tintBg: 'rgba(86,98,142,.11)',   tintFg: '#56628E' },
+  { id: 'training', route: '/training', icon: 'training', name: 'Training',        accent: 'var(--accent-training)', barColor: '#7A4E66', tintBg: 'rgba(122,78,102,.11)',  tintFg: '#7A4E66' },
 ];
 
 // Registry lookup for AppShellV3's `app` prop.

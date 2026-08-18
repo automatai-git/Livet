@@ -50,6 +50,7 @@
     --accent-books:    #8A6B4D; /* leather brown */
     --accent-property: #9C5B43; /* brick */
     --accent-goals:    #56628E; /* dusty indigo — north star */
+    --accent-training: #7A4E66; /* muted mulberry — only dark plum in the set */
 
     /* Default fallback for components that read --app-accent. */
     --app-accent: var(--primary);
@@ -3406,3 +3407,145 @@ body.screen-dark::before {
 .ns-marker-row-label { font-size: 0.88rem; font-weight: 500; }
 .ns-marker-date-inline { color: var(--text-faint); font-weight: 400; font-size: 0.8rem; }
 .ns-marker-row-detail { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+
+/* ---------- Training (/training) — read-only NAS-pipeline dashboard ---------- */
+.training-waiting {
+    background: var(--card);
+    border: 1px dashed var(--border);
+    border-radius: 16px;
+    padding: 14px 16px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+.training-section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 0 4px;
+    margin-bottom: 8px;
+}
+.training-group { padding: 14px 16px; margin-bottom: 12px; }
+.training-group-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+.training-session-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 8px 0;
+    border-top: 1px solid var(--divider);
+}
+.training-session-row:first-of-type { border-top: none; }
+.training-day {
+    flex-shrink: 0;
+    width: 22px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    padding-top: 2px;
+}
+.training-session-main { min-width: 0; }
+.tnum { font-variant-numeric: tabular-nums; }
+
+/* Blokk grid */
+.training-grid-card { padding: 14px 16px; margin-bottom: 12px; }
+.training-grid { display: grid; gap: 4px; margin-top: 8px; overflow-x: auto; }
+.training-grid-row {
+    display: grid;
+    grid-template-columns: 64px repeat(12, 1fr);
+    gap: 3px;
+    align-items: center;
+}
+.training-grid-row.head span {
+    font-size: 0.62rem;
+    color: var(--text-faint);
+    text-align: center;
+}
+.training-grid-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.training-grid-cell {
+    height: 20px;
+    border-radius: 5px;
+    background: var(--divider);
+    font-size: 0.66rem;
+    font-weight: 600;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.training-grid-cell.on { background: var(--app-accent, var(--accent-training)); }
+.training-longrun { width: 100%; height: 44px; margin: 6px 0 4px; }
+.training-longrun path {
+    fill: none;
+    stroke: var(--app-accent, var(--accent-training));
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Trend */
+.training-load-chart { width: 100%; height: 120px; margin-top: 8px; }
+.training-load-chart path { fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.training-load-chart .ctl { stroke: var(--accent-training); }
+.training-load-chart .atl { stroke: var(--accent-workout); }
+.training-load-chart .tsb { stroke: var(--text-faint); stroke-dasharray: 3 3; }
+.training-load-chart .zero { stroke: var(--divider); stroke-width: 1; }
+.training-legend {
+    display: flex;
+    gap: 14px;
+    margin-top: 6px;
+    font-size: 0.74rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+.training-legend .dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 999px;
+    margin-right: 5px;
+}
+.training-legend .dot.ctl { background: var(--accent-training); }
+.training-legend .dot.atl { background: var(--accent-workout); }
+.training-legend .dot.tsb { background: var(--text-faint); }
+.training-spark-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.training-spark { padding: 12px 14px; }
+.training-spark-value {
+    font-size: 1.15rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    margin: 2px 0 4px;
+}
+.training-spark-line { width: 100%; height: 34px; }
+.training-spark-line path {
+    fill: none;
+    stroke: var(--app-accent, var(--accent-training));
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.training-spark-empty { font-size: 0.74rem; color: var(--text-faint); padding: 6px 0; }
+.training-sleep-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 56px;
+    margin: 8px 0 6px;
+}
+.training-sleep-bar {
+    flex: 1;
+    border-radius: 3px 3px 0 0;
+    background: var(--divider);
+    min-height: 2px;
+}
+.training-sleep-bar.on { background: var(--app-accent, var(--accent-training)); opacity: .75; }
