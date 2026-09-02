@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm run dev      # Vite dev server
 npm test         # vitest run
-npm run lint     # eslint
+npm run lint     # eslint (incl. react/jsx-no-undef — a <Component /> without an import builds fine but crashes at render)
 npm run build    # production build to dist/
 ```
 
@@ -281,6 +281,15 @@ heartbeat (`max(synced_at)` line), never a live feed.
   blur; sticky action **Add to calendar** downloads the `.ics`, which iOS
   opens as the native add sheet) and `/networking/arena/:id`
   (`NetworkingArena.jsx` — How to join card first, sticky Join).
+- Alive layer (v3.3): the hero carries a 60-day **horizon rail** (Today’s
+  day-track idiom — one dot per upcoming room, lead = filled accent, solid
+  = outlined ink, tap → scroll + flash the card; `horizonFraction`) and a
+  “Next up” line; **Monday’s digest** is the page’s one ink card (tree-
+  summary idiom) and toggles a new-this-week filter; event/arena titles are
+  set in the display serif; `room_note` renders as an accent-barred
+  quote; arenas carry the gold `seat` glyph chip; marking pops the pill
+  and whispers what the mark does (`useWhisper.js`); cards rise in
+  staggered; all motion is off under prefers-reduced-motion.
 - Accent: olive `#5E6B3A` (`--accent-networking`) — distinct from sage
   mobility and the warm amber/brick/leather cluster. Sprite glyph
   `networking` = three linked nodes.

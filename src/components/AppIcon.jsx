@@ -81,6 +81,12 @@ export const IconSprite = () => (
         <circle cx="18.6" cy="17.6" r="2.2" />
         <path d="M10.9 7.2l-4.4 8.4M13.1 7.2l4.4 8.4M7.6 17.6h8.8" />
       </symbol>
+      <symbol id="icon-seat" viewBox="0 0 24 24">
+        {/* a chair: the seat you keep (standing rooms / arenas) */}
+        <path d="M7 4.5h8.5v7.5H7z" />
+        <path d="M5 12h14v4H5z" />
+        <path d="M6.5 16v4M17.5 16v4" />
+      </symbol>
       <symbol id="icon-flag" viewBox="0 0 24 24">
         <path d="M6 21V4" />
         <path d="M6 4h11l-2.5 4L17 12H6" />

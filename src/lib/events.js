@@ -132,6 +132,16 @@ export const HORIZONS = [
   ['later', 'Later'],
 ];
 
+// Position on the hero's horizon rail: 0 = today, 1 = HORIZON_DAYS out.
+// Anything further piles up at the right end ("later"); ongoing multi-day
+// events sit at 0. Null without a date (the rail skips those).
+export const HORIZON_DAYS = 60;
+export const horizonFraction = (event, now = new Date()) => {
+  const d = daysUntil(event, now);
+  if (d == null) return null;
+  return Math.min(1, Math.max(0, d) / HORIZON_DAYS);
+};
+
 export const formatEventDate = (event) => {
   const start = parseDateKey(event.event_date);
   if (!start) return 'Date TBA';

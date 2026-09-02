@@ -3697,3 +3697,145 @@ body.screen-dark::before {
 }
 .net-confirm-card .eyebrow + .net-confirm-row { border-top: none; margin-top: 4px; }
 .net-confirm-body { flex: 1; min-width: 0; }
+
+/* ----- Networking v3.3: alive ----- */
+/* Serif titles: these are invitations, not listings. */
+.net-card-title { font-size: 1.22rem; line-height: 1.2; font-weight: 400; margin: 0; letter-spacing: 0.1px; }
+/* Cards rise in on load, staggered by their index (capped in JSX). */
+.net-card, .net-arena, .net-digest-card, .net-confirm-card {
+    animation: net-rise 0.38s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation-delay: calc(var(--i, 0) * 45ms);
+}
+@keyframes net-rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+}
+/* Marking: the tapped pill pops (same beat as the life-tree leaf tick). */
+.ghost-pill.pop { animation: net-pop 0.26s ease-out; }
+@keyframes net-pop {
+    0%   { transform: scale(1); }
+    45%  { transform: scale(1.12); }
+    100% { transform: scale(1); }
+}
+.net-whisper {
+    flex-basis: 100%;
+    font-size: 0.74rem;
+    color: var(--app-tint-fg, var(--accent-networking));
+    animation: net-whisper 2.2s ease both;
+}
+@keyframes net-whisper {
+    0%   { opacity: 0; transform: translateY(3px); }
+    12%  { opacity: 1; transform: none; }
+    80%  { opacity: 1; }
+    100% { opacity: 0; }
+}
+/* Going / soon / new flags above the title. */
+.net-card-flags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 7px; }
+.net-card-flags .net-new-chip { margin-right: 0; vertical-align: baseline; }
+.net-soon-chip, .net-going-chip {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+.net-soon-chip { background: var(--ink); color: #fff; }
+.net-going-chip { background: var(--success-bg); color: var(--success); }
+.net-card.state-going, .net-card.state-interested { border-left: 3px solid var(--app-accent, var(--accent-networking)); }
+.net-card.state-going .net-card-link { background: linear-gradient(to right, var(--app-tint-bg, rgba(94, 107, 58, 0.12)), transparent 40%); }
+/* Rail dot tap → the card flashes once. */
+.net-card.flash { animation: net-flash 1.4s ease-out; }
+@keyframes net-flash {
+    0%   { box-shadow: 0 0 0 0 var(--app-tint-bg, rgba(94, 107, 58, 0.12)), 0 0 0 2px var(--app-accent, var(--accent-networking)); }
+    100% { box-shadow: var(--card-shadow); }
+}
+/* Room note reads as a quote — who is actually there. */
+blockquote.net-room-note {
+    margin: 10px 0 0;
+    padding: 2px 0 2px 10px;
+    border-left: 2px solid var(--app-accent, var(--accent-networking));
+    font-style: italic;
+}
+/* Arena: seat glyph in a gold-tint chip beside the body. */
+.net-arena-body { display: flex; gap: 12px; align-items: flex-start; }
+.net-arena-main { flex: 1; min-width: 0; }
+.net-seat-chip { flex-shrink: 0; background: rgba(184, 137, 30, 0.13); color: var(--net-arena); margin-top: 2px; }
+
+/* Hero: the horizon rail (Today's day-track idiom, two months wide). */
+.net-rail { margin-top: 14px; padding: 0 6px; }
+.net-rail-line { position: relative; height: 24px; }
+.net-rail-track {
+    position: absolute; left: 0; right: 0; top: 11px;
+    height: 2px; border-radius: 1px; background: #E0DCCF;
+}
+.net-rail-now {
+    position: absolute; left: 0; top: 4px;
+    width: 16px; height: 16px; transform: translateX(-8px);
+    border-radius: 50%; background: var(--ink);
+    border: 3px solid var(--card); box-shadow: 0 0 0 1px var(--ink);
+}
+.net-rail-dot {
+    position: absolute; top: 12px;
+    width: 10px; height: 10px; padding: 0;
+    transform: translate(-50%, -50%);
+    border-radius: 50%; cursor: pointer;
+    background: var(--card); border: 2px solid var(--text-faint);
+    animation: net-dot-in 0.4s ease both;
+    animation-delay: calc(120ms + var(--i, 0) * 35ms);
+}
+.net-rail-dot::after { content: ''; position: absolute; inset: -10px; }
+.net-rail-dot.lead { width: 13px; height: 13px; background: var(--app-accent, var(--accent-networking)); border-color: var(--app-accent, var(--accent-networking)); }
+.net-rail-dot.solid { border-color: var(--ink); }
+.net-rail-dot.going { box-shadow: 0 0 0 3px var(--app-tint-bg, rgba(94, 107, 58, 0.12)); }
+.net-rail-dot:hover, .net-rail-dot:focus-visible { transform: translate(-50%, -50%) scale(1.25); outline: none; }
+@keyframes net-dot-in {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+    to   { opacity: 1; transform: translate(-50%, -50%); }
+}
+.net-rail-ticks { position: relative; height: 14px; margin-top: 2px; font-size: 0.62rem; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.net-rail-ticks span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.net-rail-ticks span:first-child { transform: none; }
+.net-rail-ticks span:last-child { transform: translateX(-100%); }
+.net-next-line {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px;
+    margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--divider);
+    font-size: 0.82rem;
+}
+.net-next-k { font-size: 0.64rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); }
+.net-next-link {
+    padding: 0; border: 0; background: none; font: inherit; font-weight: 600; color: var(--text);
+    cursor: pointer; text-align: left; text-decoration: underline; text-decoration-color: var(--border); text-underline-offset: 3px;
+}
+.net-next-when { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+/* Monday's digest — the one ink surface on the page (tree-summary idiom),
+   doubling as a "new this week" filter. */
+.net-digest-card {
+    display: flex; align-items: center; gap: 16px; width: 100%;
+    background: var(--ink); color: #fff; border: 0; border-radius: var(--radius);
+    padding: 16px 18px; margin-bottom: 14px; text-align: left; font: inherit; cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.15s;
+}
+.net-digest-card:active { transform: scale(0.99); }
+.net-digest-card.on { box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--ink); }
+.net-digest-main { flex: 1; min-width: 0; }
+.net-digest-eyebrow { font-size: 0.64rem; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: rgba(255, 255, 255, 0.6); }
+.net-digest-title { font-size: 1.2rem; margin: 3px 0 2px; }
+.net-digest-hint { font-size: 0.76rem; color: rgba(255, 255, 255, 0.68); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.net-digest-dots { display: flex; gap: 5px; align-items: center; flex-shrink: 0; }
+.net-digest-dots span { width: 9px; height: 9px; border-radius: 50%; background: rgba(255, 255, 255, 0.35); }
+.net-digest-dots span.lead { background: #fff; }
+
+/* Empty state with a face. */
+.net-empty { text-align: center; padding: 40px 20px 32px; color: var(--text-faint); }
+.net-empty svg { opacity: 0.55; }
+.net-empty-title { font-size: 1.5rem; color: var(--text); margin-top: 10px; }
+.net-empty-hint { font-size: 0.82rem; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
+
+@media (prefers-reduced-motion: reduce) {
+    .net-card, .net-arena, .net-digest-card, .net-confirm-card, .net-rail-dot,
+    .ghost-pill.pop, .net-card.flash { animation: none; }
+    .net-whisper { animation: none; }
+}

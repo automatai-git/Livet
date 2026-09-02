@@ -3,7 +3,7 @@ import {
   scoreBand, barrierRank, barrierLabel, daysUntil, isPast, urgencyLabel,
   horizonOf, formatEventDate, mondayOf, latestSentWeek, isNewThisWeek,
   sortEvents, filterEvents, groupByHorizon, filterArenas, needsAttendance,
-  buildEventIcs, icsFilename, localDateKey, lastSynced,
+  buildEventIcs, icsFilename, localDateKey, lastSynced, horizonFraction,
 } from './events';
 
 const NOW = new Date(2026, 8, 2, 14, 30); // Wed 2 Sep 2026, local
@@ -55,6 +55,13 @@ describe('dates', () => {
     expect(horizonOf(ev({ event_date: '2026-09-16' }), NOW)).toBe('next_2m');
     expect(horizonOf(ev({ event_date: '2026-12-01' }), NOW)).toBe('later');
     expect(horizonOf(ev({ event_date: null }), NOW)).toBe('later');
+  });
+  it('maps dates onto the 60-day horizon rail', () => {
+    expect(horizonFraction(ev({ event_date: '2026-09-02' }), NOW)).toBe(0);
+    expect(horizonFraction(ev({ event_date: '2026-08-30', end_date: '2026-09-04' }), NOW)).toBe(0);
+    expect(horizonFraction(ev({ event_date: '2026-09-17' }), NOW)).toBeCloseTo(0.25);
+    expect(horizonFraction(ev({ event_date: '2027-01-01' }), NOW)).toBe(1);
+    expect(horizonFraction(ev({ event_date: null }), NOW)).toBeNull();
   });
   it('formats single and ranged dates', () => {
     expect(formatEventDate(ev({ event_date: '2026-09-10' }))).toBe('Thu 10 Sept');
