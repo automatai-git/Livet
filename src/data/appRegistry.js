@@ -17,6 +17,7 @@ export const APP_REGISTRY = [
   { id: 'property', route: '/property', icon: 'house',    name: 'Property Search', accent: 'var(--accent-property)', barColor: '#9C5B43', tintBg: 'rgba(156,91,67,.11)',   tintFg: '#9C5B43' },
   { id: 'goals',    route: '/goals',    icon: 'goals',    name: 'Goals',           accent: 'var(--accent-goals)',    barColor: '#56628E', tintBg: 'rgba(86,98,142,.11)',   tintFg: '#56628E' },
   { id: 'training', route: '/training', icon: 'training', name: 'Training',        accent: 'var(--accent-training)', barColor: '#7A4E66', tintBg: 'rgba(122,78,102,.11)',  tintFg: '#7A4E66' },
+  { id: 'networking', route: '/networking', icon: 'networking', name: 'Networking', accent: 'var(--accent-networking)', barColor: '#5E6B3A', tintBg: 'rgba(94,107,58,.12)', tintFg: '#5E6B3A' },
 ];
 
 // Registry lookup for AppShellV3's `app` prop.

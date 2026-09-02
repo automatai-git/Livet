@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Life & Training Hub** (repo "Livet") — a React 19 + Vite single-page app with Supabase auth and persistence, deployed to GitHub Pages. Hash routing serves twelve sub-apps behind one login, inside the **v3 four-tab shell** (Today / Apps / Life / You — see Architecture). The original five-single-file static PWA lives in `legacy_static/` for reference only (it fails lint — pre-existing, don't fix). `Life support app redesign/` holds the v3 design handoff bundle (reference only, lint-ignored).
+**Life & Training Hub** (repo "Livet") — a React 19 + Vite single-page app with Supabase auth and persistence, deployed to GitHub Pages. Hash routing serves thirteen sub-apps behind one login, inside the **v3 four-tab shell** (Today / Apps / Life / You — see Architecture). The original five-single-file static PWA lives in `legacy_static/` for reference only (it fails lint — pre-existing, don't fix). `Life support app redesign/` holds the v3 design handoff bundle (reference only, lint-ignored).
 
 ## Running Locally
 
@@ -39,7 +39,7 @@ Sub-pages wrap in `AppShellV3` (see Shared components) — one slotted framework
 Every screen carries the v3.1 safe-area top offset: `.tab-page` and `.sticky-header` pad top by `calc(env(safe-area-inset-top, 0px) + 24px)` so content clears the iPhone status clock / Dynamic Island (24px minimum on desktop). Don't place anything above the serif title with negative margins.
 
 ### Layering conventions
-- `src/pages/` — one page component per route (routes live in `src/App.jsx`: the four tabs above plus `/menu`, `/timeline`, `/mobility`, `/workout`, `/colour`, `/bucket`, `/travel`, `/decision`, `/books`, `/property`, `/goals`, `/training`).
+- `src/pages/` — one page component per route (routes live in `src/App.jsx`: the four tabs above plus `/menu`, `/timeline`, `/mobility`, `/workout`, `/colour`, `/bucket`, `/travel`, `/decision`, `/books`, `/property`, `/goals`, `/training`, `/networking`).
 - `src/components/<feature>/` — feature-scoped components (e.g. `mobility/`, `rehab/`, `colour/`).
 - `src/services/` — the **only** files that touch their Supabase tables.
 - `src/lib/` — pure helpers, unit-tested with vitest in sibling `*.test.js` files.
@@ -219,6 +219,72 @@ apps — `/training` only displays executed data.
   plum in the accent set, keeping the fitness cluster (mobility sage,
   workout slate teal) visually distinct.
 
+### Networking (/networking)
+The NAS weekly events digest (Pleasure / Social / Business) surfaced in the
+hub (data contract: `HANDOVER-livet-events.md`; DDL copy in
+`input/life-events-schema.sql`; the digest task lives outside this repo in
+`NAS-setup and system/tasks/events-sync/`). Every Monday ~11:30 CET the NAS
+researches and scores events and upserts them into `public.life_events`
+(dated happenings) and `public.life_arenas` (standing rooms — clubs,
+networks, syndicates, series). Rows land once a week; build for a weekly
+heartbeat (`max(synced_at)` line), never a live feed.
+- **Purpose shapes the UI:** Social and Business exist to get Andreas into
+  rooms with high achievers (the split is setting, not audience);
+  Pleasure is the small unscored track. Arenas are the compounding play and
+  are pinned *above* the dated feed on Social/Business with a gold mark
+  (`--net-arena`), never buried in the list.
+- **Ownership split:** NAS owns every column except `user_state` and
+  `user_notes` (column-level grant to `authenticated`). Same RLS gotcha as
+  `meals`/`property`: a refused write is success-with-zero-rows, so
+  `eventService.updateEvent`/`updateArena` use `.select()` and treat empty
+  as failure.
+- **The feedback loop is the point:** the NAS reads `user_state` back at
+  the start of every digest run. Events: `interested`/`going`/`attended`
+  → hunt for more like this; `hidden` → down-rank that category/format/
+  organiser. Arenas: `interested` keeps it in view; `joined` stops
+  suggesting it and looks one tier up. Stick to those exact strings
+  (`EVENT_STATES`/`ARENA_STATES` in `src/lib/events.js`); marking is
+  one tap on the card itself and every mark is reversible (tap again =
+  null). The "Did you go?" card prompts `going` events whose date passed.
+- `src/lib/events.js` — pure helpers, unit-tested: score bands (≥70 lead
+  pick · 50–69 solid · 35–49 marginal, null = pleasure → no chip),
+  barrier rank (higher friction = stronger signal — the badge inks
+  *deeper* with rank, never a free=green scale), local-date parsing
+  (`event_date` is a Postgres `date`; never `new Date('YYYY-MM-DD')`),
+  urgency/horizon derived from `event_date` at render time (`time_band`
+  goes stale), "new this week" keyed on the max `sent_week` in the data
+  (not the calendar, so a failed Monday push doesn't fake newness),
+  `sortEvents` (date asc / score desc nulls last), `filterEvents`
+  (default: one track, upcoming, not hidden; `goals` = Business chips),
+  and `buildEventIcs` — an all-day VEVENT (the digest only knows dates)
+  with RFC 5545 escaping/folding and exclusive DTEND.
+- `src/services/eventService.js` — the only file touching the two tables:
+  paged reads of both in one `getAll()`, `life-events-cache-v1` /
+  `life-arenas-cache-v1` localStorage fallback, cache-first on write. No
+  realtime (weekly cadence).
+- `src/pages/Networking.jsx` — AppShellV3, scope `Business · Social ·
+  Pleasure` (last track in `networking-track-v1`, sort in
+  `networking-sort-v1`), hero = lead rooms ahead + upcoming/new/synced
+  meta, a one-line "marking teaches the digest" note, "Did you go?" card,
+  Soonest/Best rooms sort + Customers/Capital/Frontier goal chips
+  (Business), Standing rooms, then events grouped by horizon (Next two
+  weeks / Next two months / Later), Past · n and Hidden · n toggles after
+  the list. `src/components/events/EventCard.jsx` (rich card: New chip,
+  room score, date/urgency/city meta, description, `room_note` line with
+  the networking glyph, barrier + "Format · ~size" + `price_note`, goal
+  chips, Interested/Going/Hide pills) and `ArenaCard.jsx` (kind eyebrow,
+  score, cadence · cost · city, description, boxed `how_to_join`, Join ↗
+  + Interested/Joined/Hide).
+- Detail flows: `/networking/:id` (`NetworkingEvent.jsx` — photo, name +
+  score, The room / Why it matters / About cards, Event page / Book /
+  Google Calendar links, state pills incl. Attended once past, notes on
+  blur; sticky action **Add to calendar** downloads the `.ics`, which iOS
+  opens as the native add sheet) and `/networking/arena/:id`
+  (`NetworkingArena.jsx` — How to join card first, sticky Join).
+- Accent: olive `#5E6B3A` (`--accent-networking`) — distinct from sage
+  mobility and the warm amber/brick/leather cluster. Sprite glyph
+  `networking` = three linked nodes.
+
 ### Design system (v3)
 Global tokens live in `src/index.css` `:root` and apply across every page.
 - Surfaces: `--bg: #F5F3ED` (warm ground) · `--card: #FDFCF9` (ivory) · `--border: #E6E2D6` (hairline) · `--divider: #EFEBE0` (inside-card) · `--ink: #1B3B2F` (the single dark surface colour — cards, active tab, buttons).
@@ -228,7 +294,7 @@ Global tokens live in `src/index.css` `:root` and apply across every page.
   `--accent-mobility` (sage `#6B9E72`), `--accent-workout` (slate teal `#2D5A6C`),
   `--accent-palette` (dusty rose `#B5838D`), `--accent-bucket` (lavender `#8E7CC3`),
   `--accent-travel` (ocean `#2F7DA0`), `--accent-decision` (amber `#C8804A`), `--accent-books` (leather `#8A6B4D`),
-  `--accent-property` (brick `#9C5B43`), `--accent-goals` (dusty indigo `#56628E`), `--accent-training` (muted mulberry `#7A4E66`).
+  `--accent-property` (brick `#9C5B43`), `--accent-goals` (dusty indigo `#56628E`), `--accent-training` (muted mulberry `#7A4E66`), `--accent-networking` (olive `#5E6B3A`).
   Chip tint pairs live per app in `src/data/appRegistry.js`.
 - Dark screen (Life only): `--dark-bg` radial gradient, on-dark ivory text, `--tint-health/wealth/happiness`.
 - Radii: cards 20 · rows 14–16 · icon chips 10–12 · pills 999. Card shadow nearly flat (`--card-shadow`).

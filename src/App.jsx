@@ -96,6 +96,9 @@ function App() {
               <Route path="/property/:finnkode" element={<ErrorBoundary key="property-listing"><PropertyListing /></ErrorBoundary>} />
               <Route path="/goals" element={<ErrorBoundary key="goals"><Goals /></ErrorBoundary>} />
               <Route path="/training" element={<ErrorBoundary key="training"><Training /></ErrorBoundary>} />
+              <Route path="/networking" element={<ErrorBoundary key="networking"><Networking /></ErrorBoundary>} />
+              <Route path="/networking/arena/:id" element={<ErrorBoundary key="networking-arena"><NetworkingArena /></ErrorBoundary>} />
+              <Route path="/networking/:id" element={<ErrorBoundary key="networking-event"><NetworkingEvent /></ErrorBoundary>} />
             </Routes>
           </>
         )}

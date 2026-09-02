@@ -74,6 +74,13 @@ export const IconSprite = () => (
         {/* pulse trace: the data dashboard over the content apps */}
         <path d="M3 12.5h3.6l2.2-5.5 3.6 10.5 2.2-5h6.4" />
       </symbol>
+      <symbol id="icon-networking" viewBox="0 0 24 24">
+        {/* three people in a room, linked: the network as a triangle of nodes */}
+        <circle cx="12" cy="5.2" r="2.2" />
+        <circle cx="5.4" cy="17.6" r="2.2" />
+        <circle cx="18.6" cy="17.6" r="2.2" />
+        <path d="M10.9 7.2l-4.4 8.4M13.1 7.2l4.4 8.4M7.6 17.6h8.8" />
+      </symbol>
       <symbol id="icon-flag" viewBox="0 0 24 24">
         <path d="M6 21V4" />
         <path d="M6 4h11l-2.5 4L17 12H6" />

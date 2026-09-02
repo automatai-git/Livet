@@ -17,6 +17,8 @@ import { crossedToday } from '../lib/propertySeen';
 import { displayPrice, formatNokCompact, priceCut, VIEWING_THRESHOLD } from '../lib/property';
 import { sprintProgress } from '../lib/goals';
 import { ScoreChip } from '../components/property/ListingCard';
+import { eventService } from '../services/eventService';
+import { filterEvents, scoreBand } from '../lib/events';
 import AppIcon from '../components/AppIcon';
 import TabBar from '../components/shell/TabBar';
 
@@ -39,6 +41,7 @@ const STATIC_META = {
   '/decision': 'Weighted choices',
   '/property': 'Finn.no watchlist',
   '/goals': 'Sprint & north star',
+  '/networking': 'Rooms worth being in',
 };
 
 const registryFor = (route) => APP_REGISTRY.find((a) => a.route === route);
@@ -208,6 +211,18 @@ const Today = () => {
     if (route === '/life') return treeHint;
     if (route === '/property' && propActive.length > 0) {
       return `${propHot} worth a viewing · ${propUnscored} awaiting score`;
+    }
+    if (route === '/networking') {
+      // Upcoming, not hidden, scored tracks only — from the cache so the
+      // row renders instantly (the Networking page refreshes it).
+      const cached = eventService.getCachedEvents();
+      const rooms = filterEvents(cached, { track: 'business' }).concat(filterEvents(cached, { track: 'social' }));
+      if (rooms.length > 0) {
+        const lead = rooms.filter((e) => scoreBand(e.achiever_score) === 'lead').length;
+        return lead > 0
+          ? `${lead} lead ${lead === 1 ? 'room' : 'rooms'} · ${rooms.length} upcoming`
+          : `${rooms.length} rooms upcoming`;
+      }
     }
     if (route === '/goals') {
       const doc = goalService.getCachedDoc();

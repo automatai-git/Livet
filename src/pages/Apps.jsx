@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { sortByUsage } from '../lib/appUsage';
 import { sprintProgress } from '../lib/goals';
+import { filterEvents, scoreBand } from '../lib/events';
 import { APP_REGISTRY } from '../data/appRegistry';
 import AppIcon from '../components/AppIcon';
 import TabBar from '../components/shell/TabBar';
@@ -24,6 +25,14 @@ const statusFor = (route) => {
         l.active !== false && l.user_state !== 'hidden' && (l.score ?? 0) >= 80
       ).length;
       return hot > 0 ? `${hot} ≥ 80` : null;
+    } catch { return null; }
+  }
+  if (route === '/networking') {
+    try {
+      const rows = JSON.parse(localStorage.getItem('life-events-cache-v1')) || [];
+      const lead = filterEvents(rows.filter((e) => e.track !== 'pleasure'))
+        .filter((e) => scoreBand(e.achiever_score) === 'lead').length;
+      return lead > 0 ? `${lead} lead ${lead === 1 ? 'pick' : 'picks'}` : null;
     } catch { return null; }
   }
   if (route === '/goals') {
